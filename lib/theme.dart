@@ -194,8 +194,11 @@ ThemeData buildTheme(Brightness brightness) {
       brightness: brightness,
     ),
     scaffoldBackgroundColor: c.pageBg,
-    // Unknown families are skipped on device (system fallback handles Arabic
-    // and emoji); they matter for golden-test rendering.
-    fontFamilyFallback: const ['SegoeUI', 'SegoeUIEmoji'],
+    // NotoNaskhArabic (bundled) renders all Arabic glyphs — naskh style per
+    // the owner's preference. Latin text and digits never reach it (the
+    // default family covers them first). SegoeUI/SegoeUIEmoji remain for
+    // emoji and golden-test rendering; unknown families are skipped on
+    // device.
+    fontFamilyFallback: const ['NotoNaskhArabic', 'SegoeUI', 'SegoeUIEmoji'],
   );
 }

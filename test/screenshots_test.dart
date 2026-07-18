@@ -71,6 +71,12 @@ void main() {
     await _loadFonts('MaterialIcons', [
       '$_sdkFonts\\materialicons-regular.otf',
     ]);
+    // Bundled Arabic font — same file the app ships, so goldens match.
+    await _loadFonts('NotoNaskhArabic', [
+      'assets/fonts/NotoNaskhArabic-Regular.ttf',
+      'assets/fonts/NotoNaskhArabic-SemiBold.ttf',
+      'assets/fonts/NotoNaskhArabic-Bold.ttf',
+    ]);
     // Windows fonts as glyph fallback for Arabic text and emoji.
     await _loadFonts('SegoeUI', [
       '$_winFonts\\segoeui.ttf',
