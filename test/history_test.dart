@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:calorie_tracker/app_state.dart';
+import 'package:calorie_tracker/history_screen.dart';
 import 'package:calorie_tracker/main.dart';
 import 'package:calorie_tracker/models.dart';
 
@@ -35,6 +36,55 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('History'), findsOneWidget);
     expect(find.text('No logged days yet'), findsOneWidget);
+    // No chart on a fully empty history.
+    expect(find.text('Last 7 days'), findsNothing);
+  });
+
+  testWidgets('7-day chart renders with data, over-goal and RTL variants', (
+    tester,
+  ) async {
+    final state = await _pumpApp(tester);
+    state.addEntry(DateTime(2026, 7, 13), 'kalee_cheese', 1, MealType.snack);
+    for (var i = 0; i < 5; i++) {
+      state.addEntry(DateTime(2026, 7, 14), 'bazin', 1, MealType.lunch);
+    }
+    await tester.pumpAndSettle();
+
+    await _openHistory(tester);
+    expect(tester.takeException(), isNull);
+    expect(find.text('Last 7 days'), findsOneWidget);
+
+    final painter =
+        tester
+                .widget<CustomPaint>(
+                  find.byWidgetPredicate(
+                    (w) => w is CustomPaint && w.painter is WeekBarChartPainter,
+                  ),
+                )
+                .painter
+            as WeekBarChartPainter;
+    // 7 slots ending today (15th); the 13th and 14th carry the data.
+    expect(painter.kcals.length, 7);
+    expect(painter.labels, ['9', '10', '11', '12', '13', '14', '15']);
+    expect(painter.kcals[4], 130);
+    expect(painter.kcals[5], 2700); // over goal → gold bar
+    expect(painter.kcals[6], 0);
+    expect(painter.isRtl, isFalse);
+
+    // Same chart in Arabic flags RTL so bars mirror.
+    state.toggleLocale();
+    await tester.pumpAndSettle();
+    final rtlPainter =
+        tester
+                .widget<CustomPaint>(
+                  find.byWidgetPredicate(
+                    (w) => w is CustomPaint && w.painter is WeekBarChartPainter,
+                  ),
+                )
+                .painter
+            as WeekBarChartPainter;
+    expect(rtlPainter.isRtl, isTrue);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('history lists one day and opens its read-only view', (

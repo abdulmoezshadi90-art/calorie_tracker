@@ -79,6 +79,7 @@ class L10n {
   // Neutral goal wording by design: no alarm colors, no judgement.
   String get withinGoal => isAr ? 'ضمن الهدف' : 'Within goal';
   String get overGoal => isAr ? 'فوق الهدف' : 'Over goal';
+  String get last7Days => isAr ? 'آخر 7 أيام' : 'Last 7 days';
 
   String mealName(MealType meal) => switch (meal) {
     MealType.breakfast => isAr ? 'الفطور' : 'Breakfast',

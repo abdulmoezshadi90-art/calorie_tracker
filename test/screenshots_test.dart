@@ -120,6 +120,22 @@ void main() {
     );
   });
 
+  testWidgets('history with 7-day chart — English', (tester) async {
+    final state = await _pumpWithSampleData(tester);
+    // A couple of past days so the chart and list have content.
+    state.addEntry(DateTime(2026, 7, 13), 'kalee_cheese', 2, MealType.snack);
+    for (var i = 0; i < 5; i++) {
+      state.addEntry(DateTime(2026, 7, 14), 'bazin', 1, MealType.lunch);
+    }
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.history));
+    await tester.pumpAndSettle();
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('goldens/history_en.png'),
+    );
+  });
+
   testWidgets('add-food sheet — English', (tester) async {
     await _pumpWithSampleData(tester);
     await tester.tap(find.byIcon(Icons.add).first);
