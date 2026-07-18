@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -17,6 +18,18 @@ void main() {
     await state.load();
     await tester.pumpWidget(CalorieApp(state: state));
     await tester.pumpAndSettle();
+
+    // Record haptic calls (issue #10): log and delete must each vibrate.
+    final haptics = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'HapticFeedback.vibrate') {
+          haptics.add(call.arguments as String);
+        }
+        return null;
+      },
+    );
 
     // Open search for Snack via its + button (4th/last meal row; index 3 —
     // the very last Icons.add belongs to the "Add meal" button). The row sits
@@ -45,6 +58,8 @@ void main() {
     expect(find.text('1,805 kcal left today'), findsOneWidget);
     expect(find.text('Kalee Chips — Cheese'), findsOneWidget); // row subtitle
 
+    expect(haptics, ['HapticFeedbackType.lightImpact']); // logged → one tap
+
     // Entry persisted to storage.
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getString('logs_v1'), contains('kalee_cheese'));
@@ -64,6 +79,7 @@ void main() {
     expect(find.text('Not logged yet'), findsOneWidget);
 
     expect(state.totalsFor(state.selectedDate).kcal, 0);
+    expect(haptics.length, 2); // delete fired the second haptic
   });
 
   test('logs reload from storage across app restarts', () async {

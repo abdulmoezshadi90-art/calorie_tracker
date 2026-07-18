@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'app_state.dart';
 import 'empty_state.dart';
@@ -106,10 +107,13 @@ class MealDetailScreen extends StatelessWidget {
                                     size: 20,
                                     color: c.muted,
                                   ),
-                                  onPressed: () => state.removeEntry(
-                                    state.selectedDate,
-                                    entry.id,
-                                  ),
+                                  onPressed: () {
+                                    HapticFeedback.lightImpact();
+                                    state.removeEntry(
+                                      state.selectedDate,
+                                      entry.id,
+                                    );
+                                  },
                                 ),
                               ],
                             ),

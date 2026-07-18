@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'app_state.dart';
 import 'empty_state.dart';
@@ -239,6 +240,7 @@ class _FoodTile extends StatelessWidget {
                         ),
                       ),
                       onPressed: () {
+                        HapticFeedback.lightImpact();
                         state.addEntry(
                           state.selectedDate,
                           food.id,
