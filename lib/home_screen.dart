@@ -7,6 +7,7 @@ import 'l10n.dart';
 import 'meal_detail_screen.dart';
 import 'models.dart';
 import 'search_screen.dart';
+import 'settings_screen.dart';
 import 'theme.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -174,10 +175,33 @@ class _TopRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
+        const _SettingsButton(),
+        const SizedBox(width: 8),
         const _LangToggle(),
         const SizedBox(width: 8),
         const _TodayPill(),
       ],
+    );
+  }
+}
+
+class _SettingsButton extends StatelessWidget {
+  const _SettingsButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
+      ),
+      child: Container(
+        height: 40,
+        width: 40,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(color: c.dayIdleBg, shape: BoxShape.circle),
+        child: Icon(Icons.settings_outlined, color: c.onHeader, size: 20),
+      ),
     );
   }
 }

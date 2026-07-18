@@ -55,6 +55,25 @@ class L10n {
   String get perServing => isAr ? 'لكل حصة' : 'per serving';
   String get toggleLabel => isAr ? 'EN' : 'ع';
 
+  String get settings => isAr ? 'الإعدادات' : 'Settings';
+  String get dailyGoals => isAr ? 'الأهداف اليومية' : 'Daily goals';
+  String get calories => isAr ? 'سعرات حرارية' : 'Calories';
+  String get save => isAr ? 'حفظ' : 'Save';
+  String get cancel => isAr ? 'إلغاء' : 'Cancel';
+  String get language => isAr ? 'اللغة' : 'Language';
+  String get languageName => isAr ? 'العربية' : 'English';
+  String get about => isAr ? 'حول التطبيق' : 'About';
+  String get version => isAr ? 'الإصدار' : 'Version';
+  String get disclaimerTitle => isAr ? 'إخلاء مسؤولية' : 'Disclaimer';
+  String get disclaimerBody => isAr
+      ? 'القيم الغذائية في هذا التطبيق تقريبية. قيم المنتجات المعبأة مأخوذة من ملصقات المنتجات، وقيم الأطباق المنزلية تقديرية بناءً على وصفات شائعة. هذا التطبيق لا يقدم استشارة طبية. إذا كنت تعاني من حالة صحية مثل السكري، استشر طبيبك أو أخصائي التغذية.'
+      : 'Nutrition values in this app are approximate. Packaged food values come from product labels. Home dish values are estimates based on typical recipes. This app does not provide medical advice. If you manage a medical condition such as diabetes, consult your doctor or dietitian.';
+  String get invalidNumber => isAr ? 'أدخل رقمًا صحيحًا' : 'Enter a valid number';
+  String get valueTooLow => isAr
+      ? 'هذه القيمة أقل من المعتاد. هل تريد المتابعة؟'
+      : 'This value is lower than typical. Continue anyway?';
+  String get goalsSaved => isAr ? 'تم حفظ الأهداف' : 'Goals saved';
+
   String mealName(MealType meal) => switch (meal) {
     MealType.breakfast => isAr ? 'الفطور' : 'Breakfast',
     MealType.lunch => isAr ? 'الغداء' : 'Lunch',
