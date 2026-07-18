@@ -38,6 +38,8 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: 24),
                     const _MealsHeader(),
                     const SizedBox(height: 4),
+                    if (state.loggedMealCount(date) == 0)
+                      const _EmptyTodayBanner(),
                     _MealsList(totals: totals),
                     const SizedBox(height: 14),
                     const _AddMealButton(),
@@ -857,6 +859,64 @@ class _RoundBtn extends StatelessWidget {
   }
 }
 
+/// Friendly banner when nothing is logged on the selected day; tapping it
+/// opens the same meal chooser as the add button.
+class _EmptyTodayBanner extends StatelessWidget {
+  const _EmptyTodayBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final state = AppScope.of(context);
+    final c = AppColors.of(context);
+    final l = state.l;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, bottom: 10),
+      child: Material(
+        color: c.chipBg,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _chooseMeal(context, state),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Icon(Icons.restaurant_outlined, size: 20, color: c.accent),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l.emptyTodayLine,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: c.ink,
+                        ),
+                      ),
+                      Text(
+                        l.emptyTodayAction,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: c.accent,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.add_circle_outline, size: 20, color: c.accent),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _AddMealButton extends StatelessWidget {
   const _AddMealButton();
 
@@ -900,8 +960,11 @@ class _AddMealButton extends StatelessWidget {
       ),
     );
   }
+}
 
-  void _chooseMeal(BuildContext context, AppState state) {
+/// Bottom sheet asking which meal to add to; shared by the add-meal button
+/// and the empty-today banner.
+void _chooseMeal(BuildContext context, AppState state) {
     final c = AppColors.of(context);
     final l = state.l;
     showModalBottomSheet(
@@ -955,7 +1018,6 @@ class _AddMealButton extends StatelessWidget {
         ),
       ),
     );
-  }
 }
 
 // ───────────────────────── Shared building blocks ─────────────────────────

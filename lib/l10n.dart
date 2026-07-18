@@ -95,6 +95,21 @@ class L10n {
       : 'You can start with the defaults and change them anytime in settings.';
   String get replayOnboarding => isAr ? 'إعادة عرض المقدمة' : 'Replay intro';
 
+  // Empty states: short friendly line + one clear action each.
+  String get emptyTodayLine =>
+      isAr ? 'لم تسجّل شيئًا اليوم بعد' : 'Nothing logged today yet';
+  String get emptyTodayAction =>
+      isAr ? 'سجّل أول وجبة' : 'Log your first meal';
+  String get searchEmptyHint => isAr
+      ? 'جرّب اسمًا آخر، بالعربية أو الإنجليزية'
+      : 'Try another name, in Arabic or English';
+  String get clearSearch => isAr ? 'مسح البحث' : 'Clear search';
+  String get historyEmptyHint => isAr
+      ? 'الأيام التي تسجّل فيها وجباتك ستظهر هنا'
+      : 'Days you log meals will show up here';
+  String get backToToday => isAr ? 'العودة إلى اليوم' : 'Back to today';
+  String get addFood => isAr ? 'أضف طعامًا' : 'Add a food';
+
   String mealName(MealType meal) => switch (meal) {
     MealType.breakfast => isAr ? 'الفطور' : 'Breakfast',
     MealType.lunch => isAr ? 'الغداء' : 'Lunch',

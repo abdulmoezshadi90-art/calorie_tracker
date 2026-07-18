@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_state.dart';
+import 'empty_state.dart';
 import 'food_db.dart';
 import 'models.dart';
 import 'theme.dart';
@@ -25,8 +26,12 @@ class HistoryScreen extends StatelessWidget {
         title: Text(l.history),
       ),
       body: dates.isEmpty
-          ? Center(
-              child: Text(l.historyEmpty, style: TextStyle(color: c.muted)),
+          ? EmptyState(
+              icon: Icons.calendar_month_outlined,
+              line: l.historyEmpty,
+              hint: l.historyEmptyHint,
+              actionLabel: l.backToToday,
+              onAction: () => Navigator.of(context).pop(),
             )
           : ListView.builder(
               padding: const EdgeInsets.all(16),

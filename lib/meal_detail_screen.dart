@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_state.dart';
+import 'empty_state.dart';
 import 'food_db.dart';
 import 'models.dart';
 import 'search_screen.dart';
@@ -43,8 +44,13 @@ class MealDetailScreen extends StatelessWidget {
         child: const Icon(Icons.add),
       ),
       body: entries.isEmpty
-          ? Center(
-              child: Text(l.notLoggedYet, style: TextStyle(color: c.muted)),
+          ? EmptyState(
+              icon: meal.icon,
+              line: l.notLoggedYet,
+              actionLabel: l.addFood,
+              onAction: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => SearchScreen(meal: meal)),
+              ),
             )
           : Column(
               children: [

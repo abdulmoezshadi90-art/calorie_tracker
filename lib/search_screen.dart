@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_state.dart';
+import 'empty_state.dart';
 import 'food_db.dart';
 import 'models.dart';
 import 'theme.dart';
@@ -14,7 +15,14 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
+  final _searchController = TextEditingController();
   String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   List<FoodItem> get _results {
     final q = _query.trim().toLowerCase();
@@ -45,6 +53,7 @@ class _SearchScreenState extends State<SearchScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
             child: TextField(
+              controller: _searchController,
               autofocus: true,
               onChanged: (v) => setState(() => _query = v),
               style: TextStyle(color: c.ink),
@@ -64,8 +73,15 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           Expanded(
             child: results.isEmpty
-                ? Center(
-                    child: Text(l.noResults, style: TextStyle(color: c.muted)),
+                ? EmptyState(
+                    icon: Icons.search_off_outlined,
+                    line: l.noResults,
+                    hint: l.searchEmptyHint,
+                    actionLabel: l.clearSearch,
+                    onAction: () {
+                      _searchController.clear();
+                      setState(() => _query = '');
+                    },
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
