@@ -69,6 +69,44 @@ class LogEntry {
   );
 }
 
+/// Daily nutrition goals. Values are whole units: kcal and grams.
+class Goals {
+  final int kcal;
+  final int carbs;
+  final int fat;
+  final int protein;
+
+  const Goals({
+    required this.kcal,
+    required this.carbs,
+    required this.fat,
+    required this.protein,
+  });
+
+  static const Goals defaults = Goals(
+    kcal: 2000,
+    carbs: 220,
+    fat: 65,
+    protein: 110,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'kcal': kcal,
+    'carbs': carbs,
+    'fat': fat,
+    'protein': protein,
+  };
+
+  /// Null tolerant: any missing or malformed field falls back to its default,
+  /// so goals saved by older app versions keep working as fields are added.
+  factory Goals.fromJson(Map<String, dynamic> json) => Goals(
+    kcal: (json['kcal'] as num?)?.round() ?? defaults.kcal,
+    carbs: (json['carbs'] as num?)?.round() ?? defaults.carbs,
+    fat: (json['fat'] as num?)?.round() ?? defaults.fat,
+    protein: (json['protein'] as num?)?.round() ?? defaults.protein,
+  );
+}
+
 class DayTotals {
   double kcal = 0;
   double protein = 0;

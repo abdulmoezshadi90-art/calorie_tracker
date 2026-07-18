@@ -368,9 +368,10 @@ class _CalorieCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    final l = AppScope.of(context).l;
+    final state = AppScope.of(context);
+    final l = state.l;
     final consumed = totals.kcal.round();
-    const goal = AppState.kcalGoal;
+    final goal = state.goals.kcal;
     final progress = (totals.kcal / goal).clamp(0.0, 1.0);
     final remaining = goal - consumed;
 
@@ -510,7 +511,9 @@ class _MacroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    final l = AppScope.of(context).l;
+    final state = AppScope.of(context);
+    final l = state.l;
+    final goals = state.goals;
     return _Card(
       radius: 22,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
@@ -523,13 +526,13 @@ class _MacroCard extends StatelessWidget {
               l,
               l.carb,
               totals.carbs,
-              AppState.carbGoal,
+              goals.carbs.toDouble(),
               c.carb,
             ),
           ),
           const SizedBox(width: 14),
           Expanded(
-            child: _macroCol(c, l, l.fat, totals.fat, AppState.fatGoal, c.fat),
+            child: _macroCol(c, l, l.fat, totals.fat, goals.fat.toDouble(), c.fat),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -538,7 +541,7 @@ class _MacroCard extends StatelessWidget {
               l,
               l.protein,
               totals.protein,
-              AppState.proteinGoal,
+              goals.protein.toDouble(),
               c.protein,
             ),
           ),

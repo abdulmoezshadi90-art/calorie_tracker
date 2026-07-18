@@ -78,4 +78,22 @@ void main() {
     await reloaded.load();
     expect(reloaded.totalsFor(state.selectedDate).kcal, 540);
   });
+
+  test('goals reload from storage across app restarts', () async {
+    SharedPreferences.setMockInitialValues({});
+    final state = AppState();
+    await state.load();
+    expect(state.goals.kcal, Goals.defaults.kcal);
+
+    state.setGoals(const Goals(kcal: 1800, carbs: 200, fat: 60, protein: 120));
+    // _save is fire-and-forget; give it a beat.
+    await Future<void>.delayed(Duration.zero);
+
+    final reloaded = AppState();
+    await reloaded.load();
+    expect(reloaded.goals.kcal, 1800);
+    expect(reloaded.goals.carbs, 200);
+    expect(reloaded.goals.fat, 60);
+    expect(reloaded.goals.protein, 120);
+  });
 }

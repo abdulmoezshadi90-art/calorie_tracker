@@ -10,12 +10,10 @@ import 'models.dart';
 class AppState extends ChangeNotifier {
   static const _logsKey = 'logs_v1';
   static const _localeKey = 'locale';
+  static const _goalsKey = 'goals';
 
-  // Daily goals — fixed for the MVP, editable in a later iteration.
-  static const int kcalGoal = 2000;
-  static const double carbGoal = 220;
-  static const double fatGoal = 65;
-  static const double proteinGoal = 110;
+  Goals _goals = Goals.defaults;
+  Goals get goals => _goals;
 
   String localeCode = 'en';
   // Shown in the header greeting; empty until profiles land, then the greeting
@@ -86,6 +84,12 @@ class AppState extends ChangeNotifier {
     _save();
   }
 
+  void setGoals(Goals goals) {
+    _goals = goals;
+    notifyListeners();
+    _save();
+  }
+
   void toggleLocale() {
     localeCode = localeCode == 'en' ? 'ar' : 'en';
     notifyListeners();
@@ -95,6 +99,10 @@ class AppState extends ChangeNotifier {
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
     localeCode = prefs.getString(_localeKey) ?? 'en';
+    final rawGoals = prefs.getString(_goalsKey);
+    if (rawGoals != null) {
+      _goals = Goals.fromJson(jsonDecode(rawGoals) as Map<String, dynamic>);
+    }
     final raw = prefs.getString(_logsKey);
     if (raw != null) {
       final decoded = jsonDecode(raw) as Map<String, dynamic>;
@@ -109,6 +117,7 @@ class AppState extends ChangeNotifier {
   Future<void> _save() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_localeKey, localeCode);
+    await prefs.setString(_goalsKey, jsonEncode(_goals.toJson()));
     await prefs.setString(
       _logsKey,
       jsonEncode(
