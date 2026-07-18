@@ -68,6 +68,16 @@ class AppState extends ChangeNotifier {
     return totals;
   }
 
+  /// Days with at least one logged entry, newest first.
+  List<DateTime> loggedDates() {
+    final dates = <DateTime>[
+      for (final e in _logsByDate.entries)
+        if (e.value.isNotEmpty) DateTime.parse(e.key),
+    ];
+    dates.sort((a, b) => b.compareTo(a));
+    return dates;
+  }
+
   void selectDate(DateTime date) {
     selectedDate = date;
     notifyListeners();

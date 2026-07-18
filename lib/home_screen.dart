@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'app_state.dart';
+import 'history_screen.dart';
 import 'l10n.dart';
 import 'meal_detail_screen.dart';
 import 'models.dart';
@@ -92,7 +93,10 @@ class _Header extends StatelessWidget {
                 children: const [
                   _TopRow(),
                   SizedBox(height: 12),
-                  _DatePill(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [_DatePill(), _HistoryButton()],
+                  ),
                   SizedBox(height: 18),
                   _WeekStrip(),
                 ],
@@ -181,6 +185,27 @@ class _TopRow extends StatelessWidget {
         const SizedBox(width: 8),
         const _TodayPill(),
       ],
+    );
+  }
+}
+
+class _HistoryButton extends StatelessWidget {
+  const _HistoryButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const HistoryScreen()),
+      ),
+      child: Container(
+        height: 40,
+        width: 40,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(color: c.dayIdleBg, shape: BoxShape.circle),
+        child: Icon(Icons.history, color: c.onHeader, size: 20),
+      ),
     );
   }
 }

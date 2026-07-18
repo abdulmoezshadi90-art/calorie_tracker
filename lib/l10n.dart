@@ -74,6 +74,12 @@ class L10n {
       : 'This value is lower than typical. Continue anyway?';
   String get goalsSaved => isAr ? 'تم حفظ الأهداف' : 'Goals saved';
 
+  String get history => isAr ? 'السجل' : 'History';
+  String get historyEmpty => isAr ? 'لا توجد أيام مسجلة بعد' : 'No logged days yet';
+  // Neutral goal wording by design: no alarm colors, no judgement.
+  String get withinGoal => isAr ? 'ضمن الهدف' : 'Within goal';
+  String get overGoal => isAr ? 'فوق الهدف' : 'Over goal';
+
   String mealName(MealType meal) => switch (meal) {
     MealType.breakfast => isAr ? 'الفطور' : 'Breakfast',
     MealType.lunch => isAr ? 'الغداء' : 'Lunch',
