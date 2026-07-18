@@ -36,7 +36,9 @@ Future<AppState> _pumpWithSampleData(
   addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
 
   SharedPreferences.setMockInitialValues({});
-  final state = AppState();
+  // Pinned clock: goldens must not change as real days pass (a Wednesday
+  // mid-morning, so the week strip and greeting are stable).
+  final state = AppState(clock: () => DateTime(2026, 7, 15, 9, 30));
   await state.load();
   state.localeCode = locale;
   state.userName = locale == 'ar' ? 'مها' : 'Maha';

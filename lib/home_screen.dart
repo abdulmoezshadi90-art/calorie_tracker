@@ -118,7 +118,7 @@ class _TopRow extends StatelessWidget {
     final state = AppScope.of(context);
     final c = AppColors.of(context);
     final l = state.l;
-    final greeting = l.greeting(DateTime.now().hour);
+    final greeting = l.greeting(state.now().hour);
     final hasName = state.userName.trim().isNotEmpty;
 
     return Row(
@@ -217,7 +217,7 @@ class _TodayPill extends StatelessWidget {
     final state = AppScope.of(context);
     final c = AppColors.of(context);
     return GestureDetector(
-      onTap: () => state.selectDate(DateTime.now()),
+      onTap: () => state.selectDate(state.now()),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
@@ -250,7 +250,7 @@ class _WeekStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
-    final now = DateTime.now();
+    final now = state.now();
     final today = DateTime(now.year, now.month, now.day);
     // Monday-first week containing today (weekday: Mon=1 … Sun=7).
     final monday = today.subtract(Duration(days: today.weekday - 1));

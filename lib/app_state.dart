@@ -8,6 +8,13 @@ import 'l10n.dart';
 import 'models.dart';
 
 class AppState extends ChangeNotifier {
+  /// Injectable clock so tests (goldens especially) can pin the date.
+  AppState({DateTime Function()? clock}) : now = clock ?? DateTime.now {
+    selectedDate = now();
+  }
+
+  final DateTime Function() now;
+
   static const _logsKey = 'logs_v1';
   static const _localeKey = 'locale';
   static const _goalsKey = 'goals';
@@ -19,7 +26,7 @@ class AppState extends ChangeNotifier {
   // Shown in the header greeting; empty until profiles land, then the greeting
   // renders on its own.
   String userName = '';
-  DateTime selectedDate = DateTime.now();
+  late DateTime selectedDate;
   final Map<String, List<LogEntry>> _logsByDate = {};
 
   L10n get l => L10n(localeCode);
