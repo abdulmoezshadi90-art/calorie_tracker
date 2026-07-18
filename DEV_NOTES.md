@@ -46,10 +46,18 @@ reviewed → run [QA_CHECKLIST.md](QA_CHECKLIST.md) on a device → tag.
 - Home dishes: one documented reference recipe each, USDA FDC for raw ingredients, account for cooking changes (water absorption, meat shrink, frying oil). kJ labels always converted to kcal.
 - Before launch: test/assertion fails if any food lacks a sourceNote.
 
+## Android toolchain (set up 18 July 2026)
+
+- JDK 17 (Temurin 17.0.19, portable zip): `C:\dev\jdk17`. Wired via `flutter config --jdk-dir`.
+- Android SDK (cmdline-tools only, no Android Studio): `C:\dev\android-sdk` (platform-tools, platform 36, build-tools 36, NDK 28.2, emulator). Wired via `flutter config --android-sdk`. Licenses accepted.
+- Emulator AVD `libya_test_phone` (Pixel 4a profile, Android 36) — start:
+  `C:\dev\android-sdk\emulator\emulator.exe -avd libya_test_phone`
+- **SIGNING KEYSTORE**: `C:\Users\abdul\dev\keystore\calorie_tracker_upload.jks` (alias `upload`, 30-year validity). Passwords in `android/key.properties` (NOT in git). ⚠️ BACK BOTH UP IN TWO PLACES (cloud + USB). Losing them = never updating the app on Play. CI/fresh clones without key.properties fall back to debug signing automatically.
+- adb basics: `adb devices` (list), `adb install -r app-release.apk`, `adb logcat -s flutter` (app logs). platform-tools not on PATH — full path `C:\dev\android-sdk\platform-tools\adb.exe`.
+
 ## Android / JDK plan (Phase 3)
 
-- Install JDK 17 (Temurin), then `C:\dev\flutter\bin\flutter.bat config --jdk-dir=<temurin-path>`.
-- minSdkVersion deliberately low (~API 24) — Libyan phones skew old and cheap.
+- minSdkVersion set explicitly to 24 (Android 7) — Libyan phones skew old and cheap.
 - Test on 2 physical devices incl. one cheap one. Watch: Arabic rendering, RTL mirroring (week strip, ring), font fallbacks, CustomPainter perf on weak GPUs, large system font sizes. Consider bundling a Noto Arabic font if Arabic looks poor.
 - Create the signing keystore and back it up in TWO places — losing it means never updating the app on Play.
 - Record adb + logcat basics here when learned.
