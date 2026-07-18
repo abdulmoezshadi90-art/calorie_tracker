@@ -1,8 +1,4 @@
-# CLAUDE CODE HANDOFF PROMPT
-# Paste everything below this line as your first message in Claude Code.
-# Better yet: save this file as CLAUDE.md in the repo root so Claude Code reads it automatically every session.
-
----
+# CLAUDE CODE PROJECT BRIEF (read automatically every session)
 
 You are working on my Flutter app. Read this entire brief before touching anything. It contains the project context, hard rules, the full plan, and your first tasks.
 
@@ -27,9 +23,11 @@ Positioning (for any store copy or user facing text later): works offline, no si
 7. Goldens load Roboto from the SDK cache plus Segoe UI and Segoe UI Emoji from Windows fonts. The theme has fontFamilyFallback ['SegoeUI','SegoeUIEmoji'] for this. It is harmless on device. Do not remove it.
 8. Do not upgrade Flutter, Gradle, or the JDK mid phase. Upgrades happen only between phases, with a clean commit before and after, then full tests plus goldens.
 
-# CURRENT STATE (16 July 2026)
+# CURRENT STATE (18 July 2026)
 
-MVP core built and tested. Front end is a working skeleton, NOT complete. Three screens exist: home, food search with add sheet, meal detail. 12 tests pass: layout/overflow at 375x812, log flow end to end, RTL plus Western digit checks, persistence round trip, and a screenshot generator. Never run on a real phone yet, only web renderer and widget tests. Not a git repo yet (fixing this is your first task).
+MVP core built and tested. Front end is a working skeleton, NOT complete. Three screens exist: home, food search with add sheet, meal detail. 15 tests pass: layout/overflow at 375x812, log flow end to end, RTL plus Western digit checks, persistence round trips (logs and goals), 6 goldens (light/dark x EN/AR home, AR search, EN add sheet). Goldens are deterministic: AppState takes an injectable clock, pinned to Wed 2026-07-15 09:30 in the golden test. Never run on a real phone yet, only web renderer and widget tests.
+
+Phase 0 is DONE: git repo at https://github.com/abdulmoezshadi90-art/calorie_tracker, tag mvp-skeleton, CLAUDE.md/PLAN.md/DEV_NOTES.md committed, backlog filed as issues #1-#12 (label phase-1) and #13-#17 (label later). Task 2 below (goals persistence, issue #1) is DONE.
 
 Related artifacts that already exist outside this repo (built earlier with Claude Code):
 1. Screenshots page: https://claude.ai/code/artifact/56cb6bb6-8115-4cdd-9097-3055dc52976b
@@ -38,19 +36,20 @@ Related artifacts that already exist outside this repo (built earlier with Claud
 # ARCHITECTURE (lib/)
 
 1. main.dart: entry; MaterialApp with locale switching; web only ?lang=ar|en URL override.
-2. app_state.dart: AppState (ChangeNotifier) holds logs, totals, locale, persistence. AppScope (InheritedNotifier) exposes it. Goals are currently constants: 2000 kcal, 220g carb, 65g fat, 110g protein. Storage is local only via shared_preferences, JSON day logs keyed yyyy-MM-dd. Storage is isolated in AppState so a backend can be swapped in later. No backend by design.
-3. models.dart: FoodItem, LogEntry, MealType (breakfast/lunch/dinner/snack with emoji and tint), DayTotals, and number formatters fmtInt/fmtGrams/fmtServings.
+2. app_state.dart: AppState (ChangeNotifier) holds logs, totals, locale, goals, persistence, and an injectable clock (constructor param `clock`, exposed as `now`; UI date reads go through it so goldens stay deterministic). AppScope (InheritedNotifier) exposes it. Goals are a persisted Goals object (defaults 2000 kcal, 220g carb, 65g fat, 110g protein) saved under prefs key 'goals'; setGoals() notifies then persists. Storage is local only via shared_preferences, JSON day logs keyed yyyy-MM-dd. Storage is isolated in AppState so a backend can be swapped in later. No backend by design.
+3. models.dart: FoodItem, LogEntry, MealType (breakfast/lunch/dinner/snack with emoji and icon), Goals (immutable, null-tolerant fromJson), DayTotals, and number formatters fmtInt/fmtGrams/fmtServings.
 4. food_db.dart: 44 foods (Kalee variants, Bifa, Al Naseem, bazin, couscous, mbakbka, usban, sfinz, maqrud, Libyan teas, more). Each has EN and AR names and servings, kcal, protein/carbs/fat, category.
 5. l10n.dart: hand rolled EN/AR strings, no intl codegen. Arabic month and day names.
-6. home_screen.dart: week strip, calorie ring (CustomPainter), macros row, meal cards.
-7. search_screen.dart: search matching EN or AR, add sheet with 0.5 step servings stepper.
-8. meal_detail_screen.dart: per meal entries, delete, total.
+6. theme.dart: AppColors design-token system (light/dark palettes per the design PDF), AppColors.of(context), buildTheme(). Widgets never hardcode colors. ThemeMode.system.
+7. home_screen.dart: green header with greeting (name hidden until profiles exist), today pill, week strip (gold selected day), calorie card with linear progress bar (no ring), combined macro card (three columns with mini bars), meal rows with dashed dividers.
+8. search_screen.dart: search matching EN or AR, add sheet with 0.5 step servings stepper.
+9. meal_detail_screen.dart: per meal entries, delete, total.
 
 # HARD REQUIREMENTS (never violate, never "improve" away)
 
 1. Numerals are ALWAYS Western digits (0-9), including in Arabic. All numbers go through fmtInt/fmtGrams/fmtServings. Never use locale aware number formatting. Any numeric text input must normalize Eastern Arabic numerals (٠١٢٣٤٥٦٧٨٩) to Western on entry.
 2. Full RTL layout in Arabic. Language toggle in the top bar. Choice persists.
-3. Visual identity: green accent #16a34a (dark #1c8c5c), bg #f7f8fa, ink #1a1a1a, muted #8a8f98, macro colors carb #f59e0b, fat #ef4444, protein #3b82f6. Rounded cards, soft shadows.
+3. Visual identity (per the design PDF, implemented as tokens in theme.dart — change colors THERE, never inline): warm cream page bg #F1EEE0, forest green header #35533B→#243D2A, gold selected-day #EFC65B, accent green #2E8B57, card #FFFDF6, ink #1E3325, muted #7E8C7F; macros carb #E0A72E, fat #D06A4F, protein #2F8F5B. Full light AND dark palettes exist in AppColors; every color change must cover both. Rounded cards, soft shadows, dashed meal dividers.
 4. MVP scope stays tight: NO barcode scanner, NO accounts or login, NO social features unless I explicitly ask.
 5. All nutrition numbers in food_db.dart are PLACEHOLDERS until verified. Never present current numbers as accurate.
 6. Match existing code style. Arabic strings live in l10n.dart. Foods live in food_db.dart. Do not redesign existing screens from scratch; iterate and fill gaps.
@@ -58,12 +57,12 @@ Related artifacts that already exist outside this repo (built earlier with Claud
 
 # ROADMAP (full details, metrics, and decision gates live in PLAN.md; keep both files in the repo)
 
-- Phase 0 (NOW): git init, GitHub push, DEV_NOTES.md, GitHub issues as backlog.
+- Phase 0 (DONE 18 July 2026): git init, GitHub push, DEV_NOTES.md, GitHub issues as backlog.
 - Phase 1 (5 to 6 weeks): finish front end, in this order:
   a. Goals persistence + settings screen with goals editor (Tasks 2 and 3 below).
   b. History screen: scrollable list of past days (date, total kcal, over/under indicator), tap opens a read only day view, plus a 7 day calorie bar chart via CustomPainter (no charting package). Test with empty, 1 day, and 30 days of data.
   c. Onboarding: 3 screens max, language choice FIRST (it gates everything), then a one screen logging intro, then goal setup reusing the goals editor widgets. Shown once via a prefs flag, fully skippable (defaults must carry it), replayable from settings.
-  d. Polish pass: empty states for (i) no foods logged today, (ii) empty search results, (iii) empty history, (iv) empty meal detail, each with a short friendly EN+AR line and a clear action. Replace emoji meal icons with 4 bundled SVG/PNG assets. App icon (calorie ring motif in the green) + splash. Haptics via HapticFeedback.lightImpact() on log and delete.
+  d. Polish pass: empty states for (i) no foods logged today, (ii) empty search results, (iii) empty history, (iv) empty meal detail, each with a short friendly EN+AR line and a clear action. Replace emoji meal icons with 4 bundled SVG/PNG assets. App icon (motif matching the current design language: forest green + cream, e.g. the linear progress bar or a leaf/plate mark) + splash. Haptics via HapticFeedback.lightImpact() on log and delete.
   e. Hardening: zero analyzer warnings, all tests + goldens pass, write a reusable ~20 step manual QA checklist doc (QA_CHECKLIST.md) covering language switch, logging, goal edit, restart persistence, delete, etc. This checklist runs before EVERY release from here on, including weekly beta builds.
 - Phase 2 (parallel, fieldwork): verified nutrition data. See DATA PIPELINE below.
 - Phase 3: Android build (JDK 17 via Temurin), set minSdkVersion low deliberately (Libyan phones skew old and cheap, target around API 24), on device testing on 2 physical devices including a cheap one. Watch: Arabic rendering, RTL mirroring of week strip and ring, device font fallbacks, CustomPainter performance on weak GPUs, large system font sizes. If Arabic looks poor on cheap devices, consider bundling a Noto Arabic font. Create the signing keystore and back it up in two places; losing it means never updating the app on Play. Learn/record adb + logcat basics in DEV_NOTES.md.
@@ -108,7 +107,7 @@ Related artifacts that already exist outside this repo (built earlier with Claud
 
 # YOUR FIRST WORK SESSION, IN ORDER
 
-## Task 1: Phase 0
+## Task 1: Phase 0 — DONE (18 July 2026)
 1. git init in the project root. Verify .gitignore covers /build/, .dart_tool/, *.iml (goldens PNGs stay IN).
 2. Commit everything: "MVP skeleton: home, search, meal detail, 12 tests passing". Tag mvp-skeleton.
 3. I will create the private GitHub repo and authenticate (gh auth login if needed); help me wire the remote and push with tags.
@@ -116,10 +115,10 @@ Related artifacts that already exist outside this repo (built earlier with Claud
 5. Add PLAN.md (I will provide the file) and this brief as CLAUDE.md. Commit.
 6. Create the Phase 1 backlog as GitHub issues: (1) goals persistence, (2) settings screen + goals editor, (3) disclaimer EN/AR in l10n + settings, (4) history screen list + read only day view, (5) 7 day bar chart, (6) onboarding, (7) empty states x4, (8) custom meal icons, (9) app icon + splash, (10) haptics, (11) QA checklist doc, (12) FoodItem verified flag + sourceNote. Add a "later" label (meaning: scheduled for a later phase, not Phase 1) and park Ramadan mode, portions, export/import, tea quick log, feedback email there.
 
-## Task 2: Goals persistence (no UI yet)
+## Task 2: Goals persistence (no UI yet) — DONE (18 July 2026, issue #1 closed)
 1. In models.dart add an immutable Goals class: int kcal, carbs, fat, protein; static const defaults (2000/220/65/110); toJson; null tolerant fromJson falling back to defaults per field (future proof against added fields).
-2. In app_state.dart: replace goal constants with a Goals field + getter, setGoals() that notifies then persists to shared_preferences under key 'goals' as JSON, and loading in the existing init path. Search the whole project for the literal numbers 2000/220/65/110 to catch every consumer; update home_screen.dart ring and macros row to read AppState goals.
-3. Trap to verify: after goals stop being constants, the ring and macros must repaint on a goal change WITHOUT an app restart. AppScope (InheritedNotifier) handles this only if those widgets actually depend on it; check the dependency, do not assume.
+2. In app_state.dart: replace goal constants with a Goals field + getter, setGoals() that notifies then persists to shared_preferences under key 'goals' as JSON, and loading in the existing init path. Search the whole project for the literal numbers 2000/220/65/110 to catch every consumer; update home_screen.dart calorie card and macro card to read AppState goals.
+3. Trap to verify: after goals stop being constants, the calorie bar and macros must repaint on a goal change WITHOUT an app restart. AppScope (InheritedNotifier) handles this only if those widgets actually depend on it; check the dependency, do not assume.
 4. Add a test: goals persist across AppState reload (mock shared_preferences, set custom goals, new AppState instance, expect custom values). Match the style of the existing persistence round trip test.
 5. Analyze clean, all tests pass, commit.
 
@@ -128,7 +127,7 @@ Related artifacts that already exist outside this repo (built earlier with Claud
 2. New lib/settings_screen.dart matching existing screen style: rounded cards for daily goals (opens editor as a bottom sheet, reuse the add sheet pattern from search_screen.dart), language toggle (reuse the top bar widget), about card with app version + disclaimer. Leave room for later items (replay onboarding, feedback email, export) without building them now.
 3. Gear icon in home top bar pushes the settings route.
 4. Goals editor: four numeric fields, keyboardType number; a WesternDigitsFormatter TextInputFormatter that converts ٠١٢٣٤٥٦٧٨٩ to Western and strips non digits; validation per the guardrails in DESIGN DECISIONS (reject empty/zero, gentle confirm below floors, 5 digit cap); save via AppState.setGoals + snackbar (goalsSaved), pop the sheet.
-5. Tests: settings renders RTL at 375x812 without overflow (copy the existing overflow test pattern); editor rejects zero and a valid edit updates the home ring; input of ٢٠٠٠ stores 2000 (this test protects hard requirement 1 forever).
+5. Tests: settings renders RTL at 375x812 without overflow (copy the existing overflow test pattern); editor rejects zero and a valid edit updates the home calorie bar; input of ٢٠٠٠ stores 2000 (this test protects hard requirement 1 forever).
 6. Analyze, test, update goldens, review them visually, commit, tag v0.2-goals, close issues 1 to 3.
 
 ## Working rules for you (Claude Code)
