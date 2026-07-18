@@ -29,6 +29,7 @@ Planning docs in the repo root:
 - **[PLAN.md](PLAN.md)** — full roadmap, phase gates, risk register
 - **[CLAUDE.md](CLAUDE.md)** — project brief and hard requirements (read by Claude Code every session)
 - **[DEV_NOTES.md](DEV_NOTES.md)** — machine setup, key commands, data pipeline pointers
+- **[QA_CHECKLIST.md](QA_CHECKLIST.md)** — manual QA run before every release (incl. weekly beta builds)
 
 ## Hard rules (never violated)
 

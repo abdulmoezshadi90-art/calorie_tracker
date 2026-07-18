@@ -22,6 +22,11 @@ Working notes for the solo dev environment. Full project brief lives in CLAUDE.m
 - Goldens load Roboto from the SDK cache plus Segoe UI / Segoe UI Emoji from Windows fonts. Theme has `fontFamilyFallback ['SegoeUI','SegoeUIEmoji']` for this — harmless on device, do not remove.
 - No Flutter/Gradle/JDK upgrades mid phase. Upgrades only between phases: clean commit before and after, then full tests + goldens.
 
+## Release ritual
+
+Before every release (incl. weekly beta builds): analyzer clean → full test suite → goldens
+reviewed → run [QA_CHECKLIST.md](QA_CHECKLIST.md) on a device → tag.
+
 ## Hard requirements (summary — full text in CLAUDE.md)
 
 1. Numerals ALWAYS Western digits (0-9), even in Arabic. All numbers via `fmtInt`/`fmtGrams`/`fmtServings`. Numeric input normalizes Eastern Arabic numerals (٠١٢٣٤٥٦٧٨٩) to Western.
