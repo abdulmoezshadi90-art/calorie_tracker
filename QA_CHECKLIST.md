@@ -57,4 +57,4 @@ Record the run at the bottom: date, build/tag, device, result per step (✅/❌ 
 
 | Date | Build/tag | Device | Result | Notes |
 |---|---|---|---|---|
-| | | | | |
+| 2026-07-18 | v0.3-phase1 | Web release (Chrome pane) | Partial ✅ | Release build boots EN + AR (`?lang=` override): correct titles, RTL strings, no console errors. Interactive steps blocked by a local browser-pane/Flutter-web input quirk — flows covered by the 38-test widget suite instead. Full device run due in Phase 3. |

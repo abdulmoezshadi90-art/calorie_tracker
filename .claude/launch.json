@@ -2,11 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "calorie-tracker-web",
-      "runtimeExecutable": "C:\\dev\\flutter\\bin\\flutter.bat",
-      "runtimeArgs": ["run", "-d", "web-server", "--web-port=8080"],
-      "cwd": "C:\\Users\\abdul\\dev\\calorie_tracker",
-      "port": 8080
+      "name": "web-release",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8787", "--directory", "build/web"],
+      "port": 8787
     }
   ]
 }

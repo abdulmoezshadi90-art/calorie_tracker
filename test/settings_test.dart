@@ -52,6 +52,36 @@ void main() {
     expect(state.goals.kcal, 2000); // unchanged
   });
 
+  testWidgets('goals editor rejects empty input', (tester) async {
+    final state = await _pumpSettings(tester);
+
+    await tester.tap(find.text('Daily goals'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextField, 'Calories'), '');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Enter a valid number'), findsOneWidget);
+    expect(state.goals.kcal, 2000);
+  });
+
+  testWidgets('goals editor caps input at 5 digits (huge numbers)', (
+    tester,
+  ) async {
+    final state = await _pumpSettings(tester);
+
+    await tester.tap(find.text('Daily goals'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Calories'),
+      '1234567',
+    );
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(state.goals.kcal, 12345); // LengthLimitingTextInputFormatter(5)
+  });
+
   testWidgets('valid goal edit updates the home calorie bar live', (
     tester,
   ) async {

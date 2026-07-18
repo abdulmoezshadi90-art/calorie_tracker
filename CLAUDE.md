@@ -23,11 +23,13 @@ Positioning (for any store copy or user facing text later): works offline, no si
 7. Goldens load Roboto from the SDK cache plus Segoe UI and Segoe UI Emoji from Windows fonts. The theme has fontFamilyFallback ['SegoeUI','SegoeUIEmoji'] for this. It is harmless on device. Do not remove it.
 8. Do not upgrade Flutter, Gradle, or the JDK mid phase. Upgrades happen only between phases, with a clean commit before and after, then full tests plus goldens.
 
-# CURRENT STATE (18 July 2026)
+# CURRENT STATE (18 July 2026 — PHASE 1 COMPLETE, tag v0.3-phase1)
 
-MVP core built and tested. Front end is a working skeleton, NOT complete. Three screens exist: home, food search with add sheet, meal detail. 15 tests pass: layout/overflow at 375x812, log flow end to end, RTL plus Western digit checks, persistence round trips (logs and goals), 6 goldens (light/dark x EN/AR home, AR search, EN add sheet). Goldens are deterministic: AppState takes an injectable clock, pinned to Wed 2026-07-15 09:30 in the golden test. Never run on a real phone yet, only web renderer and widget tests.
+All Phase 1 issues (#1-#12, plus #18 clock fix) are closed. Screens: home, search+add sheet, meal detail, settings (goals editor, language, disclaimer), history (list + 7-day CustomPainter chart + read-only day view), onboarding (3 skippable pages). Custom bundled meal icons, app icon + native splash (flutter_launcher_icons / flutter_native_splash, the pre-approved dev packages), haptics on log/delete, empty states x4, QA_CHECKLIST.md. FoodItem carries verified+sourceNote (all false/placeholder until the Phase 2 pipeline).
 
-Phase 0 is DONE: git repo at https://github.com/abdulmoezshadi90-art/calorie_tracker, tag mvp-skeleton, CLAUDE.md/PLAN.md/DEV_NOTES.md committed, backlog filed as issues #1-#12 (label phase-1) and #13-#17 (label later). Task 2 below (goals persistence, issue #1) is DONE.
+38 tests pass, analyzer clean. Goldens (7) are deterministic: AppState takes an injectable clock, pinned to Wed 2026-07-15 09:30. Golden helper precaches the meal-icon assets (asset images never decode under the fake-async test clock). Web release build verified booting in EN and AR (?lang= override); THE APP HAS STILL NEVER RUN ON A REAL PHONE — that is Phase 3, next along with Phase 2 data fieldwork.
+
+Phase 0 DONE: repo https://github.com/abdulmoezshadi90-art/calorie_tracker, tags mvp-skeleton / v0.2-goals / v0.3-phase1, milestones mirror the roadmap phases.
 
 Related artifacts that already exist outside this repo (built earlier with Claude Code):
 1. Screenshots page: https://claude.ai/code/artifact/56cb6bb6-8115-4cdd-9097-3055dc52976b
@@ -122,7 +124,7 @@ Related artifacts that already exist outside this repo (built earlier with Claud
 4. Add a test: goals persist across AppState reload (mock shared_preferences, set custom goals, new AppState instance, expect custom values). Match the style of the existing persistence round trip test.
 5. Analyze clean, all tests pass, commit.
 
-## Task 3: Settings screen + goals editor
+## Task 3: Settings screen + goals editor — DONE (18 July 2026, issues #2-#3 closed)
 1. l10n.dart keys: settings, dailyGoals, calories, carbs, fat, protein, save, cancel, language, about, version, disclaimerTitle, disclaimerBody, invalidNumber, valueTooLow, goalsSaved. Use the disclaimer draft above.
 2. New lib/settings_screen.dart matching existing screen style: rounded cards for daily goals (opens editor as a bottom sheet, reuse the add sheet pattern from search_screen.dart), language toggle (reuse the top bar widget), about card with app version + disclaimer. Leave room for later items (replay onboarding, feedback email, export) without building them now.
 3. Gear icon in home top bar pushes the settings route.

@@ -13,16 +13,12 @@ home-cooked dishes (bazin, mbakbka, couscous, sfinz…) that global apps don't c
 
 ## Status
 
-**Phase 1 — finishing the front end** (public launch target: early December 2026; Ramadan mode hard deadline: 25 January 2027).
+**Phase 1 complete** (18 July 2026, tag `v0.3-phase1`) — all 12 backlog issues closed, well ahead of the early-September plan date. Next: **Phase 2** (verified nutrition data, owner fieldwork) and **Phase 3** (Android build + on-device testing). Public launch target: early December 2026; Ramadan mode hard deadline: 25 January 2027.
 
-| Done | In progress / next |
-|---|---|
-| ✅ Home, search, meal detail screens | 🔜 Custom meal icons ([#8](../../issues/8)) |
-| ✅ Goals: persisted + editable in settings | 🔜 App icon + splash ([#9](../../issues/9)) |
-| ✅ Settings with EN/AR disclaimer | 🔜 Haptics ([#10](../../issues/10)) |
-| ✅ History list, read-only day view, 7-day chart | 🔜 QA checklist doc ([#11](../../issues/11)) |
-| ✅ Onboarding (3 pages, skippable, replayable) | 🔜 FoodItem verified flag ([#12](../../issues/12)) |
-| ✅ Empty states ×4 | |
+Phase 1 delivered: home/search/meal-detail screens, persisted + editable goals, settings with
+EN/AR disclaimer, history + read-only day view + 7-day chart, onboarding, empty states ×4,
+custom meal icons, app icon + splash, haptics, QA checklist, and the FoodItem
+`verified`/`sourceNote` fields ready for the data pipeline.
 
 Planning docs in the repo root:
 
