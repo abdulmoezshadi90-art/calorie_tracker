@@ -30,14 +30,30 @@ class FoodItem {
 enum FoodCategory { snack, main, breakfast, sweet, drink }
 
 enum MealType {
-  breakfast('🍳', Icons.local_cafe_outlined),
-  lunch('🍛', Icons.lunch_dining_outlined),
-  dinner('🍲', Icons.ramen_dining_outlined),
-  snack('🍪', Icons.cookie_outlined);
+  breakfast,
+  lunch,
+  dinner,
+  snack;
 
-  final String emoji;
-  final IconData icon;
-  const MealType(this.emoji, this.icon);
+  /// Bundled tintable glyph (issue #8) — render via [MealIcon], not Image
+  /// directly, so sizing and tinting stay consistent.
+  String get asset => 'assets/icons/meal_$name.png';
+}
+
+/// The bundled meal glyph, tinted like an [Icon].
+class MealIcon extends StatelessWidget {
+  const MealIcon(this.meal, {super.key, required this.size, this.color});
+  final MealType meal;
+  final double size;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) => Image.asset(
+    meal.asset,
+    width: size,
+    height: size,
+    color: color ?? IconTheme.of(context).color,
+  );
 }
 
 /// One logged food, tied to a meal on a given day.

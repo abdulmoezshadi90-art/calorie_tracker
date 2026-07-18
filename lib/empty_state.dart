@@ -8,14 +8,17 @@ import 'theme.dart';
 class EmptyState extends StatelessWidget {
   const EmptyState({
     super.key,
-    required this.icon,
+    this.icon,
+    this.graphic,
     required this.line,
     this.hint,
     required this.actionLabel,
     required this.onAction,
-  });
+  }) : assert(icon != null || graphic != null);
 
-  final IconData icon;
+  final IconData? icon;
+  /// Custom glyph (e.g. [MealIcon]) shown instead of [icon].
+  final Widget? graphic;
   final String line;
   final String? hint;
   final String actionLabel;
@@ -35,7 +38,7 @@ class EmptyState extends StatelessWidget {
               height: 64,
               alignment: Alignment.center,
               decoration: BoxDecoration(color: c.chipBg, shape: BoxShape.circle),
-              child: Icon(icon, size: 30, color: c.accent),
+              child: graphic ?? Icon(icon, size: 30, color: c.accent),
             ),
             const SizedBox(height: 16),
             Text(

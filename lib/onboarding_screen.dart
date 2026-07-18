@@ -188,7 +188,7 @@ class _IntroPage extends StatelessWidget {
                     color: c.mealTint[meal],
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(meal.icon, color: c.mealIconColor, size: 24),
+                  child: MealIcon(meal, color: c.mealIconColor, size: 24),
                 ),
               ),
           ],

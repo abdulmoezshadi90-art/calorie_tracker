@@ -777,7 +777,7 @@ class _MealRow extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
-              child: Icon(meal.icon, color: c.mealIconColor, size: 22),
+              child: MealIcon(meal, color: c.mealIconColor, size: 22),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -1000,7 +1000,9 @@ void _chooseMeal(BuildContext context, AppState state) {
                     color: c.mealTint[m],
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(m.icon, color: c.mealIconColor, size: 20),
+                  child: Center(
+                    child: MealIcon(m, color: c.mealIconColor, size: 20),
+                  ),
                 ),
                 title: Text(
                   l.mealName(m),

@@ -345,7 +345,7 @@ class _MealSection extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
           child: Row(
             children: [
-              Icon(meal.icon, size: 18, color: c.mealIconColor),
+              MealIcon(meal, size: 18, color: c.mealIconColor),
               const SizedBox(width: 8),
               Text(
                 l.mealName(meal),

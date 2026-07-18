@@ -29,7 +29,7 @@ class MealDetailScreen extends StatelessWidget {
         foregroundColor: c.onHeader,
         title: Row(
           children: [
-            Icon(meal.icon, size: 22),
+            MealIcon(meal, size: 22),
             const SizedBox(width: 10),
             Text(l.mealName(meal)),
           ],
@@ -45,7 +45,7 @@ class MealDetailScreen extends StatelessWidget {
       ),
       body: entries.isEmpty
           ? EmptyState(
-              icon: meal.icon,
+              graphic: MealIcon(meal, size: 30, color: c.accent),
               line: l.notLoggedYet,
               actionLabel: l.addFood,
               onAction: () => Navigator.of(context).push(

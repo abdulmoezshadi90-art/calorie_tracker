@@ -48,6 +48,14 @@ Future<AppState> _pumpWithSampleData(
   state.addEntry(state.selectedDate, 'rice_chicken', 1, MealType.lunch);
   state.addEntry(state.selectedDate, 'kalee_cheese', 2, MealType.snack);
   await tester.pumpWidget(CalorieApp(state: state));
+  // Asset images never decode under the fake-async test clock; precache the
+  // meal glyphs for real so goldens show them.
+  await tester.runAsync(() async {
+    final context = tester.element(find.byType(MaterialApp));
+    for (final m in MealType.values) {
+      await precacheImage(AssetImage(m.asset), context);
+    }
+  });
   await tester.pumpAndSettle();
   return state;
 }
