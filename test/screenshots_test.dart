@@ -35,7 +35,7 @@ Future<AppState> _pumpWithSampleData(
   addTearDown(tester.view.reset);
   addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
 
-  SharedPreferences.setMockInitialValues({});
+  SharedPreferences.setMockInitialValues({'onboarding_done': true});
   // Pinned clock: goldens must not change as real days pass (a Wednesday
   // mid-morning, so the week strip and greeting are stable).
   final state = AppState(clock: () => DateTime(2026, 7, 15, 9, 30));

@@ -12,7 +12,7 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({'onboarding_done': true});
     final state = AppState();
     await state.load();
     await tester.pumpWidget(CalorieApp(state: state));
@@ -67,7 +67,7 @@ void main() {
   });
 
   test('logs reload from storage across app restarts', () async {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({'onboarding_done': true});
     final state = AppState();
     await state.load();
     state.addEntry(state.selectedDate, 'bazin', 1, MealType.lunch);
@@ -80,7 +80,7 @@ void main() {
   });
 
   test('goals reload from storage across app restarts', () async {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({'onboarding_done': true});
     final state = AppState();
     await state.load();
     expect(state.goals.kcal, Goals.defaults.kcal);

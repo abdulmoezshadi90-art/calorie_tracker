@@ -5,6 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'app_state.dart';
 import 'home_screen.dart';
+import 'onboarding_screen.dart';
 import 'theme.dart';
 
 Future<void> main() async {
@@ -44,7 +45,9 @@ class CalorieApp extends StatelessWidget {
         darkTheme: buildTheme(Brightness.dark),
         themeMode: ThemeMode.system,
         builder: (context, child) => AppScope(state: state, child: child!),
-        home: const HomeScreen(),
+        home: state.onboardingDone
+            ? const HomeScreen()
+            : const OnboardingScreen(),
       ),
     );
   }

@@ -18,11 +18,13 @@ class AppState extends ChangeNotifier {
   static const _logsKey = 'logs_v1';
   static const _localeKey = 'locale';
   static const _goalsKey = 'goals';
+  static const _onboardingKey = 'onboarding_done';
 
   Goals _goals = Goals.defaults;
   Goals get goals => _goals;
 
   String localeCode = 'en';
+  bool onboardingDone = false;
   // Shown in the header greeting; empty until profiles land, then the greeting
   // renders on its own.
   String userName = '';
@@ -107,8 +109,16 @@ class AppState extends ChangeNotifier {
     _save();
   }
 
-  void toggleLocale() {
-    localeCode = localeCode == 'en' ? 'ar' : 'en';
+  void toggleLocale() => setLocale(localeCode == 'en' ? 'ar' : 'en');
+
+  void setLocale(String code) {
+    localeCode = code;
+    notifyListeners();
+    _save();
+  }
+
+  void completeOnboarding() {
+    onboardingDone = true;
     notifyListeners();
     _save();
   }
@@ -116,6 +126,7 @@ class AppState extends ChangeNotifier {
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
     localeCode = prefs.getString(_localeKey) ?? 'en';
+    onboardingDone = prefs.getBool(_onboardingKey) ?? false;
     final rawGoals = prefs.getString(_goalsKey);
     if (rawGoals != null) {
       _goals = Goals.fromJson(jsonDecode(rawGoals) as Map<String, dynamic>);
@@ -135,6 +146,7 @@ class AppState extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_localeKey, localeCode);
     await prefs.setString(_goalsKey, jsonEncode(_goals.toJson()));
+    await prefs.setBool(_onboardingKey, onboardingDone);
     await prefs.setString(
       _logsKey,
       jsonEncode(

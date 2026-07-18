@@ -12,7 +12,7 @@ Future<AppState> _pumpApp(WidgetTester tester, {String locale = 'en'}) async {
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
 
-  SharedPreferences.setMockInitialValues({});
+  SharedPreferences.setMockInitialValues({'onboarding_done': true});
   final state = AppState(clock: () => DateTime(2026, 7, 15, 9, 30));
   await state.load();
   state.localeCode = locale;

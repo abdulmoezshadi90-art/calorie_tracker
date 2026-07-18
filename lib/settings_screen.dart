@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import 'app_state.dart';
 import 'models.dart';
+import 'onboarding_screen.dart';
 import 'theme.dart';
 
 /// Shown in the about card. Keep in sync with pubspec.yaml `version:`.
@@ -113,7 +114,25 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // Room grows here later: replay onboarding, feedback email, export.
+          _SettingsCard(
+            child: ListTile(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              leading: Icon(Icons.replay_outlined, color: c.accent),
+              title: Text(
+                l.replayOnboarding,
+                style: TextStyle(fontWeight: FontWeight.w700, color: c.ink),
+              ),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const OnboardingScreen(),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Room grows here later: feedback email, export.
           _SettingsCard(
             child: Padding(
               padding: const EdgeInsets.all(16),

@@ -7,7 +7,7 @@ import 'package:calorie_tracker/main.dart';
 import 'package:calorie_tracker/models.dart';
 
 Future<AppState> _pumpApp(WidgetTester tester) async {
-  SharedPreferences.setMockInitialValues({});
+  SharedPreferences.setMockInitialValues({'onboarding_done': true});
   final state = AppState();
   await state.load();
   await tester.pumpWidget(CalorieApp(state: state));

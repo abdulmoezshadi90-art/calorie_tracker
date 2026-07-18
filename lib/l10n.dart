@@ -81,6 +81,20 @@ class L10n {
   String get overGoal => isAr ? 'فوق الهدف' : 'Over goal';
   String get last7Days => isAr ? 'آخر 7 أيام' : 'Last 7 days';
 
+  String get chooseLanguage => isAr ? 'اختر اللغة' : 'Choose your language';
+  String get next => isAr ? 'التالي' : 'Next';
+  String get skip => isAr ? 'تخطي' : 'Skip';
+  String get getStarted => isAr ? 'ابدأ الآن' : 'Get started';
+  String get introTitle => isAr ? 'سجّل ما تأكل' : 'Log what you eat';
+  String get introBody => isAr
+      ? 'ابحث عن الأطعمة الليبية — من شيبسي كالي إلى البازين — وأضفها إلى وجباتك بضغطة. يعمل التطبيق بدون إنترنت وبياناتك تبقى على هاتفك.'
+      : 'Search Libyan foods — from Kalee chips to bazin — and add them to your meals with a tap. Works offline, and your data stays on your phone.';
+  String get onboardGoalsTitle => isAr ? 'حدد أهدافك اليومية' : 'Set your daily goals';
+  String get onboardGoalsBody => isAr
+      ? 'يمكنك البدء بالأهداف الافتراضية وتغييرها في أي وقت من الإعدادات.'
+      : 'You can start with the defaults and change them anytime in settings.';
+  String get replayOnboarding => isAr ? 'إعادة عرض المقدمة' : 'Replay intro';
+
   String mealName(MealType meal) => switch (meal) {
     MealType.breakfast => isAr ? 'الفطور' : 'Breakfast',
     MealType.lunch => isAr ? 'الغداء' : 'Lunch',
