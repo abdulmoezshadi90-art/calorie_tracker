@@ -73,6 +73,21 @@ void main() {
     expect(find.textContaining('4 / 110 g'), findsOneWidget);
   });
 
+  testWidgets('wide viewport keeps phone width (desktop frame)', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await _pumpApp(tester);
+
+    expect(tester.takeException(), isNull);
+    // App content is centered at phone width, not stretched to 1280.
+    expect(tester.getSize(find.byType(Scaffold)).width, 430);
+    expect(find.text("Today's calories"), findsOneWidget);
+  });
+
   testWidgets('arabic locale renders RTL with Western digits', (tester) async {
     tester.view.physicalSize = const Size(375, 812);
     tester.view.devicePixelRatio = 1.0;

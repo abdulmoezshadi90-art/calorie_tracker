@@ -23,6 +23,48 @@ Future<void> main() async {
   runApp(CalorieApp(state: state));
 }
 
+/// On wide viewports (desktop web) the app keeps its phone layout: content
+/// is centered at phone width on a deep-green backdrop instead of
+/// stretching. Sits inside the MaterialApp builder so navigation, sheets
+/// and dialogs are all framed too. Phone-sized windows are untouched.
+class _PhoneFrame extends StatelessWidget {
+  const _PhoneFrame({required this.child});
+  final Widget child;
+
+  static const _phoneWidth = 430.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth <= 500) return child;
+        final c = AppColors.of(context);
+        return ColoredBox(
+          color: c.headerBottom,
+          child: Center(
+            child: Container(
+              width: _phoneWidth,
+              margin: const EdgeInsets.symmetric(vertical: 24),
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(32),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x66000000),
+                    blurRadius: 40,
+                    offset: Offset(0, 16),
+                  ),
+                ],
+              ),
+              child: child,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class CalorieApp extends StatelessWidget {
   const CalorieApp({super.key, required this.state});
   final AppState state;
@@ -44,7 +86,8 @@ class CalorieApp extends StatelessWidget {
         theme: buildTheme(Brightness.light),
         darkTheme: buildTheme(Brightness.dark),
         themeMode: ThemeMode.system,
-        builder: (context, child) => AppScope(state: state, child: child!),
+        builder: (context, child) =>
+            AppScope(state: state, child: _PhoneFrame(child: child!)),
         home: state.onboardingDone
             ? const HomeScreen()
             : const OnboardingScreen(),
