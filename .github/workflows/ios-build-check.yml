@@ -1,0 +1,29 @@
+# Unsigned iOS build check (no Apple account needed): proves the iOS side
+# still compiles on a real Mac. Cannot produce an installable app — signing
+# and TestFlight need the $99/yr Apple Developer Program (parked, Phase 9).
+#
+# macOS runners burn GitHub minutes at 10x, so this runs only on release
+# tags, a weekly cron, or manually — not on every push (~10 builds/month
+# fit the free tier).
+name: iOS build check
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC
+  push:
+    tags: ["v*"]
+
+jobs:
+  ios-no-codesign:
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.6"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build ios --release --no-codesign
