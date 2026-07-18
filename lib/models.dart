@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 
 /// A food item in the local database. Nutrition values are per one serving.
+///
+/// [verified] and [sourceNote] exist ahead of the Phase 2 data pipeline so
+/// verified entries land in final shape. Values change ONLY through that
+/// pipeline (label photo → extraction → owner verification) — never edited
+/// ad hoc. Home dishes stay computed-from-recipe and display as approximate.
 class FoodItem {
   final String id;
   final String nameEn;
@@ -13,6 +18,14 @@ class FoodItem {
   final double fat;
   final FoodCategory category;
 
+  /// True only once the owner has verified the values against a label
+  /// (packaged) or a documented reference recipe (home dishes).
+  final bool verified;
+
+  /// Where the numbers come from: label basis (e.g. "per 100g drained"),
+  /// recipe reference, or the placeholder marker. Never empty.
+  final String sourceNote;
+
   const FoodItem({
     required this.id,
     required this.nameEn,
@@ -24,6 +37,8 @@ class FoodItem {
     required this.carbs,
     required this.fat,
     required this.category,
+    this.verified = false,
+    this.sourceNote = 'Placeholder — unverified development estimate',
   });
 }
 

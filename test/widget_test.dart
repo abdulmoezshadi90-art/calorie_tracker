@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:calorie_tracker/food_db.dart';
 import 'package:calorie_tracker/models.dart';
 
 void main() {
@@ -14,6 +15,15 @@ void main() {
     expect(fmtGrams(140), '140');
     expect(fmtGrams(6.5), '6.5');
     expect(fmtGrams(13.5), '14');
+  });
+
+  test('every food carries a sourceNote (data pipeline, issue #12)', () {
+    // Early form of the pre-launch gate: zero foods ship without a source.
+    for (final f in foodDatabase) {
+      expect(f.sourceNote, isNotEmpty, reason: f.id);
+    }
+    // Nothing is verified until it passes the Phase 2 label pipeline.
+    expect(foodDatabase.where((f) => f.verified), isEmpty);
   });
 
   test('fmtServings drops trailing .0', () {
