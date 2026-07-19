@@ -27,7 +27,7 @@ Timeline assumes roughly 10 to 15 productive hours per week. Adjust dates propor
 7. **Phase 6. Public launch** (early December 2026)
 8. **Phase 7. Ramadan mode** (December to late January 2027, hard deadline 25 January 2027)
 9. **Phase 8. Post Ramadan roadmap** (March 2027 onward. Sunnah fasting, Friday meal, tea quick log, seasonal rotation)
-10. **Phase 9. Long horizon** (H2 2027. Barcode scanner, expanded database, evaluate backend and iOS)
+10. **Phase 9. Long horizon** (H2 2027, via the July gate. Barcode scanner, optional sync with guest as default, iOS via cloud CI plus PWA, code redemption monetization)
 
 Built in buffer. The plan targets launch in early December but the true deadline is Ramadan mode by late January. That gives you roughly six weeks of slack. Expect to spend it.
 
@@ -89,7 +89,7 @@ Definition of done. All screens exist, no hardcoded goals, analyzer clean, all t
 This is fieldwork, not coding, so it runs alongside Phase 1 during evenings and shopping trips.
 
 1. Add a `verified` boolean and a `sourceNote` string to FoodItem in `models.dart` now, so the data model is ready. Unverified foods can show a subtle marker in the UI, decide the exact treatment during the polish pass.
-2. Priority order for verification. Packaged goods first (Kalee variants, Bifa, Al Naseem) because labels give exact numbers. Photograph every label, store photos in a folder inside the repo or a cloud drive, named to match food IDs.
+2. Priority order for verification. Packaged goods first (Kalee variants, Bifa, Al Naseem) because labels give exact numbers. Photograph every label, store photos in a folder inside the repo or a cloud drive, named to match food IDs. Capture the barcode number of every packaged product in the spreadsheet from the very first label (one extra second each); this quietly builds the Libyan barcode database that makes the Phase 9 scanner possible and uncopyable.
 3. Home dishes second (bazin, mbakbka, couscous, usban, sfinz, maqrud). These have no labels. Method. Pick one standard recipe per dish, compute nutrition from ingredient weights using a reputable database (USDA FoodData Central works for raw ingredients), document the recipe in the source note. Present these as approximate in the UI, and that honesty becomes a trust feature.
 4. Target for launch. All packaged foods verified, all dishes computed and documented. 44 foods is enough for launch. Depth of trust beats breadth of catalog.
 5. Keep a simple spreadsheet as the master data source and a small script or manual process to sync it into `food_db.dart`. The spreadsheet becomes valuable later if you ever ship database updates separately from app updates.
@@ -135,6 +135,7 @@ Definition of done. At least 5 testers logging in week 3 or later, top 10 report
 3. Versioning discipline. Semantic versions, git tag per release, a CHANGELOG.md.
 4. Launch marketing, zero budget version. Post in Libyan Facebook groups (Facebook dominates in Libya), food and health focused groups first. Ask beta testers to share. Prepare a short demo video captured from a real phone.
 5. Crash visibility. Since there is no backend by design, integrate nothing at first, but reconsider after launch. A privacy respecting crash reporter (Sentry has a free tier) only fires when the device is online and sends no personal data. Decide consciously, and if you skip it, the in app email feedback is your only eyes. Document the decision.
+6. PWA polish for iPhone users, roughly one day, timeboxed. Fill in the web manifest and icons, verify offline caching via the service worker, host on a cheap static host. iPhone users add it to their home screen (Libya has no Apple storefront, so this is the practical iPhone answer at launch), and the same URL doubles as the shareable demo. Cut this first if launch week runs tight; it can ship the week after.
 
 Definition of done. App installable by a stranger in Libya through at least one channel, listing live or landing page live, version 1.0 tagged.
 
@@ -164,10 +165,11 @@ Sequence by what Ramadan usage data tells you, but the default order.
 
 ## PHASE 9. Long horizon (H2 2027, decide then, not now)
 
-1. Barcode scanner, only once the verified packaged database is large enough that scans usually hit.
-2. Backend and accounts, only if users demand sync across devices. Your AppState isolation makes this swappable, which was the right call.
-3. iOS, only with access to a Mac and evidence of demand. Libyan market is overwhelmingly Android, so this stays low priority.
-4. Monetization, see the risk register. Default plan is free while building trust and data, then evaluate.
+1. Barcode scanner, only once the verified packaged database is large enough that scans usually hit. To make this possible later at zero extra cost, the barcode of every packaged product gets captured in the data spreadsheet starting from the first tuna label (one extra second per label). Global barcode databases barely know Libyan products, so a scanner backed by this data becomes a feature nobody can match.
+2. Backend and accounts, only if users demand sync. Architecture decided in advance: guest is the default, not a mode. The app never requires signup. An account is an optional backup and sync toggle in settings, added post Ramadan at the earliest, using managed auth (Firebase Auth or Supabase, never self stored passwords), with the core flow never waiting on the network. AppState isolation makes this swappable, which was the right call.
+3. iOS. No Mac required: the path is cloud CI (Codemagic or GitHub Actions macOS runners) building and signing to TestFlight, tested on my own iPhone 15 Pro Max, with the 99 dollar developer account at publishing time (fee is budgeted and fine). Note Libya has no Apple App Store storefront, Libyan iPhone users run foreign Apple IDs, so publishing targets the storefronts they borrow. Optional strictly timeboxed TestFlight experiment allowed after Phase 3. Cheaper interim answer for iPhone users: PWA polish of the web build (manifest, icons, offline service worker verification, add to home screen), roughly one day of work around launch, doubling as the shareable demo. Safari can evict PWA storage, which makes the export feature matter even more for these users. If native iOS ever becomes a daily workflow, a used Apple Silicon Mac mini or hourly MacinCloud covers it; no MacBook purchase is justified by this project alone.
+4. Monetization, updated after ground truth on Libyan payments (see E2). Target shape for the July 2027 gate: free forever core (logging, Libyan database, Ramadan mode, guest by default); one time premium unlock activated by code redemption sold through the gift card channels Libyans already use for online payment (phone shops, kiosks, resellers, bank transfer), unlocking barcode scanning, deeper stats, and sync backup; sponsorship from a Libyan food brand and clinic licensing of the verified database as the larger revenue lines. NO ADS, EVER, as a stated principle and a marketable sentence: ads would break offline, bloat the APK, and sell the trust positioning for pocket change. Renewable subscription codes only if one time unlocks prove demand first.
+5. Standing principles for all future feature debates (each has already knocked once): no AI inside the app (deterministic, offline, zero running cost is the moat; AI belongs only in the dev and data pipeline), no routine or habit system beyond food adjacent one tap features (tea log, Sunnah tracker, possibly single field water or weight), and no copying competitor shapes without their reasons (the MyFitnessPal account wall exists for their business model, not their users). The test for every idea remains: does this make it the app that understands Libyan eating?
 
 ---
 
@@ -251,8 +253,8 @@ Likelihood low, impact fatal to the project. Endure. Cannot be fully fixed solo,
 **E1. Costs with no revenue.**
 Likelihood certain, impact low. Total cash cost through launch is roughly the 25 dollar Play fee plus optional small costs (a domain for the landing page). Endure. Keep it a passion project financially. Do not spend on ads, tools, or services before users prove demand.
 
-**E2. Monetization is structurally hard from Libya.**
-Likelihood high, impact medium but only later. Google Play merchant support and card payments in Libya are limited, so in app purchases may not be available to you. Endure. Do not build the plan around app revenue. Realistic future paths. Keep it free and treat the verified database as the asset (potential licensing to clinics, dietitians, or food producers), donations via channels that work locally, or sponsorship by a Libyan food brand. Decide in 2027 with real usage numbers, not now.
+**E2. Monetization mechanics from Libya. (REVISED with ground truth)**
+Original assessment overstated this risk. Correction from the ground: online payment in Libya is growing fast, and gift cards sold everywhere are the standard way Libyans pay online, so the payment habit already exists. What remains true: Google Play merchant support is still unavailable, so Play billing is out and any paid feature needs an own built path. Endure. The viable model is a premium code redemption system distributed through the same channels gift cards move through, a redeem code field in settings, validated against a tiny service or a signed offline scheme, buildable in roughly a weekend when the time comes. This upgrades the premium unlock from side channel to primary revenue candidate, ahead of sponsorship. Still do not build any of it before the July 2027 gate, and confirm the practical details then (card denominations in dinars, distribution partners, fair local price point). Donations, sponsorship, and clinic licensing remain as additional lines.
 
 **E3. Health app liability.**
 Likelihood low, impact medium. Endure. The disclaimer (B2), approximate labeling, no medical claims anywhere in the listing or app, and the app never prescribes, it only records. Avoid words like diet plan or medical in store copy.
@@ -270,6 +272,15 @@ Without a backend you cannot measure remotely, so metrics come from beta convers
 2. **Launch plus 60 days.** 300 installs through all channels combined and at least 10 unsolicited pieces of feedback. Modest, achievable, meaningful for a solo niche app.
 3. **Ramadan gate (March 2027).** Did installs spike in the two weeks before Ramadan. Did anyone mention Ramadan mode unprompted. This validates the entire cultural differentiation thesis and decides how hard to push Phase 8.
 4. **One year decision (July 2027).** If retention signals are real, invest in Phase 9 items and consider the database as a business asset. If not, the app still serves its users at near zero running cost, which is a perfectly good steady state for a local only app. That is the quiet superpower of the no backend design, failure is cheap and survival is free.
+
+The July 2027 gate agenda, every decision deliberately parked there during planning:
+a. Optional sync and accounts (guest stays default regardless), gated on users actually requesting cross device or backup beyond JSON export.
+b. Native iOS via cloud CI, gated on iPhone user requests captured in beta and the feedback email; PWA covers iPhone users until then.
+c. Premium unlock design: price in dinars, code denominations, distribution channels, what sits behind the paywall (barcode, deeper stats, sync backup).
+d. Barcode scanner build, gated on verified packaged database coverage (barcodes already collected since the first label).
+e. Sponsorship pitch to a Libyan food brand and the clinic licensing one pager, both argued with real Ramadan numbers.
+f. The separate routine app idea, evaluated only now, and only if the calorie app's trajectory funds a second bet.
+g. Apple hardware (used Mac mini class), gated on native iOS becoming an ongoing workflow, not before.
 
 ---
 
