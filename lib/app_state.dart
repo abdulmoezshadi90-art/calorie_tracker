@@ -127,18 +127,29 @@ class AppState extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     localeCode = prefs.getString(_localeKey) ?? 'en';
     onboardingDone = prefs.getBool(_onboardingKey) ?? false;
+    // Corrupted storage (interrupted write, flaky flash on cheap phones)
+    // must never brick startup: with no backend, an unlaunchable app means
+    // reinstall and total data loss. Fall back per key instead of throwing.
     final rawGoals = prefs.getString(_goalsKey);
     if (rawGoals != null) {
-      _goals = Goals.fromJson(jsonDecode(rawGoals) as Map<String, dynamic>);
+      try {
+        _goals = Goals.fromJson(jsonDecode(rawGoals) as Map<String, dynamic>);
+      } catch (_) {
+        _goals = Goals.defaults;
+      }
     }
     final raw = prefs.getString(_logsKey);
     if (raw != null) {
-      final decoded = jsonDecode(raw) as Map<String, dynamic>;
-      decoded.forEach((date, list) {
-        _logsByDate[date] = (list as List)
-            .map((e) => LogEntry.fromJson(e as Map<String, dynamic>))
-            .toList();
-      });
+      try {
+        final decoded = jsonDecode(raw) as Map<String, dynamic>;
+        decoded.forEach((date, list) {
+          _logsByDate[date] = (list as List)
+              .map((e) => LogEntry.fromJson(e as Map<String, dynamic>))
+              .toList();
+        });
+      } catch (_) {
+        _logsByDate.clear();
+      }
     }
   }
 

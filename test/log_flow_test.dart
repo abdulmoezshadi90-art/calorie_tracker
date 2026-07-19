@@ -95,6 +95,18 @@ void main() {
     expect(reloaded.totalsFor(state.selectedDate).kcal, 540);
   });
 
+  test('corrupted storage falls back to defaults instead of crashing', () async {
+    SharedPreferences.setMockInitialValues({
+      'onboarding_done': true,
+      'goals': '{definitely not json',
+      'logs_v1': '###garbage###',
+    });
+    final state = AppState();
+    await state.load(); // must not throw
+    expect(state.goals.kcal, Goals.defaults.kcal);
+    expect(state.loggedDates(), isEmpty);
+  });
+
   test('goals reload from storage across app restarts', () async {
     SharedPreferences.setMockInitialValues({'onboarding_done': true});
     final state = AppState();
