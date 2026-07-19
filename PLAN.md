@@ -18,18 +18,20 @@ Prepared 16 July 2026. Solo developer. Flutter app, local only storage, Libyan m
 
 Timeline assumes roughly 10 to 15 productive hours per week. Adjust dates proportionally if your availability differs.
 
-1. **Phase 0. Safety and foundations** (Week of 20 July, 3 to 5 days)
-2. **Phase 1. Finish the MVP front end** (late July to early September, 5 to 6 weeks)
-3. **Phase 2. Real nutrition data, batch one** (runs in parallel with Phase 1, ends mid September)
-4. **Phase 3. Android build and on device testing** (mid to late September, 1 to 2 weeks)
-5. **Phase 4. Household portions data model** (October, 2 to 3 weeks)
-6. **Phase 5. Private beta with real users** (late October to November, 4 weeks)
-7. **Phase 6. Public launch** (early December 2026)
-8. **Phase 7. Ramadan mode** (December to late January 2027, hard deadline 25 January 2027)
-9. **Phase 8. Post Ramadan roadmap** (March 2027 onward. Sunnah fasting, Friday meal, tea quick log, seasonal rotation)
-10. **Phase 9. Long horizon** (H2 2027, via the July gate. Barcode scanner, optional sync with guest as default, iOS via cloud CI plus PWA, code redemption monetization)
+STATUS UPDATE 19 July 2026: Phases 0 to 4 are COMPLETE and Phase 5 is launching now, far ahead of the calendar below. All remaining dates are latest acceptable dates; the gained time is Ramadan buffer, spend it on data verification and beta quality, not on pulling Phase 9 forward.
 
-Built in buffer. The plan targets launch in early December but the true deadline is Ramadan mode by late January. That gives you roughly six weeks of slack. Expect to spend it.
+1. **Phase 0. Safety and foundations** — DONE
+2. **Phase 1. Finish the MVP front end** — DONE
+3. **Phase 2. Real nutrition data, batch one** — parallel, ongoing until every entry has a sourceNote
+4. **Phase 3. Android build and on device testing** — DONE
+5. **Phase 4. Household portions data model** — DONE
+6. **Phase 5. Private beta, Android primary + best effort iOS TestFlight** — CURRENT (no later than November)
+7. **Phase 6. Public launch** (no later than early December 2026)
+8. **Phase 7. Ramadan mode** (hard deadline 25 January 2027)
+9. **Phase 8. Post Ramadan roadmap** (March 2027 onward. Sunnah fasting, Friday meal, tea quick log, seasonal rotation)
+10. **Phase 9. Long horizon** (H2 2027, via the July gate. Barcode scanner, optional sync with guest as default, iOS App Store release informed by TestFlight beta data plus PWA, code redemption monetization)
+
+Built in buffer. The plan targeted launch in early December with the true deadline being Ramadan mode by late January. Being ahead of schedule has grown that buffer substantially. Expect to spend it anyway.
 
 ---
 
@@ -117,16 +119,31 @@ The strategic feature that feeds Ramadan mode, Friday meals, and everything afte
 
 Definition of done. Presets work end to end for at least 15 foods, all tests pass, on device QA repeated.
 
-## PHASE 5. Private beta (4 weeks)
+## PHASE 5. Private beta (4 weeks) — CURRENT PHASE as of 19 July 2026
 
-1. Recruit 10 to 20 testers. Family, friends, and one or two strangers if possible (strangers give honest feedback, family gives polite feedback). Aim for a mix of ages and phone quality.
-2. Distribution. Share the APK directly via Telegram or WhatsApp, which is normal and trusted distribution in Libya, plus the web demo link for anyone hesitant to install.
-3. Feedback channel. One Telegram or WhatsApp group. Low friction beats formal surveys.
-4. Add a lightweight in app feedback path. A settings item that opens a prefilled email to abdulmoezshadi.90@gmail.com with app version and locale included. No backend needed.
-5. What to measure manually. Do testers still log after 7 days. Which foods do they search for and not find (this drives database growth better than any guess). Do they understand portions. Does anyone get confused by the language toggle.
-6. Weekly beta build releases. Fix top issues, ship, repeat. Use git tags per build.
+STATUS. Phases 0 to 4 complete, QA passed, Android beta build ready. Far ahead of the original calendar, which converts the entire remaining schedule into buffer before the Ramadan deadline. The dates in Part 2 are now latest acceptable dates, not targets.
 
-Definition of done. At least 5 testers logging in week 3 or later, top 10 reported issues fixed, missing foods list captured for Phase 8.
+### Android beta track (primary)
+1. Tag the beta build (e.g. v0.5-beta1) and make the version visible in settings, every piece of feedback must map to a known build.
+2. Feedback channel BEFORE the first install. One Telegram or WhatsApp group, low friction beats formal surveys. Scattered private chat feedback is the failure mode.
+3. Recruit in TWO WAVES. Wave one, ~5 close people this week, they catch the embarrassing bugs cheaply and kindly. Fix for a few days, ship beta2. Wave two, the remaining 10 to 15 including one or two strangers (strangers give honest feedback, family gives polite feedback), mix of ages and phone quality, who then meet a smoother app and comment on substance instead of stumbles.
+4. Distribution. APK directly via Telegram or WhatsApp, normal and trusted in Libya, plus the web demo link for anyone hesitant to install. Send with a three line message, not a manual, one ask: log your real meals for a week and report anything annoying. Over instructing testers ruins the data.
+5. In app feedback path. A settings item opening a prefilled email to abdulmoezshadi.90@gmail.com with app version and locale included. No backend needed.
+6. Measurement notes file, started day one, per tester: still logging at day 3, day 7? Foods searched and not found (this list is gold, it drives database growth better than any guess). Portion comprehension. Language toggle confusion. Ask "show me how you logged yesterday's dinner", never "what do you think".
+7. Weekly beta builds. Fix top issues, ship, repeat, git tag per build, QA checklist before each. Tester feature suggestions go to the later label like everyone else's ideas.
+
+### iOS beta track (best effort, parallel, never blocks Android)
+1. Register the Apple Developer account NOW, 99 dollars, enrollment from Libya can take days and occasionally trips identity verification, so it front runs everything else. (Same week: register the Google Play developer account per Phase 6 item 1, beta is the slack time to absorb verification delays.)
+2. Cloud build pipeline, one to two timeboxed afternoons. Codemagic connected to the GitHub repo, App Store Connect API key for automatic signing and provisioning, workflow building the iOS release and uploading to TestFlight. Expect the first build to fight (bundle identifier registration, plist tweaks, icon sizes), then push button forever after. Free tier minutes cover a solo weekly cadence.
+3. First pass on my own iPhone 15 Pro Max before any testers, one session, full QA checklist. iOS specific watch list: Arabic and RTL rendering under iOS system fonts (the Segoe fallback silently falls through, this is by design but must be eyeballed), safe areas around the Dynamic Island, persistence behavior, CustomPainter ring, large text sizes.
+4. External TestFlight distribution. Public link, no tester emails needed, fits Telegram/WhatsApp distribution. The FIRST external build requires an Apple review pass, usually a day or two, so submit early. Libyan iPhone users already run foreign Apple IDs (no Libyan storefront), TestFlight follows the Apple ID, so installs work normally. Expect a handful of iOS testers versus the Android group, enough to validate rendering and behavior, not statistics.
+5. Include the TestFlight link beside the APK from wave two onward if the pipeline is green by then.
+6. THE RULE that keeps this safe: Android is primary. iOS only bugs get fixed if cheap, logged and shelved if not. If the pipeline setup exceeds its timebox, iOS beta slips to post launch without ceremony and the PWA covers iPhone users meanwhile. Nothing on this track ever touches the Ramadan deadline.
+
+### Beta2 feature: profile onboarding with calorie maintenance calculation
+Ships in wave two, never holds wave one. NOT a login, no account, all answers stored locally like everything else. Onboarding gains a profile step: name, sex, age, weight kg, height cm, training intensity, weight goal (metric only, chips not sliders). Math: Mifflin St Jeor BMR (male 10w + 6.25h − 5a + 5, female − 161), activity multipliers 1.2 / 1.375 / 1.55 / 1.725 / 1.9, goal adjustment −500 (or gentle −250) / 0 / +300, result rounded to nearest 50, macros at protein 25% fat 30% carbs 45% converted to grams. Guardrails: result shown on an editable summary screen and saved through the existing Goals object so floors and warnings apply, deficit clamped so the final number never lands under the floors, under 18 gets maintenance only with no deficit, input ranges validated (age 13 to 100, weight 30 to 250, height 120 to 230) through the Western digits formatter, and an honesty line that the estimate varies by around 10 percent. Name is greeting only. Fully skippable (skip = current defaults), recalculate entry in settings. Beta question to watch: do testers accept the calculated number or immediately edit it?
+
+Definition of done. At least 5 testers logging in week 3 or later, top 10 reported issues fixed, missing foods list captured for Phase 8. iOS additionally (best effort): app passes QA on my iPhone, external TestFlight link live.
 
 ## PHASE 6. Public launch (early December 2026)
 
@@ -136,6 +153,7 @@ Definition of done. At least 5 testers logging in week 3 or later, top 10 report
 4. Launch marketing, zero budget version. Post in Libyan Facebook groups (Facebook dominates in Libya), food and health focused groups first. Ask beta testers to share. Prepare a short demo video captured from a real phone.
 5. Crash visibility. Since there is no backend by design, integrate nothing at first, but reconsider after launch. A privacy respecting crash reporter (Sentry has a free tier) only fires when the device is online and sends no personal data. Decide consciously, and if you skip it, the in app email feedback is your only eyes. Document the decision.
 6. PWA polish for iPhone users, roughly one day, timeboxed. Fill in the web manifest and icons, verify offline caching via the service worker, host on a cheap static host. iPhone users add it to their home screen (Libya has no Apple storefront, so this is the practical iPhone answer at launch), and the same URL doubles as the shareable demo. Cut this first if launch week runs tight; it can ship the week after.
+7. If the Phase 5 iOS TestFlight track went green, launch day includes "iPhone users: TestFlight link" as a soft iOS presence, months before the full App Store release decision at the July gate, which then gets argued with real iOS usage data instead of guesses.
 
 Definition of done. App installable by a stranger in Libya through at least one channel, listing live or landing page live, version 1.0 tagged.
 
@@ -167,7 +185,7 @@ Sequence by what Ramadan usage data tells you, but the default order.
 
 1. Barcode scanner, only once the verified packaged database is large enough that scans usually hit. To make this possible later at zero extra cost, the barcode of every packaged product gets captured in the data spreadsheet starting from the first tuna label (one extra second per label). Global barcode databases barely know Libyan products, so a scanner backed by this data becomes a feature nobody can match.
 2. Backend and accounts, only if users demand sync. Architecture decided in advance: guest is the default, not a mode. The app never requires signup. An account is an optional backup and sync toggle in settings, added post Ramadan at the earliest, using managed auth (Firebase Auth or Supabase, never self stored passwords), with the core flow never waiting on the network. AppState isolation makes this swappable, which was the right call.
-3. iOS. No Mac required: the path is cloud CI (Codemagic or GitHub Actions macOS runners) building and signing to TestFlight, tested on my own iPhone 15 Pro Max, with the 99 dollar developer account at publishing time (fee is budgeted and fine). Note Libya has no Apple App Store storefront, Libyan iPhone users run foreign Apple IDs, so publishing targets the storefronts they borrow. Optional strictly timeboxed TestFlight experiment allowed after Phase 3. Cheaper interim answer for iPhone users: PWA polish of the web build (manifest, icons, offline service worker verification, add to home screen), roughly one day of work around launch, doubling as the shareable demo. Safari can evict PWA storage, which makes the export feature matter even more for these users. If native iOS ever becomes a daily workflow, a used Apple Silicon Mac mini or hourly MacinCloud covers it; no MacBook purchase is justified by this project alone.
+3. iOS full App Store release. The groundwork now happens in Phase 5 (cloud CI to TestFlight, tested on my iPhone 15 Pro Max, Apple Developer account registered during beta), so this gate decides only the final step: publish to the App Store, argued with real TestFlight usage data. Note Libya has no Apple App Store storefront, Libyan iPhone users run foreign Apple IDs, so publishing targets the storefronts they borrow. The PWA remains the zero cost iPhone fallback throughout. If native iOS ever becomes a daily workflow, a used Apple Silicon Mac mini or hourly MacinCloud covers it; no MacBook purchase is justified by this project alone.
 4. Monetization, updated after ground truth on Libyan payments (see E2). Target shape for the July 2027 gate: free forever core (logging, Libyan database, Ramadan mode, guest by default); one time premium unlock activated by code redemption sold through the gift card channels Libyans already use for online payment (phone shops, kiosks, resellers, bank transfer), unlocking barcode scanning, deeper stats, and sync backup; sponsorship from a Libyan food brand and clinic licensing of the verified database as the larger revenue lines. NO ADS, EVER, as a stated principle and a marketable sentence: ads would break offline, bloat the APK, and sell the trust positioning for pocket change. Renewable subscription codes only if one time unlocks prove demand first.
 5. Standing principles for all future feature debates (each has already knocked once): no AI inside the app (deterministic, offline, zero running cost is the moat; AI belongs only in the dev and data pipeline), no routine or habit system beyond food adjacent one tap features (tea log, Sunnah tracker, possibly single field water or weight), and no copying competitor shapes without their reasons (the MyFitnessPal account wall exists for their business model, not their users). The test for every idea remains: does this make it the app that understands Libyan eating?
 
@@ -275,7 +293,7 @@ Without a backend you cannot measure remotely, so metrics come from beta convers
 
 The July 2027 gate agenda, every decision deliberately parked there during planning:
 a. Optional sync and accounts (guest stays default regardless), gated on users actually requesting cross device or backup beyond JSON export.
-b. Native iOS via cloud CI, gated on iPhone user requests captured in beta and the feedback email; PWA covers iPhone users until then.
+b. iOS App Store release, gated on real TestFlight beta usage and iPhone user requests; the TestFlight link and PWA cover iPhone users until then.
 c. Premium unlock design: price in dinars, code denominations, distribution channels, what sits behind the paywall (barcode, deeper stats, sync backup).
 d. Barcode scanner build, gated on verified packaged database coverage (barcodes already collected since the first label).
 e. Sponsorship pitch to a Libyan food brand and the clinic licensing one pager, both argued with real Ramadan numbers.
