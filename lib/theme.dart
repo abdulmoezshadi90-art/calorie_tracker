@@ -104,7 +104,9 @@ class AppColors {
     card: Color(0xFFFFFDF6),
     ink: Color(0xFF1E3325),
     inkStrong: Color(0xFF17301F),
-    muted: Color(0xFF7E8C7F),
+    // Darkened from 7E8C7F (3.0:1) to meet WCAG 4.5:1 for small text on
+    // both pageBg and card; same green-gray hue.
+    muted: Color(0xFF5F6E62),
     cardShadow: [
       BoxShadow(
         color: Color(0x14000000),

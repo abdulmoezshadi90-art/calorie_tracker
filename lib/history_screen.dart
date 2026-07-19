@@ -83,7 +83,11 @@ class _WeekChartCard extends StatelessWidget {
           SizedBox(
             height: 140,
             width: double.infinity,
-            child: CustomPaint(
+            child: Semantics(
+              label:
+                  '${l.last7Days}: '
+                  '${[for (final d in days) '${d.day}: ${fmtInt(state.totalsFor(d).kcal.round())} ${l.kcal}'].join(', ')}',
+              child: CustomPaint(
               painter: WeekBarChartPainter(
                 // Painter draws start-to-end; pass days in reading order so
                 // RTL shows the oldest day on the right.
@@ -98,6 +102,7 @@ class _WeekChartCard extends StatelessWidget {
                 trackColor: c.macroTrack,
                 goalLineColor: c.muted,
                 labelColor: c.muted,
+              ),
               ),
             ),
           ),

@@ -68,6 +68,8 @@ class MealIcon extends StatelessWidget {
     width: size,
     height: size,
     color: color ?? IconTheme.of(context).color,
+    // Screen readers announce the meal, not "image".
+    semanticLabel: meal.name,
   );
 }
 

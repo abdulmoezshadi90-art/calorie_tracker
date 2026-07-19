@@ -191,23 +191,53 @@ class _TopRow extends StatelessWidget {
   }
 }
 
+/// Circular header button: 44px touch target, ink ripple, tooltip
+/// (ui-ux-pro-max polish pass — was a 40px GestureDetector with neither).
+class _HeaderCircleButton extends StatelessWidget {
+  const _HeaderCircleButton({
+    required this.tooltip,
+    required this.onTap,
+    required this.child,
+  });
+  final String tooltip;
+  final VoidCallback onTap;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: c.dayIdleBg,
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: SizedBox(
+            height: 44,
+            width: 44,
+            child: Center(child: child),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _HistoryButton extends StatelessWidget {
   const _HistoryButton();
 
   @override
   Widget build(BuildContext context) {
+    final state = AppScope.of(context);
     final c = AppColors.of(context);
-    return GestureDetector(
+    return _HeaderCircleButton(
+      tooltip: state.l.history,
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute<void>(builder: (_) => const HistoryScreen()),
       ),
-      child: Container(
-        height: 40,
-        width: 40,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(color: c.dayIdleBg, shape: BoxShape.circle),
-        child: Icon(Icons.history, color: c.onHeader, size: 20),
-      ),
+      child: Icon(Icons.history, color: c.onHeader, size: 20),
     );
   }
 }
@@ -217,18 +247,14 @@ class _SettingsButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final state = AppScope.of(context);
     final c = AppColors.of(context);
-    return GestureDetector(
+    return _HeaderCircleButton(
+      tooltip: state.l.settings,
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
       ),
-      child: Container(
-        height: 40,
-        width: 40,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(color: c.dayIdleBg, shape: BoxShape.circle),
-        child: Icon(Icons.settings_outlined, color: c.onHeader, size: 20),
-      ),
+      child: Icon(Icons.settings_outlined, color: c.onHeader, size: 20),
     );
   }
 }
@@ -240,20 +266,15 @@ class _LangToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
     final c = AppColors.of(context);
-    return GestureDetector(
+    return _HeaderCircleButton(
+      tooltip: state.l.language,
       onTap: state.toggleLocale,
-      child: Container(
-        height: 40,
-        width: 40,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(color: c.dayIdleBg, shape: BoxShape.circle),
-        child: Text(
-          state.l.toggleLabel,
-          style: TextStyle(
-            color: c.onHeader,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-          ),
+      child: Text(
+        state.l.toggleLabel,
+        style: TextStyle(
+          color: c.onHeader,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
@@ -267,15 +288,15 @@ class _TodayPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
     final c = AppColors.of(context);
-    return GestureDetector(
-      onTap: () => state.selectDate(state.now()),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: c.dayIdleBg,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
+    return Material(
+      color: c.dayIdleBg,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => state.selectDate(state.now()),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+          child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
@@ -289,6 +310,7 @@ class _TodayPill extends StatelessWidget {
             const SizedBox(width: 4),
             Icon(Icons.keyboard_arrow_down, color: c.onHeader, size: 18),
           ],
+          ),
         ),
       ),
     );
@@ -340,7 +362,11 @@ class _DayChip extends StatelessWidget {
 
     return GestureDetector(
       onTap: () => state.selectDate(day),
-      child: Container(
+      child: Semantics(
+        button: true,
+        selected: isSelected,
+        label: state.l.dateLine(day),
+        child: Container(
         margin: EdgeInsets.symmetric(
           horizontal: 3,
           vertical: isSelected ? 0 : 6,
@@ -383,6 +409,7 @@ class _DayChip extends StatelessWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
     );
