@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -50,6 +51,44 @@ void main() {
 
     expect(find.text('Enter a valid number'), findsOneWidget);
     expect(state.goals.kcal, 2000); // unchanged
+  });
+
+  testWidgets('feedback item falls back to copying the email address', (
+    tester,
+  ) async {
+    await _pumpSettings(tester);
+
+    // Simulate a device with no mail app: channel answers false.
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      const MethodChannel('ly.app.calorie_tracker/mail'),
+      (call) async => false,
+    );
+    // Capture the clipboard write the fallback performs.
+    final platformCalls = <MethodCall>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        platformCalls.add(call);
+        return null;
+      },
+    );
+
+    expect(find.text('Send feedback'), findsOneWidget);
+    await tester.ensureVisible(find.text('Send feedback'));
+    await tester.tap(find.text('Send feedback'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    // No mail channel in tests → clipboard fallback with confirmation.
+    final clipboard = platformCalls.where(
+      (c) => c.method == 'Clipboard.setData',
+    );
+    expect(clipboard, hasLength(1));
+    expect(
+      (clipboard.single.arguments as Map)['text'],
+      'abdulmoezshadi.90@gmail.com',
+    );
+    expect(find.textContaining('Email address copied'), findsOneWidget);
   });
 
   testWidgets('goals editor rejects empty input', (tester) async {

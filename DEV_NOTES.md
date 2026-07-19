@@ -22,6 +22,23 @@ Working notes for the solo dev environment. Full project brief lives in CLAUDE.m
 - Goldens load Roboto from the SDK cache plus Segoe UI / Segoe UI Emoji from Windows fonts. Theme has `fontFamilyFallback ['SegoeUI','SegoeUIEmoji']` for this — harmless on device, do not remove.
 - No Flutter/Gradle/JDK upgrades mid phase. Upgrades only between phases: clean commit before and after, then full tests + goldens.
 
+## Beta builds (Phase 5)
+
+Weekly beta APKs use per-ABI splits (~17-18 MB each vs 49 MB universal — kinder to
+Libyan data plans):
+
+```powershell
+C:\dev\flutter\bin\flutter.bat build apk --release --split-per-abi
+```
+
+Outputs in `build\app\outputs\flutter-apk\`:
+- `app-arm64-v8a-release.apk` — most phones (share this one by default)
+- `app-armeabi-v7a-release.apk` — old/cheap phones (the Libyan long tail)
+- `app-x86_64-release.apk` — emulators only; don't distribute
+
+Tag every beta build (`beta-YYYY-MM-DD`). If a tester's install fails with
+"app not installed", they likely need the v7a build.
+
 ## Release ritual
 
 Before every release (incl. weekly beta builds): analyzer clean → full test suite → goldens

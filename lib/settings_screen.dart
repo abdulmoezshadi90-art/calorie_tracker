@@ -7,7 +7,37 @@ import 'onboarding_screen.dart';
 import 'theme.dart';
 
 /// Shown in the about card. Keep in sync with pubspec.yaml `version:`.
-const appVersion = '0.2.0';
+const appVersion = '0.4.0';
+
+const feedbackEmail = 'abdulmoezshadi.90@gmail.com';
+
+/// Native mail intent (Android); no url_launcher — tiny dependency
+/// footprint is deliberate. Returns false where unhandled (web, tests).
+const _mailChannel = MethodChannel('ly.app.calorie_tracker/mail');
+
+Future<void> openFeedbackEmail(BuildContext context, AppState state) async {
+  final l = state.l;
+  final subject = 'Calorie Tracker feedback';
+  final body = 'App version: $appVersion\nLanguage: ${state.localeCode}\n\n';
+  var opened = false;
+  try {
+    opened = await _mailChannel.invokeMethod<bool>('openMail', {
+          'to': feedbackEmail,
+          'subject': subject,
+          'body': body,
+        }) ??
+        false;
+  } catch (_) {
+    opened = false;
+  }
+  if (opened || !context.mounted) return;
+  // Fallback (web/desktop or no mail app): copy the address instead.
+  await Clipboard.setData(const ClipboardData(text: feedbackEmail));
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('${l.feedbackCopied}: $feedbackEmail')),
+  );
+}
 
 /// Normalizes Eastern Arabic numerals to Western on entry and strips
 /// everything that is not 0-9 (hard requirement 1).
@@ -132,7 +162,25 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // Room grows here later: feedback email, export.
+          _SettingsCard(
+            child: ListTile(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              leading: Icon(Icons.mail_outline, color: c.accent),
+              title: Text(
+                l.sendFeedback,
+                style: TextStyle(fontWeight: FontWeight.w700, color: c.ink),
+              ),
+              subtitle: Text(
+                feedbackEmail,
+                style: TextStyle(fontSize: 12, color: c.muted),
+              ),
+              onTap: () => openFeedbackEmail(context, state),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Room grows here later: export.
           _SettingsCard(
             child: Padding(
               padding: const EdgeInsets.all(16),

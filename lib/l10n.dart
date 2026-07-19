@@ -90,6 +90,10 @@ class L10n {
       ? 'يمكنك البدء بالأهداف الافتراضية وتغييرها في أي وقت من الإعدادات.'
       : 'You can start with the defaults and change them anytime in settings.';
   String get replayOnboarding => isAr ? 'إعادة عرض المقدمة' : 'Replay intro';
+  String get sendFeedback => isAr ? 'أرسل ملاحظاتك' : 'Send feedback';
+  String get feedbackCopied => isAr
+      ? 'تم نسخ عنوان البريد الإلكتروني'
+      : 'Email address copied';
 
   // Empty states: short friendly line + one clear action each.
   String get emptyTodayLine =>
