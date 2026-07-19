@@ -17,7 +17,7 @@ cover Libyan products or home dishes — this one does.
 | :---: | :---: |
 | ![Home, English, light](test/goldens/home_light_en.png) | ![Home, Arabic, dark](test/goldens/home_dark_ar.png) |
 
-**[Try the web demo](https://claude.ai/code/artifact/71987bee-060d-4256-a2cc-955ecfc38a77)**
+A public web demo will be linked here at launch.
 
 ## Tech
 
