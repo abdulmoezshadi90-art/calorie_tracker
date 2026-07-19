@@ -161,7 +161,9 @@ class _FoodTile extends StatelessWidget {
         return StatefulBuilder(
           builder: (sheetContext, setSheetState) {
             final kcal = (food.kcal * servings).round();
-            return Padding(
+            // Scrollable: preset chips can push the sheet past short
+            // screens, and the keyboard shrinks the space further.
+            return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -187,6 +189,28 @@ class _FoodTile extends StatelessWidget {
                     '${l.fat}: ${fmtGrams(food.fat)}${l.grams}',
                     style: TextStyle(fontSize: 12, color: c.muted),
                   ),
+                  // Household portion chips (Phase 4): tapping one sets the
+                  // servings from its exact gram weight; the stepper below
+                  // remains for fine adjustment.
+                  if (food.presets.isNotEmpty && food.servingGrams != null) ...[
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final preset in food.presets)
+                          _PresetChip(
+                            label:
+                                '${l.isAr ? preset.nameAr : preset.nameEn} · ${fmtGrams(preset.grams)} ${l.grams}',
+                            selected:
+                                servings == food.servingsFor(preset),
+                            onTap: () => setSheetState(
+                              () => servings = food.servingsFor(preset),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -283,6 +307,45 @@ class _FoodTile extends StatelessWidget {
       style: IconButton.styleFrom(
         backgroundColor: c.macroTrack,
         foregroundColor: c.ink,
+      ),
+    );
+  }
+}
+
+/// Portion chip: selected state uses the accent, idle stays neutral.
+/// Min 44px tall for touch targets; ink ripple on tap.
+class _PresetChip extends StatelessWidget {
+  const _PresetChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return Material(
+      color: selected ? c.accent : c.chipBg,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 44),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: selected ? c.onAccent : c.chipText,
+            ),
+          ),
+        ),
       ),
     );
   }

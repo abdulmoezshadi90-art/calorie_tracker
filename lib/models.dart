@@ -1,5 +1,15 @@
 import 'package:flutter/material.dart';
 
+/// A household portion with an exact gram definition (Phase 4): users pick
+/// "ladle" or "small plate"; the app knows the grams. Precision lives in
+/// the data, simplicity in the UI.
+class PortionPreset {
+  final String nameEn;
+  final String nameAr;
+  final double grams;
+  const PortionPreset(this.nameEn, this.nameAr, this.grams);
+}
+
 /// A food item in the local database. Nutrition values are per one serving.
 ///
 /// [verified] and [sourceNote] exist ahead of the Phase 2 data pipeline so
@@ -26,6 +36,20 @@ class FoodItem {
   /// recipe reference, or the placeholder marker. Never empty.
   final String sourceNote;
 
+  /// Grams of ONE base serving, transcribed from the serving label (null
+  /// when the label has no gram weight). Nutrition stays per serving;
+  /// presets are gram multiples of this.
+  final double? servingGrams;
+
+  /// Household portions shown as chips in the add sheet. Empty for foods
+  /// not yet populated (top staples first; refined with beta data).
+  final List<PortionPreset> presets;
+
+  /// Servings equivalent of [preset], rounded to 2 decimals so displayed
+  /// serving counts stay tidy. Requires [servingGrams].
+  double servingsFor(PortionPreset preset) =>
+      ((preset.grams / servingGrams!) * 100).round() / 100;
+
   const FoodItem({
     required this.id,
     required this.nameEn,
@@ -39,6 +63,8 @@ class FoodItem {
     required this.category,
     this.verified = false,
     this.sourceNote = 'Placeholder — unverified development estimate',
+    this.servingGrams,
+    this.presets = const [],
   });
 }
 

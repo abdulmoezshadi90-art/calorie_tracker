@@ -164,6 +164,12 @@ const List<FoodItem> foodDatabase = [
     carbs: 70,
     fat: 22,
     category: FoodCategory.main,
+    servingGrams: 400,
+    presets: [
+      PortionPreset('Small plate', 'صحن صغير', 250),
+      PortionPreset('Plate', 'صحن عادي', 400),
+      PortionPreset('Large plate', 'صحن كبير', 550),
+    ],
   ),
   FoodItem(
     id: 'bazin',
@@ -176,6 +182,12 @@ const List<FoodItem> foodDatabase = [
     carbs: 75,
     fat: 15,
     category: FoodCategory.main,
+    servingGrams: 350,
+    presets: [
+      PortionPreset('Modest share', 'حصة صغيرة', 250),
+      PortionPreset('Normal share', 'حصة عادية', 350),
+      PortionPreset('Generous share', 'حصة كبيرة', 500),
+    ],
   ),
   FoodItem(
     id: 'mbakbka',
@@ -188,6 +200,12 @@ const List<FoodItem> foodDatabase = [
     carbs: 80,
     fat: 16,
     category: FoodCategory.main,
+    servingGrams: 350,
+    presets: [
+      PortionPreset('Small plate', 'صحن صغير', 250),
+      PortionPreset('Plate', 'صحن عادي', 350),
+      PortionPreset('Large plate', 'صحن كبير', 500),
+    ],
   ),
   FoodItem(
     id: 'rishda',
@@ -212,6 +230,12 @@ const List<FoodItem> foodDatabase = [
     carbs: 18,
     fat: 9,
     category: FoodCategory.main,
+    servingGrams: 250,
+    presets: [
+      PortionPreset('Cup', 'كوب', 150),
+      PortionPreset('Bowl', 'صحن شربة', 250),
+      PortionPreset('Large bowl', 'صحن كبير', 350),
+    ],
   ),
   FoodItem(
     id: 'mbattan',
@@ -248,6 +272,12 @@ const List<FoodItem> foodDatabase = [
     carbs: 65,
     fat: 17,
     category: FoodCategory.main,
+    servingGrams: 350,
+    presets: [
+      PortionPreset('Small plate', 'صحن صغير', 250),
+      PortionPreset('Plate', 'صحن عادي', 350),
+      PortionPreset('Large plate', 'صحن كبير', 500),
+    ],
   ),
   FoodItem(
     id: 'pasta_bechamel',
@@ -332,6 +362,12 @@ const List<FoodItem> foodDatabase = [
     carbs: 26,
     fat: 4,
     category: FoodCategory.main,
+    servingGrams: 250,
+    presets: [
+      PortionPreset('Cup', 'كوب', 150),
+      PortionPreset('Bowl', 'صحن', 250),
+      PortionPreset('Large bowl', 'صحن كبير', 350),
+    ],
   ),
   FoodItem(
     id: 'shakshuka',
@@ -358,6 +394,12 @@ const List<FoodItem> foodDatabase = [
     carbs: 48,
     fat: 2,
     category: FoodCategory.breakfast,
+    servingGrams: 90,
+    presets: [
+      PortionPreset('Half khubza', 'نصف خبزة', 45),
+      PortionPreset('Khubza', 'خبزة', 90),
+      PortionPreset('Two khubzas', 'خبزتان', 180),
+    ],
   ),
   FoodItem(
     id: 'tuna_sandwich',
@@ -382,6 +424,12 @@ const List<FoodItem> foodDatabase = [
     carbs: 34,
     fat: 8,
     category: FoodCategory.breakfast,
+    servingGrams: 200,
+    presets: [
+      PortionPreset('Small bowl', 'صحن صغير', 120),
+      PortionPreset('Bowl', 'صحن', 200),
+      PortionPreset('Large bowl', 'صحن كبير', 300),
+    ],
   ),
   FoodItem(
     id: 'boiled_eggs',
@@ -442,6 +490,12 @@ const List<FoodItem> foodDatabase = [
     carbs: 68,
     fat: 13,
     category: FoodCategory.breakfast,
+    servingGrams: 250,
+    presets: [
+      PortionPreset('Small bowl', 'صحن صغير', 180),
+      PortionPreset('Bowl', 'صحن', 250),
+      PortionPreset('Large bowl', 'صحن كبير', 350),
+    ],
   ),
   FoodItem(
     id: 'zummita',
@@ -480,6 +534,12 @@ const List<FoodItem> foodDatabase = [
     carbs: 40,
     fat: 10,
     category: FoodCategory.sweet,
+    servingGrams: 60,
+    presets: [
+      PortionPreset('One piece', 'قطعة', 30),
+      PortionPreset('Two pieces', 'قطعتان', 60),
+      PortionPreset('Four pieces', '4 قطع', 120),
+    ],
   ),
   FoodItem(
     id: 'ghraiba',
