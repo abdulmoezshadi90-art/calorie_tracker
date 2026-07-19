@@ -1,75 +1,48 @@
-# متتبع السعرات — Libyan Calorie Tracker
+# Calorie Tracker · متتبع السعرات
 
-A calorie counter built for Libya: local snack brands (Kalee, Bifa, Al Naseem…) and
-home-cooked dishes (bazin, mbakbka, couscous, sfinz…) that global apps don't cover.
+A calorie tracking app for the Libyan market. Global calorie apps don't
+cover Libyan products or home dishes — this one does.
 
-**Works offline · No signup · Your data stays on your phone · Built for Libyan food and Libyan life**
+## Why it's different
 
-| Home (light) | Home (dark, Arabic) | History |
-|---|---|---|
-| ![Home light EN](test/goldens/home_light_en.png) | ![Home dark AR](test/goldens/home_dark_ar.png) | ![History](test/goldens/history_en.png) |
+- **Libyan foods and dishes**: Kalee snacks, Bifa, Al Naseem, bazin,
+  mbakbka, couscous, usban, sfinz, maqrud, and more — searchable in
+  Arabic or English
+- **Full Arabic RTL** with a one-tap language toggle
+- **Works completely offline** — no connection needed, ever
+- **No account required**, no sign-up
+- **No ads, no tracking** — your data never leaves your phone
 
-*(Screenshots are the actual golden-test baselines — always current.)*
+| Home (English, light) | Home (Arabic, dark) |
+| :---: | :---: |
+| ![Home, English, light](test/goldens/home_light_en.png) | ![Home, Arabic, dark](test/goldens/home_dark_ar.png) |
+
+**[Try the web demo](https://claude.ai/code/artifact/71987bee-060d-4256-a2cc-955ecfc38a77)**
+
+## Tech
+
+Flutter. Local-only storage by design — there is no backend. Deliberately
+tiny dependency footprint to keep the APK small for older phones.
 
 ## Status
 
-**Phase 1 complete** (18 July 2026, tag `v0.3-phase1`) — all 12 backlog issues closed, well ahead of the early-September plan date. Next: **Phase 2** (verified nutrition data, owner fieldwork) and **Phase 3** (Android build + on-device testing). Public launch target: early December 2026; Ramadan mode hard deadline: 25 January 2027.
+In private beta. Public launch planned for December 2026.
 
-Phase 1 delivered: home/search/meal-detail screens, persisted + editable goals, settings with
-EN/AR disclaimer, history + read-only day view + 7-day chart, onboarding, empty states ×4,
-custom meal icons, app icon + splash, haptics, QA checklist, and the FoodItem
-`verified`/`sourceNote` fields ready for the data pipeline.
+## Data status
 
-Planning docs in the repo root:
+Packaged food values come from product labels; home dish values are
+estimates from documented reference recipes. Entries carry a source note
+and a verified flag in [food_db.dart](lib/food_db.dart) — values marked
+unverified there are placeholders pending label verification.
 
-- **[PLAN.md](PLAN.md)** — full roadmap, phase gates, risk register
-- **[CLAUDE.md](CLAUDE.md)** — project brief and hard requirements (read by Claude Code every session)
-- **[DEV_NOTES.md](DEV_NOTES.md)** — machine setup, key commands, data pipeline pointers
-- **[QA_CHECKLIST.md](QA_CHECKLIST.md)** — manual QA run before every release (incl. weekly beta builds)
+## Legal
 
-## Hard rules (never violated)
+Source available. All rights reserved.
 
-- Numerals are **always Western digits (0-9)**, including in Arabic; Eastern Arabic input (٠-٩) is normalized on entry.
-- Full RTL layout in Arabic; language choice persists.
-- ⚠️ **All nutrition values in `lib/food_db.dart` are placeholders** until verified through the label pipeline (Phase 2). Nothing ships presented as accurate without a source.
-- No barcode scanner, accounts, or social features — deliberate MVP scope.
-- Neutral goal wording everywhere: no alarm red, no streak pressure (anti-eating-disorder guardrails).
+Provided as is, without warranty of any kind.
 
-## Development
+This app provides nutritional estimates and is not medical advice.
+Consult a doctor or dietitian for medical conditions.
 
-Flutter 3.44.6 at `C:\dev\flutter` (not on PATH):
-
-```powershell
-C:\dev\flutter\bin\flutter.bat analyze                    # zero warnings expected
-C:\dev\flutter\bin\flutter.bat test                       # full suite (36 tests)
-C:\dev\flutter\bin\flutter.bat test --update-goldens test\screenshots_test.dart
-C:\dev\flutter\bin\flutter.bat run -d web-server --web-port=8080   # web preview
-```
-
-- On web, `?lang=ar` / `?lang=en` overrides the saved language (dev convenience).
-- Golden tests pin the clock to Wed 2026-07-15 (AppState takes an injectable `clock`).
-- Android builds need JDK 17–25 via `flutter config --jdk-dir=<path>` (system Java 26 is too new for Gradle 9.1) — Phase 3.
-
-## Code map
-
-| File | Purpose |
-|---|---|
-| `lib/main.dart` | Entry; onboarding gate, theming, locale wiring |
-| `lib/app_state.dart` | `AppState`: logs, totals, goals, locale, persistence, injectable clock; `AppScope` |
-| `lib/models.dart` | `FoodItem`, `LogEntry`, `MealType`, `Goals`, number formatters |
-| `lib/food_db.dart` | Local food database (placeholder values — see hard rules) |
-| `lib/l10n.dart` | Hand-rolled EN/AR strings, month/day names |
-| `lib/theme.dart` | `AppColors` design tokens (light + dark), `buildTheme` |
-| `lib/home_screen.dart` | Header + week strip, calorie bar, macro card, meal rows |
-| `lib/search_screen.dart` | EN/AR food search + add-to-meal bottom sheet |
-| `lib/meal_detail_screen.dart` | Logged entries per meal, delete, total |
-| `lib/history_screen.dart` | Past-day list, 7-day bar chart (CustomPainter), read-only day view |
-| `lib/settings_screen.dart` | Goals editor (Western-digit input), language, about + disclaimer |
-| `lib/onboarding_screen.dart` | 3-page skippable intro |
-| `lib/empty_state.dart` | Shared friendly empty-state widget |
-
-## Issue tracker
-
-- Label **`phase-1`** — current phase work, done in numeric order.
-- Label **`later`** — parked for a future phase (Ramadan mode, portions, export…). Not in scope now.
-- Milestones mirror the roadmap phases in [PLAN.md](PLAN.md).
+Product and brand names appearing in the food database are the property
+of their respective owners and are used for identification only.
