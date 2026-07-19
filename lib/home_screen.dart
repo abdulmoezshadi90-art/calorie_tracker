@@ -652,12 +652,18 @@ class _MacroCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: c.muted,
+        // Scale down instead of wrapping ("كربوهيدرا / ت") at large
+        // system font sizes — the three columns are too narrow to wrap.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            maxLines: 1,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: c.muted,
+            ),
           ),
         ),
         const SizedBox(height: 6),
