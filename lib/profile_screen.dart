@@ -7,11 +7,13 @@ import 'profile.dart';
 import 'settings_screen.dart';
 import 'theme.dart';
 
-/// Profile step with maintenance calculation (design decision 8).
+/// Profile wizard with maintenance calculation (design decision 8).
 ///
-/// A local profile, never an account: no login, no sign up, answers stay in
-/// shared_preferences. Reached from onboarding (skippable) and from the
-/// settings "recalculate" entry. The result saves through the existing
+/// One question per screen: name → sex → age → weight → height → activity
+/// → weight goal → result summary. Choice steps auto-advance; numeric
+/// steps use a continue button. A local profile, never an account: no
+/// login, no sign up, answers stay in shared_preferences. Skippable at
+/// any point (skip = defaults). The result saves through the existing
 /// Goals object so all floors and gentle warnings keep applying.
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -21,13 +23,18 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  static const _questionCount = 7; // steps before the result summary
+
+  final _controller = PageController();
+  int _step = 0;
+
   final _name = TextEditingController();
   final _age = TextEditingController();
   final _weight = TextEditingController();
   final _height = TextEditingController();
   Sex? _sex;
-  ActivityLevel _activity = ActivityLevel.moderate;
-  WeightGoal _goal = WeightGoal.maintain;
+  ActivityLevel? _activity;
+  WeightGoal? _goal;
   String? _error;
   MaintenanceResult? _result;
 
@@ -49,6 +56,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   void dispose() {
+    _controller.dispose();
     _name.dispose();
     _age.dispose();
     _weight.dispose();
@@ -56,13 +64,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  Profile? _buildProfile(AppState state) {
+  Profile? _buildProfile() {
     final age = int.tryParse(_age.text) ?? 0;
     final weight = int.tryParse(_weight.text) ?? 0;
     final height = int.tryParse(_height.text) ?? 0;
     final sex = _sex;
+    final activity = _activity;
+    final goal = _goal;
     final valid =
         sex != null &&
+        activity != null &&
+        goal != null &&
         age >= profileRanges.age.min &&
         age <= profileRanges.age.max &&
         weight >= profileRanges.weight.min &&
@@ -76,28 +88,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
       age: age,
       weightKg: weight,
       heightCm: height,
-      activity: _activity,
-      goal: _goal,
+      activity: activity,
+      goal: goal,
     );
   }
 
-  void _calculate(AppState state) {
-    final profile = _buildProfile(state);
-    if (profile == null) {
-      setState(() {
-        _error = state.l.completeFields;
-        _result = null;
-      });
+  void _goTo(int step) {
+    setState(() {
+      _step = step;
+      _error = null;
+      if (step == _questionCount) {
+        final profile = _buildProfile();
+        _result = profile == null ? null : calculateMaintenance(profile);
+      }
+    });
+    _controller.animateToPage(
+      step,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+    );
+  }
+
+  void _next() => _goTo(_step + 1);
+
+  void _back() {
+    if (_step == 0) {
+      Navigator.of(context).pop();
+    } else {
+      _goTo(_step - 1);
+    }
+  }
+
+  /// Validates the numeric field for the current step, then advances.
+  void _continueNumeric(
+    AppState state,
+    TextEditingController controller,
+    ({int min, int max}) range,
+  ) {
+    final value = int.tryParse(controller.text) ?? 0;
+    if (value < range.min || value > range.max) {
+      setState(() => _error = state.l.invalidNumber);
       return;
     }
-    setState(() {
-      _error = null;
-      _result = calculateMaintenance(profile);
-    });
+    _next();
   }
 
   void _useGoal(AppState state) {
-    final profile = _buildProfile(state);
+    final profile = _buildProfile();
     final result = _result;
     if (profile == null || result == null) return;
     state.setProfile(profile);
@@ -122,158 +159,324 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         backgroundColor: c.headerTop,
         foregroundColor: c.onHeader,
+        // Directional icon mirrors in RTL automatically.
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _back,
+        ),
         title: Text(l.profileTitle),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Text(
-            l.profileIntro,
-            style: TextStyle(fontSize: 13, height: 1.5, color: c.muted),
-          ),
-          const SizedBox(height: 16),
-          _textField(c, l.nameOptional, _name, numeric: false),
-          const SizedBox(height: 16),
-          _sectionLabel(c, l.sexLabel),
-          _chipWrap<Sex>(
-            c,
-            Sex.values,
-            _sex,
-            l.sexName,
-            (v) => setState(() => _sex = v),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _textField(
-                  c,
-                  l.ageLabel,
-                  _age,
-                  hint: l.rangeHint(profileRanges.age.min, profileRanges.age.max),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _textField(
-                  c,
-                  l.weightLabel,
-                  _weight,
-                  hint: l.rangeHint(
-                    profileRanges.weight.min,
-                    profileRanges.weight.max,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _textField(
-                  c,
-                  l.heightLabel,
-                  _height,
-                  hint: l.rangeHint(
-                    profileRanges.height.min,
-                    profileRanges.height.max,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _sectionLabel(c, l.activityLabel),
-          _chipWrap<ActivityLevel>(
-            c,
-            ActivityLevel.values,
-            _activity,
-            l.activityName,
-            (v) => setState(() => _activity = v),
-          ),
-          const SizedBox(height: 16),
-          _sectionLabel(c, l.goalLabel),
-          _chipWrap<WeightGoal>(
-            c,
-            WeightGoal.values,
-            _goal,
-            l.weightGoalName,
-            (v) => setState(() => _goal = v),
-          ),
-          if (_error != null) ...[
-            const SizedBox(height: 12),
-            Text(_error!, style: TextStyle(fontSize: 13, color: c.fat)),
-          ],
-          const SizedBox(height: 20),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: c.accent,
-              foregroundColor: c.onAccent,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-            onPressed: () => _calculate(state),
+        actions: [
+          // Skippable at any point: skip = defaults, nothing saved.
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
             child: Text(
-              l.calculateGoal,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              l.skip,
+              style: TextStyle(color: c.onHeader.withValues(alpha: 0.85)),
             ),
           ),
-          if (_result != null) ...[
-            const SizedBox(height: 16),
-            _ResultCard(
-              result: _result!,
-              onUse: () => _useGoal(state),
-              onAdjust: () {
-                // Save the profile, then hand the calculated numbers to the
-                // standard goals editor: floors and warnings apply there.
-                final profile = _buildProfile(state);
-                if (profile != null) state.setProfile(profile);
-                showGoalsEditor(context, state, initial: _result!.goals);
-              },
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(28),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              _step < _questionCount
+                  ? '${fmtInt(_step + 1)}/${fmtInt(_questionCount)}'
+                  : l.suggestedGoal,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: c.onHeader.withValues(alpha: 0.85),
+              ),
             ),
-          ],
-          const SizedBox(height: 24),
+          ),
+        ),
+      ),
+      body: PageView(
+        controller: _controller,
+        // Steps validate on advance; free swiping would bypass that.
+        physics: const NeverScrollableScrollPhysics(),
+        children: [
+          _numericOrTextStep(
+            state,
+            c,
+            question: l.nameQuestion,
+            child: _textField(c, l.nameOptional, _name, numeric: false),
+            onContinue: _next,
+          ),
+          _choiceStep<Sex>(
+            c,
+            question: l.sexQuestion,
+            values: Sex.values,
+            selected: _sex,
+            label: l.sexName,
+            onSelect: (v) {
+              setState(() => _sex = v);
+              _next();
+            },
+          ),
+          _numericOrTextStep(
+            state,
+            c,
+            question: l.ageQuestion,
+            child: _textField(
+              c,
+              l.ageLabel,
+              _age,
+              hint: l.rangeHint(profileRanges.age.min, profileRanges.age.max),
+            ),
+            onContinue: () => _continueNumeric(state, _age, profileRanges.age),
+          ),
+          _numericOrTextStep(
+            state,
+            c,
+            question: l.weightQuestion,
+            child: _textField(
+              c,
+              l.weightLabel,
+              _weight,
+              hint: l.rangeHint(
+                profileRanges.weight.min,
+                profileRanges.weight.max,
+              ),
+            ),
+            onContinue: () =>
+                _continueNumeric(state, _weight, profileRanges.weight),
+          ),
+          _numericOrTextStep(
+            state,
+            c,
+            question: l.heightQuestion,
+            child: _textField(
+              c,
+              l.heightLabel,
+              _height,
+              hint: l.rangeHint(
+                profileRanges.height.min,
+                profileRanges.height.max,
+              ),
+            ),
+            onContinue: () =>
+                _continueNumeric(state, _height, profileRanges.height),
+          ),
+          _choiceStep<ActivityLevel>(
+            c,
+            question: l.activityQuestion,
+            values: ActivityLevel.values,
+            selected: _activity,
+            label: l.activityName,
+            description: l.activityDesc,
+            helper: l.exerciseHelper,
+            onSelect: (v) {
+              setState(() => _activity = v);
+              _next();
+            },
+          ),
+          _choiceStep<WeightGoal>(
+            c,
+            question: l.goalQuestion,
+            values: WeightGoal.values,
+            selected: _goal,
+            label: l.weightGoalName,
+            description: l.goalDesc,
+            onSelect: (v) {
+              setState(() => _goal = v);
+              _next();
+            },
+          ),
+          _resultStep(state, c),
         ],
       ),
     );
   }
 
-  Widget _sectionLabel(AppColors c, String text) => Padding(
-    padding: const EdgeInsets.only(bottom: 8),
-    child: Text(
-      text,
-      style: TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: c.ink,
-      ),
+  Widget _question(AppColors c, String text) => Text(
+    text,
+    style: TextStyle(
+      fontSize: 22,
+      fontWeight: FontWeight.w800,
+      color: c.inkStrong,
     ),
   );
 
-  Widget _chipWrap<T>(
-    AppColors c,
-    List<T> values,
-    T? selected,
-    String Function(T) label,
-    ValueChanged<T> onSelect,
-  ) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+  /// Name and the three numeric steps: question, one field, continue.
+  Widget _numericOrTextStep(
+    AppState state,
+    AppColors c, {
+    required String question,
+    required Widget child,
+    required VoidCallback onContinue,
+  }) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
       children: [
-        for (final v in values)
-          ChoiceChip(
-            label: Text(label(v)),
-            selected: v == selected,
-            onSelected: (_) => onSelect(v),
-            selectedColor: c.chipBg,
-            labelStyle: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: v == selected ? c.chipText : c.ink,
+        _question(c, question),
+        const SizedBox(height: 24),
+        child,
+        if (_error != null) ...[
+          const SizedBox(height: 10),
+          Text(_error!, style: TextStyle(fontSize: 13, color: c.fat)),
+        ],
+        const SizedBox(height: 24),
+        FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: c.accent,
+            foregroundColor: c.onAccent,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
             ),
-            side: BorderSide(color: v == selected ? c.accent : c.divider),
-            backgroundColor: c.card,
           ),
+          onPressed: onContinue,
+          child: Text(
+            state.l.continueLabel,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Choice steps: question + one card per option, tap auto-advances.
+  /// [description] adds the one-line explanation (activity, goal);
+  /// [helper] adds the small definition line under the cards.
+  Widget _choiceStep<T>(
+    AppColors c, {
+    required String question,
+    required List<T> values,
+    required T? selected,
+    required String Function(T) label,
+    String Function(T)? description,
+    String? helper,
+    required ValueChanged<T> onSelect,
+  }) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+      children: [
+        _question(c, question),
+        const SizedBox(height: 20),
+        for (final v in values) ...[
+          _OptionCard(
+            label: label(v),
+            description: description?.call(v),
+            selected: v == selected,
+            onTap: () => onSelect(v),
+          ),
+          const SizedBox(height: 10),
+        ],
+        if (helper != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            helper,
+            style: TextStyle(fontSize: 11, height: 1.4, color: c.muted),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _resultStep(AppState state, AppColors c) {
+    final l = state.l;
+    final result = _result;
+    // Only reachable with valid answers; guard for safety.
+    if (result == null) return const SizedBox.shrink();
+    final g = result.goals;
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: c.card,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: c.cardShadow,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l.suggestedGoal,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: c.muted,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${fmtInt(g.kcal)} ${l.kcal}',
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  color: c.inkStrong,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                l.maintenanceLine(result.maintenanceKcal),
+                style: TextStyle(fontSize: 12, color: c.muted),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${l.protein} ${fmtInt(g.protein)}${l.grams} · '
+                '${l.fat} ${fmtInt(g.fat)}${l.grams} · '
+                '${l.carb} ${fmtInt(g.carbs)}${l.grams}',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: c.ink,
+                ),
+              ),
+              if (result.maintenanceOnly) ...[
+                const SizedBox(height: 8),
+                // Neutral wording by design: a note, never a block or alarm.
+                Text(
+                  l.under18Note,
+                  style: TextStyle(fontSize: 12, height: 1.4, color: c.muted),
+                ),
+              ],
+              const SizedBox(height: 8),
+              Text(
+                l.estimateNote,
+                style: TextStyle(fontSize: 11, height: 1.4, color: c.muted),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () {
+                        // Save the profile, then hand the calculated numbers
+                        // to the standard goals editor: floors and warnings
+                        // apply there.
+                        final profile = _buildProfile();
+                        if (profile != null) state.setProfile(profile);
+                        showGoalsEditor(context, state, initial: g);
+                      },
+                      style: TextButton.styleFrom(foregroundColor: c.muted),
+                      child: Text(l.adjust),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: c.accent,
+                        foregroundColor: c.onAccent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () => _useGoal(state),
+                      child: Text(l.useThisGoal),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -308,106 +511,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-class _ResultCard extends StatelessWidget {
-  const _ResultCard({
-    required this.result,
-    required this.onUse,
-    required this.onAdjust,
+/// One selectable option: label, optional one-line description, tap to
+/// choose (the wizard auto-advances).
+class _OptionCard extends StatelessWidget {
+  const _OptionCard({
+    required this.label,
+    this.description,
+    required this.selected,
+    required this.onTap,
   });
-  final MaintenanceResult result;
-  final VoidCallback onUse;
-  final VoidCallback onAdjust;
+  final String label;
+  final String? description;
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final state = AppScope.of(context);
     final c = AppColors.of(context);
-    final l = state.l;
-    final g = result.goals;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: c.card,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: c.cardShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l.suggestedGoal,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: c.muted,
+    return Material(
+      color: selected ? c.chipBg : c.card,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: selected ? c.accent : c.divider,
+              width: 1.5,
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            '${fmtInt(g.kcal)} ${l.kcal}',
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-              color: c.inkStrong,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            l.maintenanceLine(result.maintenanceKcal),
-            style: TextStyle(fontSize: 12, color: c.muted),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${l.protein} ${fmtInt(g.protein)}${l.grams} · '
-            '${l.fat} ${fmtInt(g.fat)}${l.grams} · '
-            '${l.carb} ${fmtInt(g.carbs)}${l.grams}',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: c.ink,
-            ),
-          ),
-          if (result.maintenanceOnly) ...[
-            const SizedBox(height: 8),
-            // Neutral wording by design: a note, never a block or alarm.
-            Text(
-              l.under18Note,
-              style: TextStyle(fontSize: 12, height: 1.4, color: c.muted),
-            ),
-          ],
-          const SizedBox(height: 8),
-          Text(
-            l.estimateNote,
-            style: TextStyle(fontSize: 11, height: 1.4, color: c.muted),
-          ),
-          const SizedBox(height: 12),
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: onAdjust,
-                  style: TextButton.styleFrom(foregroundColor: c.muted),
-                  child: Text(l.adjust),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: selected ? c.chipText : c.ink,
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: c.accent,
-                    foregroundColor: c.onAccent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: onUse,
-                  child: Text(l.useThisGoal),
+              if (description != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  description!,
+                  style: TextStyle(fontSize: 12, height: 1.4, color: c.muted),
                 ),
-              ),
+              ],
             ],
           ),
-        ],
+        ),
       ),
     );
   }

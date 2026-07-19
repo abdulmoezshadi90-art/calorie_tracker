@@ -145,6 +145,51 @@ class L10n {
   String get recalculateGoal =>
       isAr ? 'إعادة حساب الهدف' : 'Recalculate my goal';
 
+  // Wizard step questions — one clear heading per screen.
+  String get nameQuestion =>
+      isAr ? 'ما اسمك؟ (اختياري)' : "What's your name? (optional)";
+  String get sexQuestion => isAr ? 'ما هو جنسك؟' : 'What is your sex?';
+  String get ageQuestion => isAr ? 'كم عمرك؟' : 'How old are you?';
+  String get weightQuestion =>
+      isAr ? 'كم وزنك؟ (كجم)' : 'What is your weight? (kg)';
+  String get heightQuestion =>
+      isAr ? 'كم طولك؟ (سم)' : 'How tall are you? (cm)';
+  String get activityQuestion =>
+      isAr ? 'ما مستوى نشاطك؟' : 'What is your training intensity?';
+  String get goalQuestion => isAr ? 'ما هدفك؟' : 'What is your goal?';
+  String get continueLabel => isAr ? 'متابعة' : 'Continue';
+  String get exerciseHelper => isAr
+      ? 'التمرين يعني نشاطًا يرفع نبض القلب لمدة 15-30 دقيقة أو أكثر'
+      : 'Exercise means 15 to 30+ minutes of elevated heart rate activity';
+
+  String activityDesc(ActivityLevel a) => switch (a) {
+    ActivityLevel.sedentary => isAr
+        ? 'حياة مكتبية، تمرين قليل أو معدوم'
+        : 'Desk life, little or no exercise',
+    ActivityLevel.light => isAr
+        ? 'تمرين 1 إلى 3 مرات في الأسبوع'
+        : 'Exercise 1 to 3 times a week',
+    ActivityLevel.moderate => isAr
+        ? 'تمرين 4 إلى 5 مرات في الأسبوع'
+        : 'Exercise 4 to 5 times a week',
+    ActivityLevel.high => isAr
+        ? 'تمرين يومي، أو تمرين شاق 3 إلى 6 مرات في الأسبوع'
+        : 'Daily exercise, or intense exercise 3 to 6 times a week',
+    ActivityLevel.athlete => isAr
+        ? 'تدريب يومي شاق جدًا أو عمل بدني'
+        : 'Very intense daily training or a physical job',
+  };
+
+  // Plain language, not numbers, by design.
+  String goalDesc(WeightGoal g) => switch (g) {
+    WeightGoal.lose => isAr ? 'عجز يومي معتدل' : 'A moderate daily deficit',
+    WeightGoal.loseGently => isAr ? 'عجز يومي خفيف' : 'A light daily deficit',
+    WeightGoal.maintain => isAr
+        ? 'ثبات على وزنك الحالي'
+        : 'Stay at your current weight',
+    WeightGoal.gain => isAr ? 'فائض يومي بسيط' : 'A small daily surplus',
+  };
+
   String sexName(Sex s) => switch (s) {
     Sex.male => isAr ? 'ذكر' : 'Male',
     Sex.female => isAr ? 'أنثى' : 'Female',

@@ -133,104 +133,134 @@ void main() {
     });
   });
 
-  group('profile screen', () {
-    testWidgets('renders RTL at 375x812 without overflow', (tester) async {
-      await _pumpProfileScreen(tester, locale: 'ar');
+  group('profile wizard', () {
+    /// Walks the wizard through the sex step (EN locale): name skipped via
+    /// Continue, then taps the given sex (auto-advances to age).
+    Future<void> walkToAge(WidgetTester tester, {String sex = 'Male'}) async {
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(sex));
+      await tester.pumpAndSettle();
+    }
 
-      expect(tester.takeException(), isNull);
-      expect(find.text('ملفك الشخصي'), findsOneWidget);
-      // The button sits below the fold in the lazy ListView; scroll to it.
-      await tester.scrollUntilVisible(
-        find.text('احسب هدفي'),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
-      expect(find.text('احسب هدفي'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-      final context = tester.element(find.text('ملفك الشخصي'));
-      expect(Directionality.of(context), TextDirection.rtl);
-    });
+    /// Enters a numeric value on the current step and taps Continue.
+    Future<void> enterAndContinue(WidgetTester tester, String value) async {
+      await tester.enterText(find.byType(TextField), value);
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+    }
 
-    testWidgets('Eastern Arabic input ٢٥ stores 25 in the age field', (
-      tester,
-    ) async {
-      await _pumpProfileScreen(tester);
-
-      final ageField = find.widgetWithText(TextField, 'Age');
-      await tester.enterText(ageField, '٢٥');
-      expect(tester.widget<TextField>(ageField).controller!.text, '25');
-    });
-
-    testWidgets('calculate and use saves through the Goals object', (
+    testWidgets('wizard end to end produces the same Goals as before', (
       tester,
     ) async {
       final state = await _pumpProfileScreen(tester);
 
-      await tester.tap(find.text('Male'));
-      await tester.enterText(find.widgetWithText(TextField, 'Age'), '30');
-      await tester.enterText(
-        find.widgetWithText(TextField, 'Weight (kg)'),
-        '80',
+      expect(find.text("What's your name? (optional)"), findsOneWidget);
+      expect(find.text('1/7'), findsOneWidget);
+      await walkToAge(tester);
+      expect(find.text('How old are you?'), findsOneWidget);
+      expect(find.text('3/7'), findsOneWidget);
+      await enterAndContinue(tester, '30');
+      await enterAndContinue(tester, '80');
+      await enterAndContinue(tester, '180');
+
+      // Activity step: descriptions and the exercise helper line.
+      expect(find.text('What is your training intensity?'), findsOneWidget);
+      expect(find.text('Exercise 4 to 5 times a week'), findsOneWidget);
+      expect(
+        find.textContaining('elevated heart rate activity'),
+        findsOneWidget,
       );
-      await tester.enterText(
-        find.widgetWithText(TextField, 'Height (cm)'),
-        '180',
-      );
-      await tester.scrollUntilVisible(
-        find.text('Lose weight'),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.tap(find.text('Lose weight'));
-      await tester.pump();
-      await tester.scrollUntilVisible(
-        find.text('Calculate my goal'),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.tap(find.text('Calculate my goal'));
+      await tester.tap(find.text('Moderate'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Your suggested daily goal'), findsOneWidget);
-      await tester.scrollUntilVisible(
-        find.text('Use this goal'),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.ensureVisible(find.text('Use this goal'));
+      // Goal step: plain-language descriptions.
+      expect(find.text('A moderate daily deficit'), findsOneWidget);
+      await tester.tap(find.text('Lose weight'));
       await tester.pumpAndSettle();
+
+      // Result summary (title shows in both the header slot and the card):
+      // the math must not have changed with the UX rework.
+      expect(find.text('Your suggested daily goal'), findsWidgets);
       await tester.tap(find.text('Use this goal'));
       await tester.pumpAndSettle();
 
-      expect(state.goals.kcal, 2250);
+      expect(state.goals.kcal, 2250); // same inputs, same result as v1
+      expect(state.goals.protein, (2250 * 0.25 / 4).round());
       expect(state.profile, isNotNull);
       expect(state.profile!.weightKg, 80);
     });
 
-    testWidgets('out of range age shows error, nothing saved', (tester) async {
-      final state = await _pumpProfileScreen(tester);
+    testWidgets('activity step renders RTL at 375x812 without overflow', (
+      tester,
+    ) async {
+      await _pumpProfileScreen(tester, locale: 'ar');
 
-      await tester.tap(find.text('Male'));
-      await tester.enterText(find.widgetWithText(TextField, 'Age'), '9');
-      await tester.enterText(
-        find.widgetWithText(TextField, 'Weight (kg)'),
-        '80',
+      await tester.tap(find.text('متابعة'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('ذكر'));
+      await tester.pumpAndSettle();
+      for (final v in ['30', '80', '180']) {
+        await tester.enterText(find.byType(TextField), v);
+        await tester.tap(find.text('متابعة'));
+        await tester.pumpAndSettle();
+      }
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('ما مستوى نشاطك؟'), findsOneWidget);
+      // All five cards with descriptions plus the helper line.
+      expect(find.text('خامل'), findsOneWidget);
+      expect(find.text('تمرين 4 إلى 5 مرات في الأسبوع'), findsOneWidget);
+      expect(find.textContaining('يرفع نبض القلب'), findsOneWidget);
+      expect(find.text('6/7'), findsOneWidget);
+      final context = tester.element(find.text('ما مستوى نشاطك؟'));
+      expect(Directionality.of(context), TextDirection.rtl);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Eastern Arabic input ٢٥ stores 25 on the age step', (
+      tester,
+    ) async {
+      await _pumpProfileScreen(tester);
+      await walkToAge(tester);
+
+      await tester.enterText(find.byType(TextField), '٢٥');
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        '25',
       );
-      await tester.enterText(
-        find.widgetWithText(TextField, 'Height (cm)'),
-        '180',
-      );
-      await tester.scrollUntilVisible(
-        find.text('Calculate my goal'),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.tap(find.text('Calculate my goal'));
+    });
+
+    testWidgets('out of range age shows error and does not advance', (
+      tester,
+    ) async {
+      final state = await _pumpProfileScreen(tester);
+      await walkToAge(tester);
+
+      await tester.enterText(find.byType(TextField), '9');
+      await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Complete the fields above'), findsOneWidget);
-      expect(find.byType(ProfileScreen), findsOneWidget);
+      expect(find.text('Enter a valid number'), findsOneWidget);
+      expect(find.text('How old are you?'), findsOneWidget); // still here
       expect(state.goals.kcal, 2000); // unchanged
+    });
+
+    testWidgets('back arrow steps backward, first step pops the screen', (
+      tester,
+    ) async {
+      await _pumpProfileScreen(tester);
+      await walkToAge(tester);
+
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pumpAndSettle();
+      expect(find.text('What is your sex?'), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pumpAndSettle();
+      expect(find.byType(ProfileScreen), findsNothing); // popped to settings
     });
   });
 }
