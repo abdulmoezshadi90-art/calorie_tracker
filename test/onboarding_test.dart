@@ -85,6 +85,11 @@ void main() {
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
 
+    // Profile step (decision 8): local profile pitch, skippable via Next.
+    expect(find.text('Your profile'), findsOneWidget);
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+
     // Goals page reuses the goals editor sheet.
     expect(find.text('Set your daily goals'), findsOneWidget);
     await tester.tap(find.textContaining('Daily goals'));

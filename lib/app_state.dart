@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'food_db.dart';
 import 'l10n.dart';
 import 'models.dart';
+import 'profile.dart';
 
 class AppState extends ChangeNotifier {
   /// Injectable clock so tests (goldens especially) can pin the date.
@@ -19,14 +20,19 @@ class AppState extends ChangeNotifier {
   static const _localeKey = 'locale';
   static const _goalsKey = 'goals';
   static const _onboardingKey = 'onboarding_done';
+  static const _profileKey = 'profile';
 
   Goals _goals = Goals.defaults;
   Goals get goals => _goals;
 
+  /// Local profile (decision 8) — optional, never an account.
+  Profile? _profile;
+  Profile? get profile => _profile;
+
   String localeCode = 'en';
   bool onboardingDone = false;
-  // Shown in the header greeting; empty until profiles land, then the greeting
-  // renders on its own.
+  // Shown in the header greeting; sourced from the profile name (greeting
+  // only, stored locally, never transmitted).
   String userName = '';
   late DateTime selectedDate;
   final Map<String, List<LogEntry>> _logsByDate = {};
@@ -109,6 +115,13 @@ class AppState extends ChangeNotifier {
     _save();
   }
 
+  void setProfile(Profile profile) {
+    _profile = profile;
+    userName = profile.name.trim();
+    notifyListeners();
+    _save();
+  }
+
   void toggleLocale() => setLocale(localeCode == 'en' ? 'ar' : 'en');
 
   void setLocale(String code) {
@@ -138,6 +151,17 @@ class AppState extends ChangeNotifier {
         _goals = Goals.defaults;
       }
     }
+    final rawProfile = prefs.getString(_profileKey);
+    if (rawProfile != null) {
+      try {
+        _profile = Profile.fromJson(
+          jsonDecode(rawProfile) as Map<String, dynamic>,
+        );
+        userName = _profile!.name.trim();
+      } catch (_) {
+        _profile = null;
+      }
+    }
     final raw = prefs.getString(_logsKey);
     if (raw != null) {
       try {
@@ -158,6 +182,9 @@ class AppState extends ChangeNotifier {
     await prefs.setString(_localeKey, localeCode);
     await prefs.setString(_goalsKey, jsonEncode(_goals.toJson()));
     await prefs.setBool(_onboardingKey, onboardingDone);
+    if (_profile != null) {
+      await prefs.setString(_profileKey, jsonEncode(_profile!.toJson()));
+    }
     await prefs.setString(
       _logsKey,
       jsonEncode(
@@ -176,4 +203,10 @@ class AppScope extends InheritedNotifier<AppState> {
 
   static AppState of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<AppScope>()!.notifier!;
+
+  /// Read without subscribing — safe in initState and callbacks.
+  static AppState read(BuildContext context) =>
+      (context.getElementForInheritedWidgetOfExactType<AppScope>()!.widget
+              as AppScope)
+          .notifier!;
 }

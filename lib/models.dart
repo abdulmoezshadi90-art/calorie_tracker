@@ -128,6 +128,11 @@ class LogEntry {
   );
 }
 
+/// Anti-eating-disorder floors: values below these get a gentle confirm,
+/// never a hard block (design decision 2). The maintenance calculation
+/// clamps to these too (decision 8).
+const goalFloors = (kcal: 1200, carbs: 50, fat: 20, protein: 30);
+
 /// Daily nutrition goals. Values are whole units: kcal and grams.
 class Goals {
   final int kcal;

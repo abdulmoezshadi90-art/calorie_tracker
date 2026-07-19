@@ -4,10 +4,11 @@ import 'package:flutter/services.dart';
 import 'app_state.dart';
 import 'models.dart';
 import 'onboarding_screen.dart';
+import 'profile_screen.dart';
 import 'theme.dart';
 
 /// Shown in the about card. Keep in sync with pubspec.yaml `version:`.
-const appVersion = '0.4.0';
+const appVersion = '0.5.0';
 
 const feedbackEmail = 'abdulmoezshadi.90@gmail.com';
 
@@ -106,6 +107,26 @@ class SettingsScreen extends StatelessWidget {
               ),
               trailing: Icon(Icons.edit_outlined, size: 20, color: c.muted),
               onTap: () => showGoalsEditor(context, state),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _SettingsCard(
+            child: ListTile(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              leading: Icon(Icons.calculate_outlined, color: c.accent),
+              title: Text(
+                l.recalculateGoal,
+                style: TextStyle(fontWeight: FontWeight.w700, color: c.ink),
+              ),
+              subtitle: Text(
+                l.profileTitle,
+                style: TextStyle(fontSize: 12, color: c.muted),
+              ),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const ProfileScreen()),
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -255,11 +276,10 @@ class _SettingsCard extends StatelessWidget {
 
 // ─────────────────────────── Goals editor ───────────────────────────
 
-/// Anti-eating-disorder floors: values below these get a gentle confirm,
-/// never a hard block (design decision 2).
-const goalFloors = (kcal: 1200, carbs: 50, fat: 20, protein: 30);
-
-void showGoalsEditor(BuildContext context, AppState state) {
+/// [initial] prefill (defaults to current goals) lets the profile summary
+/// open the editor on the calculated values — every save still runs the
+/// same validation, floors, and gentle warnings.
+void showGoalsEditor(BuildContext context, AppState state, {Goals? initial}) {
   final c = AppColors.of(context);
   showModalBottomSheet(
     context: context,
@@ -272,14 +292,15 @@ void showGoalsEditor(BuildContext context, AppState state) {
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
       ),
-      child: _GoalsEditor(state: state),
+      child: _GoalsEditor(state: state, initial: initial ?? state.goals),
     ),
   );
 }
 
 class _GoalsEditor extends StatefulWidget {
-  const _GoalsEditor({required this.state});
+  const _GoalsEditor({required this.state, required this.initial});
   final AppState state;
+  final Goals initial;
 
   @override
   State<_GoalsEditor> createState() => _GoalsEditorState();
@@ -295,7 +316,7 @@ class _GoalsEditorState extends State<_GoalsEditor> {
   @override
   void initState() {
     super.initState();
-    final g = widget.state.goals;
+    final g = widget.initial;
     _kcal = TextEditingController(text: '${g.kcal}');
     _carbs = TextEditingController(text: '${g.carbs}');
     _fat = TextEditingController(text: '${g.fat}');

@@ -1,4 +1,5 @@
 import 'models.dart';
+import 'profile.dart';
 
 /// Hand-rolled localization: two locales, Western digits everywhere.
 /// All numbers are formatted by the fmt* helpers (never locale-aware
@@ -109,6 +110,60 @@ class L10n {
       : 'Days you log meals will show up here';
   String get backToToday => isAr ? 'العودة إلى اليوم' : 'Back to today';
   String get addFood => isAr ? 'أضف طعامًا' : 'Add a food';
+
+  // Profile step (decision 8). Deliberately never "login"/"sign up"/"account"
+  // wording — it is a local profile, nothing leaves the phone.
+  String get profileTitle => isAr ? 'ملفك الشخصي' : 'Your profile';
+  String get profileIntro => isAr
+      ? 'نحسب لك هدفًا يوميًا يناسب جسمك. كل الإجابات تبقى على هاتفك.'
+      : 'We calculate a daily goal that fits your body. All answers stay on your phone.';
+  String get nameOptional => isAr ? 'الاسم (اختياري)' : 'Name (optional)';
+  String get sexLabel => isAr ? 'الجنس' : 'Sex';
+  String get ageLabel => isAr ? 'العمر' : 'Age';
+  String get weightLabel => isAr ? 'الوزن (كجم)' : 'Weight (kg)';
+  String get heightLabel => isAr ? 'الطول (سم)' : 'Height (cm)';
+  String get activityLabel => isAr ? 'مستوى النشاط' : 'Training intensity';
+  String get goalLabel => isAr ? 'هدف الوزن' : 'Weight goal';
+  String get calculateGoal => isAr ? 'احسب هدفي' : 'Calculate my goal';
+  String get suggestedGoal =>
+      isAr ? 'هدفك اليومي المقترح' : 'Your suggested daily goal';
+  String maintenanceLine(num n) => isAr
+      ? 'سعرات المحافظة: ~${fmtInt(n)} سعرة'
+      : 'Maintenance: ~${fmtInt(n)} kcal';
+  String get estimateNote => isAr
+      ? 'هذا تقدير — الاحتياج الحقيقي يختلف بحوالي 10%'
+      : 'This is an estimate — real needs vary by ~10%';
+  String get under18Note => isAr
+      ? 'لأن عمرك أقل من 18، نقترح سعرات المحافظة فقط دون عجز.'
+      : 'Because you are under 18, we suggest maintenance calories only, with no deficit.';
+  String get useThisGoal => isAr ? 'اعتماد الهدف' : 'Use this goal';
+  String get adjust => isAr ? 'تعديل' : 'Adjust';
+  String get completeFields =>
+      isAr ? 'أكمل الحقول أعلاه' : 'Complete the fields above';
+  String rangeHint(int min, int max) =>
+      isAr ? 'بين ${fmtInt(min)} و ${fmtInt(max)}' : '${fmtInt(min)}–${fmtInt(max)}';
+  String get recalculateGoal =>
+      isAr ? 'إعادة حساب الهدف' : 'Recalculate my goal';
+
+  String sexName(Sex s) => switch (s) {
+    Sex.male => isAr ? 'ذكر' : 'Male',
+    Sex.female => isAr ? 'أنثى' : 'Female',
+  };
+
+  String activityName(ActivityLevel a) => switch (a) {
+    ActivityLevel.sedentary => isAr ? 'خامل' : 'Sedentary',
+    ActivityLevel.light => isAr ? 'خفيف' : 'Light',
+    ActivityLevel.moderate => isAr ? 'متوسط' : 'Moderate',
+    ActivityLevel.high => isAr ? 'عالي' : 'High',
+    ActivityLevel.athlete => isAr ? 'رياضي' : 'Athlete',
+  };
+
+  String weightGoalName(WeightGoal g) => switch (g) {
+    WeightGoal.lose => isAr ? 'إنقاص الوزن' : 'Lose weight',
+    WeightGoal.loseGently => isAr ? 'إنقاص تدريجي' : 'Lose gently',
+    WeightGoal.maintain => isAr ? 'تثبيت الوزن' : 'Maintain',
+    WeightGoal.gain => isAr ? 'زيادة الوزن' : 'Gain weight',
+  };
 
   String mealName(MealType meal) => switch (meal) {
     MealType.breakfast => isAr ? 'الفطور' : 'Breakfast',

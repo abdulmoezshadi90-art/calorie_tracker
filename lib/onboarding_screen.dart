@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 
 import 'app_state.dart';
 import 'models.dart';
+import 'profile_screen.dart';
 import 'settings_screen.dart';
 import 'theme.dart';
 
-/// Three pages, all skippable: language first (it gates everything), a
-/// logging intro with the disclaimer, then goal setup reusing the goals
+/// Four pages, all skippable: language first (it gates everything), a
+/// logging intro with the disclaimer, the profile step (decision 8 — a
+/// local profile, never an account), then goal setup reusing the goals
 /// editor sheet. Defaults carry a skipped onboarding.
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -65,6 +67,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 children: [
                   _LanguagePage(onNext: _next),
                   _IntroPage(onNext: _next),
+                  _ProfilePage(onNext: _next),
                   _GoalsPage(onDone: () => _finish(state)),
                 ],
               ),
@@ -74,7 +77,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  for (var i = 0; i < 3; i++)
+                  for (var i = 0; i < 4; i++)
                     Container(
                       width: 8,
                       height: 8,
@@ -216,6 +219,58 @@ class _IntroPage extends StatelessWidget {
           style: TextStyle(fontSize: 11, height: 1.5, color: c.muted),
         ),
         const SizedBox(height: 24),
+        _PrimaryButton(label: l.next, onPressed: onNext),
+      ],
+    );
+  }
+}
+
+class _ProfilePage extends StatelessWidget {
+  const _ProfilePage({required this.onNext});
+  final VoidCallback onNext;
+
+  @override
+  Widget build(BuildContext context) {
+    final state = AppScope.of(context);
+    final c = AppColors.of(context);
+    final l = state.l;
+
+    return _PageShell(
+      children: [
+        Text(
+          l.profileTitle,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: c.inkStrong,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          l.profileIntro,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 14, height: 1.5, color: c.ink),
+        ),
+        const SizedBox(height: 24),
+        OutlinedButton(
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const ProfileScreen()),
+          ),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            foregroundColor: c.ink,
+            side: BorderSide(color: c.divider, width: 1.5),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          child: Text(
+            l.calculateGoal,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+          ),
+        ),
+        const SizedBox(height: 12),
         _PrimaryButton(label: l.next, onPressed: onNext),
       ],
     );
