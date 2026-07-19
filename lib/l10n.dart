@@ -31,10 +31,6 @@ class L10n {
   String get protein => isAr ? 'بروتين' : 'Protein';
   String get grams => isAr ? 'جم' : 'g';
 
-  /// e.g. "100 / 250 g" / "100 / 250 جم" — always Western digits.
-  String macroValue(double value, double goal) =>
-      '${fmtGrams(value)} / ${fmtGrams(goal)} $grams';
-
   String get meals => isAr ? 'الوجبات' : 'Meals';
   String mealCountOf(int done, int total) => isAr
       ? '${fmtInt(done)} من ${fmtInt(total)}'
@@ -153,9 +149,6 @@ class L10n {
     'نوفمبر',
     'ديسمبر',
   ];
-
-  String monthYear(DateTime d) =>
-      '${(isAr ? _monthsAr : _monthsEn)[d.month - 1]} ${d.year}';
 
   // Full weekday names, indexed by DateTime.weekday % 7 (Sunday = 0).
   static const _fullEn = [
