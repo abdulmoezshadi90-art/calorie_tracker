@@ -164,12 +164,19 @@ class _TopRow extends StatelessWidget {
                 Row(
                   children: [
                     Flexible(
-                      child: Text(
-                        greeting.replaceAll(RegExp(r'[,،]\s*$'), ''),
-                        style: TextStyle(
-                          color: c.onHeader,
-                          fontSize: 25,
-                          fontWeight: FontWeight.w800,
+                      // Scale down instead of wrapping mid-word ("mornin g")
+                      // when the header controls squeeze the greeting.
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          greeting.replaceAll(RegExp(r'[,،]\s*$'), ''),
+                          maxLines: 1,
+                          style: TextStyle(
+                            color: c.onHeader,
+                            fontSize: 25,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ),
                     ),
@@ -387,14 +394,20 @@ class _DayChip extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(
-              state.l.dayShort(day),
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: isSelected
-                    ? c.daySelectedText
-                    : c.dayIdleText.withValues(alpha: isFuture ? 0.5 : 0.85),
+            // Scale down instead of wrapping ("Mo n") at large system
+            // font sizes — the chips are too narrow to wrap gracefully.
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                state.l.dayShort(day),
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: isSelected
+                      ? c.daySelectedText
+                      : c.dayIdleText.withValues(alpha: isFuture ? 0.5 : 0.85),
+                ),
               ),
             ),
             const SizedBox(height: 6),
