@@ -46,3 +46,9 @@ app.*.map.json
 
 # Golden test failure artifacts
 test/failures/
+
+# Private docs (see main branch gitignore)
+/docs-private/
+/CLAUDE.md
+/beta-notes/
+/data-private/

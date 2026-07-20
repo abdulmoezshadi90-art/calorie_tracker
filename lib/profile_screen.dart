@@ -46,8 +46,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (p != null) {
       _name.text = p.name;
       _age.text = '${p.age}';
-      _weight.text = '${p.weightKg}';
-      _height.text = '${p.heightCm}';
+      _weight.text = fmtServings(p.weightKg); // "81.5", "80" (no ".0")
+      _height.text = fmtServings(p.heightCm);
       _sex = p.sex;
       _activity = p.activity;
       _goal = p.goal;
@@ -66,8 +66,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Profile? _buildProfile() {
     final age = int.tryParse(_age.text) ?? 0;
-    final weight = int.tryParse(_weight.text) ?? 0;
-    final height = int.tryParse(_height.text) ?? 0;
+    final weight = double.tryParse(_weight.text) ?? 0;
+    final height = double.tryParse(_height.text) ?? 0;
     final sex = _sex;
     final activity = _activity;
     final goal = _goal;
@@ -120,12 +120,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   /// Validates the numeric field for the current step, then advances.
+  /// Parses as double so decimal weight/height ("81.5") validate too;
+  /// the age field's formatter never lets a '.' through.
   void _continueNumeric(
     AppState state,
     TextEditingController controller,
     ({int min, int max}) range,
   ) {
-    final value = int.tryParse(controller.text) ?? 0;
+    final value = double.tryParse(controller.text) ?? 0;
     if (value < range.min || value > range.max) {
       setState(() => _error = state.l.invalidNumber);
       return;
@@ -235,6 +237,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               c,
               l.weightLabel,
               _weight,
+              decimal: true,
               hint: l.rangeHint(
                 profileRanges.weight.min,
                 profileRanges.weight.max,
@@ -251,6 +254,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               c,
               l.heightLabel,
               _height,
+              decimal: true,
               hint: l.rangeHint(
                 profileRanges.height.min,
                 profileRanges.height.max,
@@ -486,13 +490,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     String label,
     TextEditingController controller, {
     bool numeric = true,
+    bool decimal = false,
     String? hint,
   }) {
     return TextField(
       controller: controller,
-      keyboardType: numeric ? TextInputType.number : TextInputType.name,
+      keyboardType: numeric
+          ? TextInputType.numberWithOptions(decimal: decimal)
+          : TextInputType.name,
       inputFormatters: numeric
-          ? [WesternDigitsFormatter(), LengthLimitingTextInputFormatter(3)]
+          ? [
+              WesternDigitsFormatter(allowDecimal: decimal),
+              // "250" or "120.5" fit in 5; age stays a 3-digit field.
+              LengthLimitingTextInputFormatter(decimal ? 5 : 3),
+            ]
           : null,
       style: TextStyle(color: c.ink, fontWeight: FontWeight.w600),
       decoration: InputDecoration(
