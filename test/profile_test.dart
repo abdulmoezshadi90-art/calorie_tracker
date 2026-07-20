@@ -191,6 +191,31 @@ void main() {
       expect(state.profile!.weightKg, 80);
     });
 
+    testWidgets('every activity option shows its description, incl. High', (
+      tester,
+    ) async {
+      // Regression guard for a device report of a missing High line — not
+      // reproducible in this code (the string exists per decision 8), the
+      // report likely came from a pre-wizard build. This pins it forever.
+      await _pumpProfileScreen(tester);
+      await walkToAge(tester);
+      await enterAndContinue(tester, '30');
+      await enterAndContinue(tester, '80');
+      await enterAndContinue(tester, '180');
+
+      expect(find.text('Desk life, little or no exercise'), findsOneWidget);
+      expect(find.text('Exercise 1 to 3 times a week'), findsOneWidget);
+      expect(find.text('Exercise 4 to 5 times a week'), findsOneWidget);
+      expect(
+        find.text('Daily exercise, or intense exercise 3 to 6 times a week'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Very intense daily training or a physical job'),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('weight and height accept one decimal point', (tester) async {
       final state = await _pumpProfileScreen(tester);
       await walkToAge(tester);
