@@ -22,6 +22,10 @@ Future<void> main() async {
     await prefs.clear();
   }
   final state = AppState();
+  // Loading state, cold launch: the native splash stays up until this
+  // await completes, so the first rendered frame already has the real
+  // logs/goals/locale/profile — never a flash of defaults. This is the
+  // only launch "loading" the app has, by design (local-only storage).
   await state.load();
   // Dev convenience on web: ?lang=ar / ?lang=en overrides the saved locale.
   if (kIsWeb) {

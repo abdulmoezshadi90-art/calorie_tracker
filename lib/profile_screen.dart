@@ -38,6 +38,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _error;
   MaintenanceResult? _result;
 
+  /// Brief pause before revealing the result: the math is instant, the
+  /// moment deserves weight. The ONLY loading state besides cold launch.
+  bool _calculating = false;
+
   @override
   void initState() {
     super.initState();
@@ -100,6 +104,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (step == _questionCount) {
         final profile = _buildProfile();
         _result = profile == null ? null : calculateMaintenance(profile);
+        _calculating = true;
+        Future<void>.delayed(const Duration(milliseconds: 400), () {
+          if (mounted) setState(() => _calculating = false);
+        });
       }
     });
     _controller.animateToPage(
@@ -406,6 +414,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final result = _result;
     // Only reachable with valid answers; guard for safety.
     if (result == null) return const SizedBox.shrink();
+    if (_calculating) {
+      return Center(
+        child: SizedBox(
+          width: 28,
+          height: 28,
+          child: CircularProgressIndicator(strokeWidth: 3, color: c.accent),
+        ),
+      );
+    }
     final g = result.goals;
 
     return _stepShell([
