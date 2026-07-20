@@ -34,7 +34,8 @@ void main() {
     await _openHistory(tester);
 
     expect(tester.takeException(), isNull);
-    expect(find.text('History'), findsOneWidget);
+    // App bar title + bottom-nav tab label both say History.
+    expect(find.text('History'), findsNWidgets(2));
     expect(find.text('No logged days yet'), findsOneWidget);
     // No chart on a fully empty history.
     expect(find.text('Last 7 days'), findsNothing);
@@ -161,9 +162,10 @@ void main() {
 
     await _openHistory(tester);
     expect(tester.takeException(), isNull);
-    expect(find.text('السجل'), findsOneWidget);
+    // App bar title + bottom-nav tab label both say السجل.
+    expect(find.text('السجل'), findsNWidgets(2));
     expect(find.text('الجمعة، 10 يوليو · 2026'), findsOneWidget);
-    final context = tester.element(find.text('السجل'));
+    final context = tester.element(find.text('السجل').first);
     expect(Directionality.of(context), TextDirection.rtl);
     expect(find.textContaining('٢'), findsNothing);
   });

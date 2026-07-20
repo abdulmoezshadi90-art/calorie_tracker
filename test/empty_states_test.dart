@@ -80,7 +80,9 @@ void main() {
     tester,
   ) async {
     await _pumpApp(tester);
-    await tester.ensureVisible(find.text('Dinner'));
+    // Drag the diary up so the row sits clear of the bottom nav.
+    await tester.drag(find.text('Breakfast'), const Offset(0, -250));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Dinner'));
     await tester.pumpAndSettle();
 

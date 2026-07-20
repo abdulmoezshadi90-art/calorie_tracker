@@ -3,12 +3,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'app_state.dart';
-import 'history_screen.dart';
 import 'l10n.dart';
 import 'meal_detail_screen.dart';
 import 'models.dart';
 import 'search_screen.dart';
-import 'settings_screen.dart';
 import 'striped_bar.dart';
 import 'theme.dart';
 
@@ -135,9 +133,9 @@ class _HeaderDelegate extends SliverPersistentHeaderDelegate {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [_DatePill(), _HistoryButton()],
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: _DatePill(),
                   ),
                   SizedBox(height: 14),
                   _WeekStrip(),
@@ -235,12 +233,9 @@ class _TopRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        // Streak sits on the greeting side, opposite the language toggle.
+        // Settings gear and language toggle moved to the Settings tab
+        // (bottom nav restructure); the top bar keeps streak + today.
         const _StreakChip(),
-        const _SettingsButton(),
-        const SizedBox(width: 8),
-        const _LangToggle(),
-        const SizedBox(width: 8),
         const _TodayPill(),
       ],
     );
@@ -286,96 +281,6 @@ class _StreakChip extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Circular header button: 44px touch target, ink ripple, tooltip
-/// (ui-ux-pro-max polish pass — was a 40px GestureDetector with neither).
-class _HeaderCircleButton extends StatelessWidget {
-  const _HeaderCircleButton({
-    required this.tooltip,
-    required this.onTap,
-    required this.child,
-  });
-  final String tooltip;
-  final VoidCallback onTap;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppColors.of(context);
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: c.dayIdleBg,
-        shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: SizedBox(
-            height: 44,
-            width: 44,
-            child: Center(child: child),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HistoryButton extends StatelessWidget {
-  const _HistoryButton();
-
-  @override
-  Widget build(BuildContext context) {
-    final state = AppScope.of(context);
-    final c = AppColors.of(context);
-    return _HeaderCircleButton(
-      tooltip: state.l.history,
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => const HistoryScreen()),
-      ),
-      child: Icon(Icons.history, color: c.onHeader, size: 20),
-    );
-  }
-}
-
-class _SettingsButton extends StatelessWidget {
-  const _SettingsButton();
-
-  @override
-  Widget build(BuildContext context) {
-    final state = AppScope.of(context);
-    final c = AppColors.of(context);
-    return _HeaderCircleButton(
-      tooltip: state.l.settings,
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
-      ),
-      child: Icon(Icons.settings_outlined, color: c.onHeader, size: 20),
-    );
-  }
-}
-
-class _LangToggle extends StatelessWidget {
-  const _LangToggle();
-
-  @override
-  Widget build(BuildContext context) {
-    final state = AppScope.of(context);
-    final c = AppColors.of(context);
-    return _HeaderCircleButton(
-      tooltip: state.l.language,
-      onTap: state.toggleLocale,
-      child: Text(
-        state.l.toggleLabel,
-        style: TextStyle(
-          color: c.onHeader,
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
         ),
       ),
     );
@@ -977,7 +882,7 @@ class _EmptyTodayBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => _chooseMeal(context, state),
+          onTap: () => showMealChooser(context, state),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
@@ -1027,7 +932,7 @@ class _AddMealButton extends StatelessWidget {
     final l = state.l;
 
     return GestureDetector(
-      onTap: () => _chooseMeal(context, state),
+      onTap: () => showMealChooser(context, state),
       child: CustomPaint(
         painter: _DashedBorderPainter(color: c.divider, radius: 18),
         child: Container(
@@ -1064,7 +969,7 @@ class _AddMealButton extends StatelessWidget {
 
 /// Bottom sheet asking which meal to add to; shared by the add-meal button
 /// and the empty-today banner.
-void _chooseMeal(BuildContext context, AppState state) {
+void showMealChooser(BuildContext context, AppState state) {
     final c = AppColors.of(context);
     final l = state.l;
     showModalBottomSheet(

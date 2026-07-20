@@ -30,12 +30,13 @@ void main() {
     await _pumpSettings(tester, locale: 'ar');
 
     expect(tester.takeException(), isNull);
-    expect(find.text('الإعدادات'), findsOneWidget);
+    // App bar title + bottom-nav tab label both say الإعدادات.
+    expect(find.text('الإعدادات'), findsNWidgets(2));
     expect(find.text('الأهداف اليومية'), findsOneWidget);
     expect(find.text('اللغة'), findsOneWidget);
     expect(find.text('إخلاء مسؤولية'), findsOneWidget);
 
-    final context = tester.element(find.text('الإعدادات'));
+    final context = tester.element(find.text('الإعدادات').first);
     expect(Directionality.of(context), TextDirection.rtl);
   });
 
@@ -135,8 +136,9 @@ void main() {
     expect(find.text('Goals saved'), findsOneWidget);
     expect(state.goals.kcal, 1800);
 
-    // Back on home: the calorie card reflects the new goal with no restart.
-    await tester.pageBack();
+    // Back on home via the nav tab: the calorie card reflects the new
+    // goal with no restart.
+    await tester.tap(find.byIcon(Icons.home_outlined));
     await tester.pumpAndSettle();
     expect(find.textContaining('of 1,800 kcal'), findsOneWidget);
     expect(find.text('1,800 kcal left today'), findsOneWidget);

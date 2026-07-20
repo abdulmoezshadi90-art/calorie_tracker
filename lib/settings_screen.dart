@@ -88,6 +88,43 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Language first for quick access — the toggle moved here from
+          // the home top bar in the bottom-nav restructure.
+          _SettingsCard(
+            child: ListTile(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              leading: Icon(Icons.language_outlined, color: c.accent),
+              title: Text(
+                l.language,
+                style: TextStyle(fontWeight: FontWeight.w700, color: c.ink),
+              ),
+              subtitle: Text(
+                l.languageName,
+                style: TextStyle(fontSize: 12, color: c.muted),
+              ),
+              trailing: Container(
+                height: 36,
+                width: 36,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: c.chipBg,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  l.toggleLabel,
+                  style: TextStyle(
+                    color: c.chipText,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              onTap: state.toggleLocale,
+            ),
+          ),
+          const SizedBox(height: 12),
           _SettingsCard(
             child: ListTile(
               shape: RoundedRectangleBorder(
@@ -127,41 +164,6 @@ class SettingsScreen extends StatelessWidget {
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(builder: (_) => const ProfileScreen()),
               ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          _SettingsCard(
-            child: ListTile(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
-              ),
-              leading: Icon(Icons.language_outlined, color: c.accent),
-              title: Text(
-                l.language,
-                style: TextStyle(fontWeight: FontWeight.w700, color: c.ink),
-              ),
-              subtitle: Text(
-                l.languageName,
-                style: TextStyle(fontSize: 12, color: c.muted),
-              ),
-              trailing: Container(
-                height: 36,
-                width: 36,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: c.chipBg,
-                  shape: BoxShape.circle,
-                ),
-                child: Text(
-                  l.toggleLabel,
-                  style: TextStyle(
-                    color: c.chipText,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              onTap: state.toggleLocale,
             ),
           ),
           const SizedBox(height: 12),

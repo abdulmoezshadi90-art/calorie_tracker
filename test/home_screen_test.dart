@@ -31,7 +31,8 @@ void main() {
     await _pumpApp(tester);
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Today'), findsOneWidget); // header date pill
+    // Header today pill + bottom-nav Today tab label.
+    expect(find.text('Today'), findsNWidgets(2));
     expect(find.text("Today's calories"), findsOneWidget);
     expect(find.textContaining('of 2,000 kcal'), findsOneWidget);
     expect(find.text('2,000 kcal left today'), findsOneWidget);
@@ -84,7 +85,8 @@ void main() {
 
     expect(tester.takeException(), isNull);
     // App content is centered at phone width, not stretched to 1280.
-    expect(tester.getSize(find.byType(Scaffold)).width, 430);
+    // Shell + home each have a Scaffold; the outer one is first.
+    expect(tester.getSize(find.byType(Scaffold).first).width, 430);
     expect(find.text("Today's calories"), findsOneWidget);
   });
 
@@ -98,13 +100,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.text('اليوم'), findsOneWidget); // date pill
+    // Header today pill + bottom-nav Today tab label.
+    expect(find.text('اليوم'), findsNWidgets(2));
     expect(find.text('سعرات اليوم'), findsOneWidget);
     expect(find.text('تبقّى 2,000 سعرة اليوم'), findsOneWidget);
     expect(find.text('الوجبات'), findsOneWidget);
 
     // Layout must be RTL.
-    final context = tester.element(find.text('اليوم'));
+    final context = tester.element(find.text('اليوم').first);
     expect(Directionality.of(context), TextDirection.rtl);
 
     // Digits stay Western: no Eastern Arabic numerals anywhere.

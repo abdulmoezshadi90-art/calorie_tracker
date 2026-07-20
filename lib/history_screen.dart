@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'app_shell.dart';
 import 'app_state.dart';
 import 'empty_state.dart';
 import 'food_db.dart';
@@ -31,7 +32,16 @@ class HistoryScreen extends StatelessWidget {
               line: l.historyEmpty,
               hint: l.historyEmptyHint,
               actionLabel: l.backToToday,
-              onAction: () => Navigator.of(context).pop(),
+              // In the shell, History is a tab: switch to Today. Falls
+              // back to pop if ever shown as a pushed route.
+              onAction: () {
+                final tabs = AppTabs.maybeOf(context);
+                if (tabs != null) {
+                  tabs.select(0);
+                } else {
+                  Navigator.of(context).maybePop();
+                }
+              },
             )
           : ListView.builder(
               padding: const EdgeInsets.all(16),

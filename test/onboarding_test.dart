@@ -122,9 +122,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Choose your language'), findsOneWidget);
 
-    // Skip pops back to where the user was (settings).
+    // Skip pops back to where the user was (settings tab; the nav label
+    // and the app bar title both read Settings).
     await tester.tap(find.text('Skip'));
     await tester.pumpAndSettle();
-    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Settings'), findsNWidgets(2));
   });
 }
