@@ -46,3 +46,17 @@ app.*.map.json
 
 # Golden test failure artifacts
 test/failures/
+
+# Signing and credentials — never tracked, anywhere
+key.properties
+*.jks
+*.keystore
+*.p8
+*.p12
+*.pem
+
+# Private docs, beta measurement notes, and the nutrition data pipeline
+/docs-private/
+/beta-notes/
+/data-private/
+/CLAUDE.md
