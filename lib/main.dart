@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app_state.dart';
 import 'home_screen.dart';
@@ -13,6 +14,13 @@ Future<void> main() async {
   // On web, expose the semantics tree immediately so screen readers (and
   // browser-based testing) work without the enable-accessibility tap.
   if (kIsWeb) SemanticsBinding.instance.ensureSemantics();
+  // Demo convenience on web: ?fresh=1 wipes saved state so a shared link
+  // always starts at first-run onboarding (browser storage persists
+  // across demo deploys otherwise).
+  if (kIsWeb && Uri.base.queryParameters.containsKey('fresh')) {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+  }
   final state = AppState();
   await state.load();
   // Dev convenience on web: ?lang=ar / ?lang=en overrides the saved locale.
