@@ -180,14 +180,17 @@ class L10n {
         : 'Very intense daily training or a physical job',
   };
 
-  // Plain language, not numbers, by design.
+  // Weekly-rate phrasing (TDEE-calculator mental model). Never a raw
+  // kcal number in the option — the kcal appears on the result summary.
+  // Rates from the standard adjustments: −500/day ≈ 0.5 kg/wk,
+  // −250 ≈ 0.25, +300 ≈ 0.27 (shown as ~0.25).
   String goalDesc(WeightGoal g) => switch (g) {
-    WeightGoal.lose => isAr ? 'عجز يومي معتدل' : 'A moderate daily deficit',
-    WeightGoal.loseGently => isAr ? 'عجز يومي خفيف' : 'A light daily deficit',
-    WeightGoal.maintain => isAr
-        ? 'ثبات على وزنك الحالي'
-        : 'Stay at your current weight',
-    WeightGoal.gain => isAr ? 'فائض يومي بسيط' : 'A small daily surplus',
+    WeightGoal.maintain => isAr ? '0 كجم أسبوعيًا' : '0 kg per week',
+    WeightGoal.loseGently => isAr
+        ? '~0.25 كجم أسبوعيًا'
+        : '~0.25 kg per week',
+    WeightGoal.lose => isAr ? '~0.5 كجم أسبوعيًا' : '~0.5 kg per week',
+    WeightGoal.gain => isAr ? '~0.25 كجم أسبوعيًا' : '~0.25 kg per week',
   };
 
   String sexName(Sex s) => switch (s) {
@@ -204,10 +207,10 @@ class L10n {
   };
 
   String weightGoalName(WeightGoal g) => switch (g) {
-    WeightGoal.lose => isAr ? 'إنقاص الوزن' : 'Lose weight',
-    WeightGoal.loseGently => isAr ? 'إنقاص تدريجي' : 'Lose gently',
-    WeightGoal.maintain => isAr ? 'تثبيت الوزن' : 'Maintain',
-    WeightGoal.gain => isAr ? 'زيادة الوزن' : 'Gain weight',
+    WeightGoal.maintain => isAr ? 'تثبيت الوزن' : 'Maintain weight',
+    WeightGoal.loseGently => isAr ? 'إنقاص خفيف' : 'Mild weight loss',
+    WeightGoal.lose => isAr ? 'إنقاص الوزن' : 'Weight loss',
+    WeightGoal.gain => isAr ? 'زيادة الوزن' : 'Weight gain',
   };
 
   String mealName(MealType meal) => switch (meal) {

@@ -279,7 +279,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _choiceStep<WeightGoal>(
             c,
             question: l.goalQuestion,
-            values: WeightGoal.values,
+            // Reference-calculator order: maintain, mild loss, loss, gain.
+            values: const [
+              WeightGoal.maintain,
+              WeightGoal.loseGently,
+              WeightGoal.lose,
+              WeightGoal.gain,
+            ],
             selected: _goal,
             label: l.weightGoalName,
             description: l.goalDesc,
