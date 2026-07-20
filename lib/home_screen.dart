@@ -9,6 +9,7 @@ import 'meal_detail_screen.dart';
 import 'models.dart';
 import 'search_screen.dart';
 import 'settings_screen.dart';
+import 'striped_bar.dart';
 import 'theme.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -463,7 +464,6 @@ class _CalorieCard extends StatelessWidget {
     final l = state.l;
     final consumed = totals.kcal.round();
     final goal = state.goals.kcal;
-    final progress = (totals.kcal / goal).clamp(0.0, 1.0);
     final remaining = goal - consumed;
 
     return _Card(
@@ -516,7 +516,13 @@ class _CalorieCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _ProgressBar(progress: progress),
+          StripedBar(
+            value: totals.kcal,
+            goal: goal.toDouble(),
+            height: 10,
+            track: c.progressTrack,
+            gradient: [c.progressStart, c.progressEnd],
+          ),
         ],
       ),
     );
@@ -549,45 +555,15 @@ class _LeftPill extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             over ? l.kcalOverToday(-remaining) : l.kcalLeftToday(remaining),
+            // Neutral in both directions — over-goal is information,
+            // not an alarm (design decision 2).
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: over ? c.fat : c.leftPillText,
+              color: c.leftPillText,
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ProgressBar extends StatelessWidget {
-  const _ProgressBar({required this.progress});
-  final double progress;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppColors.of(context);
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: SizedBox(
-        height: 10,
-        child: Stack(
-          children: [
-            Container(color: c.progressTrack),
-            FractionallySizedBox(
-              widthFactor: progress == 0 ? 0.001 : progress,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  gradient: LinearGradient(
-                    colors: [c.progressStart, c.progressEnd],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -687,44 +663,29 @@ class _MacroCard extends StatelessWidget {
                     color: c.muted,
                   ),
                 ),
+                // Exact overage, plain wording, no alarm styling.
+                if (value > goal)
+                  TextSpan(
+                    text: ' · +${fmtGrams(value - goal)}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: color,
+                    ),
+                  ),
               ],
             ),
           ),
         ),
         const SizedBox(height: 10),
-        _MiniBar(progress: (value / goal).clamp(0.0, 1.0), color: color),
-      ],
-    );
-  }
-}
-
-class _MiniBar extends StatelessWidget {
-  const _MiniBar({required this.progress, required this.color});
-  final double progress;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppColors.of(context);
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(6),
-      child: SizedBox(
-        height: 8,
-        child: Stack(
-          children: [
-            Container(color: c.macroTrack),
-            FractionallySizedBox(
-              widthFactor: progress == 0 ? 0.001 : progress,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-              ),
-            ),
-          ],
+        StripedBar(
+          value: value,
+          goal: goal,
+          height: 8,
+          track: c.macroTrack,
+          color: color,
         ),
-      ),
+      ],
     );
   }
 }
