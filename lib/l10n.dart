@@ -78,6 +78,11 @@ class L10n {
   String get overGoal => isAr ? 'فوق الهدف' : 'Over goal';
   String get last7Days => isAr ? 'آخر 7 أيام' : 'Last 7 days';
 
+  /// Accessibility label for the streak chip. Neutral wording only.
+  String streakDays(int n) => isAr
+      ? '${fmtInt(n)} أيام تسجيل متتالية'
+      : '${fmtInt(n)} consecutive days logged';
+
   String get chooseLanguage => isAr ? 'اختر اللغة' : 'Choose your language';
   String get next => isAr ? 'التالي' : 'Next';
   String get skip => isAr ? 'تخطي' : 'Skip';

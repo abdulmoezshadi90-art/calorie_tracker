@@ -76,6 +76,24 @@ class AppState extends ChangeNotifier {
     return totals;
   }
 
+  /// Consecutive days with at least one logged entry, ending today — or
+  /// yesterday, so an unlogged morning doesn't zero it. Derived from the
+  /// day logs, no extra persistence; a broken streak just resets quietly
+  /// (design decision 2: no guilt framing).
+  int get streak {
+    final t = now();
+    var day = DateTime(t.year, t.month, t.day);
+    if (entriesFor(day).isEmpty) {
+      day = DateTime(day.year, day.month, day.day - 1);
+    }
+    var count = 0;
+    while (entriesFor(day).isNotEmpty) {
+      count++;
+      day = DateTime(day.year, day.month, day.day - 1);
+    }
+    return count;
+  }
+
   /// Days with at least one logged entry, newest first.
   List<DateTime> loggedDates() {
     final dates = <DateTime>[

@@ -36,7 +36,7 @@ class HomeScreen extends StatelessWidget {
             // Pull the content up so the first card overlaps the header
             // base; while scrolling it tucks under the pinned header.
             child: Transform.translate(
-              offset: const Offset(0, -30),
+              offset: const Offset(0, -12),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(18, 0, 18, 0),
                 child: Column(
@@ -179,11 +179,18 @@ class _TopRow extends StatelessWidget {
                 Row(
                   children: [
                     Flexible(
-                      child: Text(
-                        greeting,
-                        style: TextStyle(
-                          color: c.onHeader.withValues(alpha: 0.9),
-                          fontSize: 14,
+                      // Same one-line scale-down treatment as the unnamed
+                      // branch — wrapping would overflow the header slot.
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          greeting,
+                          maxLines: 1,
+                          style: TextStyle(
+                            color: c.onHeader.withValues(alpha: 0.9),
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                     ),
@@ -228,12 +235,59 @@ class _TopRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
+        // Streak sits on the greeting side, opposite the language toggle.
+        const _StreakChip(),
         const _SettingsButton(),
         const SizedBox(width: 8),
         const _LangToggle(),
         const SizedBox(width: 8),
         const _TodayPill(),
       ],
+    );
+  }
+}
+
+/// Subtle consecutive-days-logged counter. Hidden entirely at zero —
+/// a broken streak resets quietly, never scolds (design decision 2).
+class _StreakChip extends StatelessWidget {
+  const _StreakChip();
+
+  @override
+  Widget build(BuildContext context) {
+    final state = AppScope.of(context);
+    final c = AppColors.of(context);
+    final streak = state.streak;
+    if (streak == 0) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(end: 6),
+      child: Semantics(
+        label: state.l.streakDays(streak),
+        child: Container(
+          height: 44,
+          padding: const EdgeInsets.symmetric(horizontal: 7),
+          decoration: BoxDecoration(
+            color: c.dayIdleBg,
+            borderRadius: BorderRadius.circular(22),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.local_fire_department_outlined,
+                  size: 15, color: c.gold),
+              const SizedBox(width: 3),
+              Text(
+                fmtInt(streak),
+                style: TextStyle(
+                  color: c.onHeader,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
