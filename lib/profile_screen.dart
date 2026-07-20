@@ -294,6 +294,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  /// Shared step layout: the question, input and button group vertically
+  /// centered in the available space (calm guided flow, not a form).
+  /// Falls back to scrolling when content is taller than the viewport
+  /// (activity step at large font sizes).
+  Widget _stepShell(List<Widget> children) {
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight - 32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: children,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _question(AppColors c, String text) => Text(
     text,
     style: TextStyle(
@@ -311,9 +331,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required Widget child,
     required VoidCallback onContinue,
   }) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
-      children: [
+    return _stepShell([
         _question(c, question),
         const SizedBox(height: 24),
         child,
@@ -354,9 +372,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     String? helper,
     required ValueChanged<T> onSelect,
   }) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
-      children: [
+    return _stepShell([
         _question(c, question),
         const SizedBox(height: 20),
         for (final v in values) ...[
@@ -386,9 +402,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (result == null) return const SizedBox.shrink();
     final g = result.goals;
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
-      children: [
+    return _stepShell([
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
