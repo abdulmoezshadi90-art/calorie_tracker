@@ -11,8 +11,8 @@ import 'package:calorie_tracker/profile_screen.dart';
 Profile _profile({
   Sex sex = Sex.male,
   int age = 30,
-  int weightKg = 80,
-  int heightCm = 180,
+  double weightKg = 80,
+  double heightCm = 180,
   ActivityLevel activity = ActivityLevel.moderate,
   WeightGoal goal = WeightGoal.maintain,
 }) => Profile(
@@ -174,9 +174,10 @@ void main() {
       await tester.tap(find.text('Moderate'));
       await tester.pumpAndSettle();
 
-      // Goal step: plain-language descriptions.
-      expect(find.text('A moderate daily deficit'), findsOneWidget);
-      await tester.tap(find.text('Lose weight'));
+      // Goal step: weekly-rate phrasing, no raw kcal in the options.
+      expect(find.text('~0.5 kg per week'), findsOneWidget);
+      expect(find.textContaining('kcal'), findsNothing);
+      await tester.tap(find.text('Weight loss'));
       await tester.pumpAndSettle();
 
       // Result summary (title shows in both the header slot and the card):
@@ -189,6 +190,116 @@ void main() {
       expect(state.goals.protein, (2250 * 0.25 / 4).round());
       expect(state.profile, isNotNull);
       expect(state.profile!.weightKg, 80);
+    });
+
+    testWidgets('every activity option shows its description, incl. High', (
+      tester,
+    ) async {
+      // Regression guard for a device report of a missing High line — not
+      // reproducible in this code (the string exists per decision 8), the
+      // report likely came from a pre-wizard build. This pins it forever.
+      await _pumpProfileScreen(tester);
+      await walkToAge(tester);
+      await enterAndContinue(tester, '30');
+      await enterAndContinue(tester, '80');
+      await enterAndContinue(tester, '180');
+
+      expect(find.text('Desk life, little or no exercise'), findsOneWidget);
+      expect(find.text('Exercise 1 to 3 times a week'), findsOneWidget);
+      expect(find.text('Exercise 4 to 5 times a week'), findsOneWidget);
+      expect(
+        find.text('Daily exercise, or intense exercise 3 to 6 times a week'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Very intense daily training or a physical job'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('weight and height accept one decimal point', (tester) async {
+      final state = await _pumpProfileScreen(tester);
+      await walkToAge(tester);
+      await enterAndContinue(tester, '30');
+
+      // Second '.' and other separators are normalized/stripped.
+      await tester.enterText(find.byType(TextField), '8١٫5'); // mixed input
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        '81.5',
+      );
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      await enterAndContinue(tester, '175.5');
+
+      await tester.tap(find.text('Moderate'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Maintain weight'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Use this goal'));
+      await tester.pumpAndSettle();
+
+      expect(state.profile!.weightKg, 81.5);
+      expect(state.profile!.heightCm, 175.5);
+      // Mifflin with decimals: 10×81.5 + 6.25×175.5 − 150 + 5 = 1766.875;
+      // ×1.55 = 2738.66 → 2750 to the nearest 50.
+      expect(state.goals.kcal, 2750);
+    });
+
+    testWidgets('rate-phrased goal options map to the spec adjustments', (
+      tester,
+    ) async {
+      // Maintenance for the standard test profile is 2759 → the option
+      // picked must apply exactly the decision-8 kcal adjustment. One app
+      // instance; reruns go through settings' recalculate (prefilled).
+      final state = await _pumpProfileScreen(tester);
+      var first = true;
+
+      Future<int> runWith(String goalLabel) async {
+        if (!first) {
+          await tester.tap(find.byIcon(Icons.calculate_outlined));
+          await tester.pumpAndSettle();
+        }
+        await tester.tap(find.text('Continue')); // name
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Male'));
+        await tester.pumpAndSettle();
+        if (first) {
+          await enterAndContinue(tester, '30');
+          await enterAndContinue(tester, '80');
+          await enterAndContinue(tester, '180');
+        } else {
+          // Prefilled from the saved profile — just continue through.
+          for (var i = 0; i < 3; i++) {
+            await tester.tap(find.text('Continue'));
+            await tester.pumpAndSettle();
+          }
+        }
+        await tester.tap(find.text('Moderate'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(goalLabel));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Use this goal'));
+        await tester.pumpAndSettle();
+        first = false;
+        return state.goals.kcal;
+      }
+
+      expect(await runWith('Maintain weight'), 2750); // 2759 → nearest 50
+      expect(await runWith('Mild weight loss'), 2500); // 2509 (−250)
+      expect(await runWith('Weight loss'), 2250); // 2259 (−500)
+      expect(await runWith('Weight gain'), 3050); // 3059 (+300)
+    });
+
+    testWidgets('age field still rejects a decimal point', (tester) async {
+      await _pumpProfileScreen(tester);
+      await walkToAge(tester);
+
+      await tester.enterText(find.byType(TextField), '2.5');
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        '25',
+      );
     });
 
     testWidgets('activity step renders RTL at 375x812 without overflow', (

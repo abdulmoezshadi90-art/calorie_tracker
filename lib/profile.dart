@@ -40,8 +40,9 @@ class Profile {
   final String name; // greeting only, stored locally, never transmitted
   final Sex sex;
   final int age;
-  final int weightKg;
-  final int heightCm;
+  // Weight and height accept decimals (81.5 kg); age stays integer-only.
+  final double weightKg;
+  final double heightCm;
   final ActivityLevel activity;
   final WeightGoal goal;
 
@@ -67,6 +68,8 @@ class Profile {
 
   static int _intOr(Object? v, int fallback) =>
       v is num ? v.round() : fallback;
+  static double _doubleOr(Object? v, double fallback) =>
+      v is num ? v.toDouble() : fallback;
 
   /// Null tolerant like Goals.fromJson: malformed fields fall back to
   /// harmless defaults so older saves keep loading as fields are added.
@@ -74,8 +77,8 @@ class Profile {
     name: json['name'] is String ? json['name'] as String : '',
     sex: Sex.values.asNameMap()[json['sex']] ?? Sex.male,
     age: _intOr(json['age'], 30),
-    weightKg: _intOr(json['weightKg'], 70),
-    heightCm: _intOr(json['heightCm'], 170),
+    weightKg: _doubleOr(json['weightKg'], 70),
+    heightCm: _doubleOr(json['heightCm'], 170),
     activity:
         ActivityLevel.values.asNameMap()[json['activity']] ??
         ActivityLevel.moderate,

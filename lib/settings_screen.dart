@@ -41,8 +41,13 @@ Future<void> openFeedbackEmail(BuildContext context, AppState state) async {
 }
 
 /// Normalizes Eastern Arabic numerals to Western on entry and strips
-/// everything that is not 0-9 (hard requirement 1).
+/// everything that is not 0-9 (hard requirement 1). With [allowDecimal]
+/// a single '.' is permitted too (Arabic decimal separator '٫' and ','
+/// normalize to '.') — used by weight/height, never by integer fields.
 class WesternDigitsFormatter extends TextInputFormatter {
+  const WesternDigitsFormatter({this.allowDecimal = false});
+  final bool allowDecimal;
+
   static const _eastern = '٠١٢٣٤٥٦٧٨٩';
 
   @override
@@ -51,6 +56,7 @@ class WesternDigitsFormatter extends TextInputFormatter {
     TextEditingValue newValue,
   ) {
     final buf = StringBuffer();
+    var hasPoint = false;
     for (final rune in newValue.text.runes) {
       final ch = String.fromCharCode(rune);
       final eastern = _eastern.indexOf(ch);
@@ -58,6 +64,11 @@ class WesternDigitsFormatter extends TextInputFormatter {
         buf.write(eastern);
       } else if (ch.compareTo('0') >= 0 && ch.compareTo('9') <= 0) {
         buf.write(ch);
+      } else if (allowDecimal &&
+          !hasPoint &&
+          (ch == '.' || ch == '٫' || ch == ',')) {
+        buf.write('.');
+        hasPoint = true;
       }
     }
     final text = buf.toString();
