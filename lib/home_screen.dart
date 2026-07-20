@@ -21,13 +21,21 @@ class HomeScreen extends StatelessWidget {
     final date = state.selectedDate;
     final totals = state.totalsFor(date);
 
+    final topInset = MediaQuery.of(context).padding.top;
+
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const _Header(),
-            // Pull the content up so the first card overlaps the header base.
-            Transform.translate(
+      body: CustomScrollView(
+        slivers: [
+          // Greeting row scrolls away; the date pill + week strip stay
+          // pinned (sliver-based, works unchanged in RTL).
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _HeaderDelegate(topInset: topInset),
+          ),
+          SliverToBoxAdapter(
+            // Pull the content up so the first card overlaps the header
+            // base; while scrolling it tucks under the pinned header.
+            child: Transform.translate(
               offset: const Offset(0, -30),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(18, 0, 18, 0),
@@ -49,8 +57,8 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -58,13 +66,35 @@ class HomeScreen extends StatelessWidget {
 
 // ─────────────────────────────── Header ───────────────────────────────
 
-class _Header extends StatelessWidget {
-  const _Header();
+/// Pinned header: greeting slides up and fades with scroll; the date row
+/// and week strip are bottom-anchored so they never move.
+class _HeaderDelegate extends SliverPersistentHeaderDelegate {
+  const _HeaderDelegate({required this.topInset});
+  final double topInset;
+
+  // Fixed allotments (the greeting row is FittedBox-guarded, so a fixed
+  // slot is safe at any font scale).
+  static const _greetingSlot = 68.0; // fits greeting + name line
+  static const _pinnedSection = 162.0; // date row + gap + strip + padding
 
   @override
-  Widget build(BuildContext context) {
+  double get maxExtent => topInset + 16 + _greetingSlot + 12 + _pinnedSection;
+
+  @override
+  double get minExtent => topInset + 8 + _pinnedSection;
+
+  @override
+  bool shouldRebuild(_HeaderDelegate old) => old.topInset != topInset;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     final c = AppColors.of(context);
-    final topInset = MediaQuery.of(context).padding.top;
+    final range = maxExtent - minExtent;
+    final progress = range == 0 ? 1.0 : (shrinkOffset / range).clamp(0.0, 1.0);
 
     return Container(
       decoration: BoxDecoration(
@@ -79,28 +109,37 @@ class _Header extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
         child: Stack(
           children: [
-            Positioned(
+            PositionedDirectional(
               top: -50,
-              right: -40,
+              end: -40,
               child: _blob(190, c.headerBlob.withValues(alpha: 0.55)),
             ),
-            Positioned(
+            PositionedDirectional(
               bottom: -70,
-              left: -30,
+              start: -30,
               child: _blob(220, c.headerBlob.withValues(alpha: 0.35)),
             ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(20, topInset + 16, 20, 34),
+            // Greeting: slides under the status bar and fades out.
+            PositionedDirectional(
+              top: topInset + 16 - shrinkOffset,
+              start: 20,
+              end: 20,
+              height: _greetingSlot,
+              child: Opacity(opacity: 1 - progress, child: const _TopRow()),
+            ),
+            // Pinned section, bottom-anchored: never moves.
+            const PositionedDirectional(
+              bottom: 20,
+              start: 20,
+              end: 20,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  _TopRow(),
-                  SizedBox(height: 12),
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [_DatePill(), _HistoryButton()],
                   ),
-                  SizedBox(height: 18),
+                  SizedBox(height: 14),
                   _WeekStrip(),
                 ],
               ),
