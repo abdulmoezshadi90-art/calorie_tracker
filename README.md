@@ -17,7 +17,7 @@ cover Libyan products or home dishes — this one does.
 | :---: | :---: |
 | ![Home, English, light](test/goldens/home_light_en.png) | ![Home, Arabic, dark](test/goldens/home_dark_ar.png) |
 
-A public web demo will be linked here at launch.
+**[Try the web demo](https://abdulmoezshadi90-art.github.io/calorie_tracker/)** — the real app, running in your browser. Data stays in your browser's local storage.
 
 ## Tech
 
