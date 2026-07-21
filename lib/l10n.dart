@@ -70,6 +70,9 @@ class L10n {
       ? 'هذه القيمة أقل من المعتاد. هل تريد المتابعة؟'
       : 'This value is lower than typical. Continue anyway?';
   String get goalsSaved => isAr ? 'تم حفظ الأهداف' : 'Goals saved';
+  // Storage write failure — the only real error a local-only app has.
+  String get saveFailed =>
+      isAr ? 'تعذّر الحفظ — حاول مرة أخرى' : "Couldn't save — try again";
 
   String get history => isAr ? 'السجل' : 'History';
   String get historyEmpty => isAr ? 'لا توجد أيام مسجلة بعد' : 'No logged days yet';

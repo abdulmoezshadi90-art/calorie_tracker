@@ -263,15 +263,25 @@ class _FoodTile extends StatelessWidget {
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      onPressed: () {
+                      onPressed: () async {
                         HapticFeedback.lightImpact();
-                        state.addEntry(
+                        // Await the write; only proceed on success so the
+                        // meter never confirms an entry that did not save.
+                        final ok = await state.addEntry(
                           state.selectedDate,
                           food.id,
                           servings,
                           meal,
                         );
+                        if (!sheetContext.mounted) return;
+                        if (!ok) {
+                          ScaffoldMessenger.of(sheetContext).showSnackBar(
+                            SnackBar(content: Text(l.saveFailed)),
+                          );
+                          return;
+                        }
                         Navigator.of(sheetContext).pop();
+                        if (!context.mounted) return;
                         Navigator.of(context).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(

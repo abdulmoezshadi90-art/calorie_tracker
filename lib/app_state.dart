@@ -109,7 +109,18 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addEntry(DateTime date, String foodId, double servings, MealType meal) {
+  // Every mutation applies in memory, persists, and ROLLS BACK on a
+  // failed write (disk full, permission): the UI must never show success
+  // for data that was not actually saved. Callers check the result and
+  // surface the inline "couldn't save" error where it matters.
+
+  /// Adds a log entry; false (and no visible entry) if the write failed.
+  Future<bool> addEntry(
+    DateTime date,
+    String foodId,
+    double servings,
+    MealType meal,
+  ) async {
     final entry = LogEntry(
       id: '${DateTime.now().microsecondsSinceEpoch}',
       foodId: foodId,
@@ -118,40 +129,81 @@ class AppState extends ChangeNotifier {
     );
     _logsByDate.putIfAbsent(dateKey(date), () => []).add(entry);
     notifyListeners();
-    _save();
-  }
-
-  void removeEntry(DateTime date, String entryId) {
-    _logsByDate[dateKey(date)]?.removeWhere((e) => e.id == entryId);
+    if (await _save()) return true;
+    _logsByDate[dateKey(date)]?.removeWhere((e) => e.id == entry.id);
     notifyListeners();
-    _save();
+    return false;
   }
 
-  void setGoals(Goals goals) {
+  /// Removes an entry, returning it (with its position) so callers can
+  /// offer undo via [restoreEntry]. Null if not found or write failed.
+  Future<({LogEntry entry, int index})?> removeEntry(
+    DateTime date,
+    String entryId,
+  ) async {
+    final list = _logsByDate[dateKey(date)];
+    final index = list?.indexWhere((e) => e.id == entryId) ?? -1;
+    if (list == null || index < 0) return null;
+    final removed = list.removeAt(index);
+    notifyListeners();
+    if (await _save()) return (entry: removed, index: index);
+    list.insert(index, removed);
+    notifyListeners();
+    return null;
+  }
+
+  /// Puts an undone-deleted entry back where it was.
+  Future<bool> restoreEntry(DateTime date, LogEntry entry, int index) async {
+    final list = _logsByDate.putIfAbsent(dateKey(date), () => []);
+    list.insert(index.clamp(0, list.length), entry);
+    notifyListeners();
+    if (await _save()) return true;
+    list.removeWhere((e) => e.id == entry.id);
+    notifyListeners();
+    return false;
+  }
+
+  Future<bool> setGoals(Goals goals) async {
+    final previous = _goals;
     _goals = goals;
     notifyListeners();
-    _save();
+    if (await _save()) return true;
+    _goals = previous;
+    notifyListeners();
+    return false;
   }
 
-  void setProfile(Profile profile) {
+  Future<bool> setProfile(Profile profile) async {
+    final previousProfile = _profile;
+    final previousName = userName;
     _profile = profile;
     userName = profile.name.trim();
     notifyListeners();
-    _save();
+    if (await _save()) return true;
+    _profile = previousProfile;
+    userName = previousName;
+    notifyListeners();
+    return false;
   }
 
-  void toggleLocale() => setLocale(localeCode == 'en' ? 'ar' : 'en');
+  Future<bool> toggleLocale() => setLocale(localeCode == 'en' ? 'ar' : 'en');
 
-  void setLocale(String code) {
+  Future<bool> setLocale(String code) async {
+    final previous = localeCode;
     localeCode = code;
     notifyListeners();
-    _save();
+    if (await _save()) return true;
+    localeCode = previous;
+    notifyListeners();
+    return false;
   }
 
-  void completeOnboarding() {
+  Future<bool> completeOnboarding() async {
     onboardingDone = true;
     notifyListeners();
-    _save();
+    // Never trap the user in onboarding over a failed flag write; worst
+    // case it replays next launch.
+    return _save();
   }
 
   Future<void> load() async {
@@ -182,12 +234,21 @@ class AppState extends ChangeNotifier {
     }
     final raw = prefs.getString(_logsKey);
     if (raw != null) {
+      // Salvage per day and per entry: one malformed record must not
+      // discard the rest of the diary (same spirit as Goals.fromJson).
       try {
         final decoded = jsonDecode(raw) as Map<String, dynamic>;
         decoded.forEach((date, list) {
-          _logsByDate[date] = (list as List)
-              .map((e) => LogEntry.fromJson(e as Map<String, dynamic>))
-              .toList();
+          if (DateTime.tryParse(date) == null || list is! List) return;
+          final entries = <LogEntry>[];
+          for (final e in list) {
+            try {
+              entries.add(LogEntry.fromJson(e as Map<String, dynamic>));
+            } catch (_) {
+              // Skip the bad entry, keep the day.
+            }
+          }
+          if (entries.isNotEmpty) _logsByDate[date] = entries;
         });
       } catch (_) {
         _logsByDate.clear();
@@ -195,22 +256,35 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<void> _save() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_localeKey, localeCode);
-    await prefs.setString(_goalsKey, jsonEncode(_goals.toJson()));
-    await prefs.setBool(_onboardingKey, onboardingDone);
-    if (_profile != null) {
-      await prefs.setString(_profileKey, jsonEncode(_profile!.toJson()));
-    }
-    await prefs.setString(
-      _logsKey,
-      jsonEncode(
-        _logsByDate.map(
-          (date, list) => MapEntry(date, list.map((e) => e.toJson()).toList()),
+  /// Simulates a storage write failure (disk full etc.) in tests.
+  @visibleForTesting
+  bool debugFailWrites = false;
+
+  /// True when everything persisted; false swallows nothing silently —
+  /// mutators roll back and their callers show the inline error.
+  Future<bool> _save() async {
+    try {
+      if (debugFailWrites) throw StateError('simulated write failure');
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_localeKey, localeCode);
+      await prefs.setString(_goalsKey, jsonEncode(_goals.toJson()));
+      await prefs.setBool(_onboardingKey, onboardingDone);
+      if (_profile != null) {
+        await prefs.setString(_profileKey, jsonEncode(_profile!.toJson()));
+      }
+      await prefs.setString(
+        _logsKey,
+        jsonEncode(
+          _logsByDate.map(
+            (date, list) =>
+                MapEntry(date, list.map((e) => e.toJson()).toList()),
+          ),
         ),
-      ),
-    );
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 }
 

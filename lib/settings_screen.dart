@@ -379,10 +379,14 @@ class _GoalsEditorState extends State<_GoalsEditor> {
       );
       if (proceed != true || !mounted) return;
     }
-    widget.state.setGoals(
+    final ok = await widget.state.setGoals(
       Goals(kcal: kcal, carbs: carbs, fat: fat, protein: protein),
     );
     if (!mounted) return;
+    if (!ok) {
+      setState(() => _error = l.saveFailed);
+      return;
+    }
     Navigator.of(context).pop();
     ScaffoldMessenger.of(
       context,

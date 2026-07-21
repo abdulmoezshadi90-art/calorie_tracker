@@ -143,15 +143,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _next();
   }
 
-  void _useGoal(AppState state) {
+  Future<void> _useGoal(AppState state) async {
     final profile = _buildProfile();
     final result = _result;
     if (profile == null || result == null) return;
-    state.setProfile(profile);
+    final okProfile = await state.setProfile(profile);
     // Result is already clamped at the floors, so this save needs no
     // warning; manual edits go through the goals editor as usual.
-    state.setGoals(result.goals);
+    final okGoals = await state.setGoals(result.goals);
     if (!mounted) return;
+    if (!okProfile || !okGoals) {
+      setState(() => _error = state.l.saveFailed);
+      return;
+    }
     Navigator.of(context).pop();
     ScaffoldMessenger.of(
       context,
@@ -482,6 +486,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 l.estimateNote,
                 style: TextStyle(fontSize: 11, height: 1.4, color: c.muted),
               ),
+              if (_error != null) ...[
+                const SizedBox(height: 8),
+                Text(_error!, style: TextStyle(fontSize: 13, color: c.fat)),
+              ],
               const SizedBox(height: 12),
               Row(
                 children: [
