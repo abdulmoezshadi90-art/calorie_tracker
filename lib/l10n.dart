@@ -77,6 +77,27 @@ class L10n {
   String get saveFailed =>
       isAr ? 'تعذّر الحفظ — حاول مرة أخرى' : "Couldn't save — try again";
 
+  // Weight logging + progress (neutral wording, no judgement by design).
+  String get progress => isAr ? 'التقدّم' : 'Progress';
+  String get logWeight => isAr ? 'سجّل وزنك' : 'Log weight';
+  String get weightTrend => isAr ? 'الوزن' : 'Weight';
+  String get weightSaved => isAr ? 'تم حفظ الوزن' : 'Weight saved';
+  String get weightOverwrite => isAr
+      ? 'سجّلت وزنك اليوم بالفعل. هل تريد استبداله؟'
+      : "You already logged today's weight. Replace it?";
+  String get weightEmptyLine =>
+      isAr ? 'لا يوجد وزن مسجّل بعد' : 'No weight logged yet';
+  String get weightEmptyHint => isAr
+      ? 'سجّل وزنك لتتبّع تقدّمك هنا'
+      : 'Log your weight to track your progress here';
+  String get weightTrendHint => isAr
+      ? 'سجّل وزنك بانتظام لرؤية اتجاهك'
+      : 'Log weight regularly to see your trend';
+  String get kg => isAr ? 'كجم' : 'kg';
+
+  String get foods => isAr ? 'الأطعمة' : 'Foods';
+  String get approxMarker => isAr ? 'تقريبي' : 'approx.';
+
   String get history => isAr ? 'السجل' : 'History';
   String get historyEmpty => isAr ? 'لا توجد أيام مسجلة بعد' : 'No logged days yet';
   // Neutral goal wording by design: no alarm colors, no judgement.

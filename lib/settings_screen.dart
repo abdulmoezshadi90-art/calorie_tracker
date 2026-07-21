@@ -6,6 +6,7 @@ import 'models.dart';
 import 'onboarding_screen.dart';
 import 'profile_screen.dart';
 import 'theme.dart';
+import 'weight_log.dart';
 
 /// Shown in the about card. Keep in sync with pubspec.yaml `version:`.
 const appVersion = '0.5.0';
@@ -182,6 +183,20 @@ class SettingsScreen extends StatelessWidget {
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(builder: (_) => const ProfileScreen()),
               ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _SettingsCard(
+            child: ListTile(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              leading: Icon(Icons.monitor_weight_outlined, color: c.accent),
+              title: Text(
+                l.logWeight,
+                style: TextStyle(fontWeight: FontWeight.w700, color: c.ink),
+              ),
+              onTap: () => showLogWeightSheet(context, state),
             ),
           ),
           const SizedBox(height: 12),

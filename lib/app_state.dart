@@ -21,6 +21,7 @@ class AppState extends ChangeNotifier {
   static const _goalsKey = 'goals';
   static const _onboardingKey = 'onboarding_done';
   static const _profileKey = 'profile';
+  static const _weightsKey = 'weights_v1';
 
   Goals _goals = Goals.defaults;
   Goals get goals => _goals;
@@ -36,6 +37,9 @@ class AppState extends ChangeNotifier {
   String userName = '';
   late DateTime selectedDate;
   final Map<String, List<LogEntry>> _logsByDate = {};
+
+  // One weight per day (kg), keyed yyyy-MM-dd — mirrors the day-log store.
+  final Map<String, double> _weightByDate = {};
 
   // Monotonic suffix so entries logged in the same microsecond still get
   // unique ids (delete and undo target by id).
@@ -96,6 +100,38 @@ class AppState extends ChangeNotifier {
       day = DateTime(day.year, day.month, day.day - 1);
     }
     return count;
+  }
+
+  // ─────────────────────────── Weight log ───────────────────────────
+
+  bool hasWeightOn(DateTime date) =>
+      _weightByDate.containsKey(dateKey(date));
+
+  /// All weight entries as (date, kg), oldest first — chart reading order.
+  List<({DateTime date, double kg})> weightEntries() {
+    final entries = [
+      for (final e in _weightByDate.entries)
+        (date: DateTime.parse(e.key), kg: e.value),
+    ];
+    entries.sort((a, b) => a.date.compareTo(b.date));
+    return entries;
+  }
+
+  /// Logs (or overwrites) one weight for [date]. Write-safe: rolls back
+  /// on a failed write. Callers confirm before overwriting an existing day.
+  Future<bool> logWeight(DateTime date, double kg) async {
+    final key = dateKey(date);
+    final previous = _weightByDate[key];
+    _weightByDate[key] = kg;
+    notifyListeners();
+    if (await _save()) return true;
+    if (previous == null) {
+      _weightByDate.remove(key);
+    } else {
+      _weightByDate[key] = previous;
+    }
+    notifyListeners();
+    return false;
   }
 
   /// Days with at least one logged entry, newest first.
@@ -180,12 +216,20 @@ class AppState extends ChangeNotifier {
   Future<bool> setProfile(Profile profile) async {
     final previousProfile = _profile;
     final previousName = userName;
+    // Seed the weight log from the wizard answer so the trend graph is
+    // never empty for profile users. Only when there are no entries yet
+    // and today has none, so recalculating never overwrites a real log.
+    final today = dateKey(now());
+    final seedWeight =
+        _weightByDate.isEmpty && !_weightByDate.containsKey(today);
     _profile = profile;
     userName = profile.name.trim();
+    if (seedWeight) _weightByDate[today] = profile.weightKg;
     notifyListeners();
     if (await _save()) return true;
     _profile = previousProfile;
     userName = previousName;
+    if (seedWeight) _weightByDate.remove(today);
     notifyListeners();
     return false;
   }
@@ -236,6 +280,20 @@ class AppState extends ChangeNotifier {
         _profile = null;
       }
     }
+    final rawWeights = prefs.getString(_weightsKey);
+    if (rawWeights != null) {
+      // Salvage per entry like the diary: skip malformed, keep the rest.
+      try {
+        final decoded = jsonDecode(rawWeights) as Map<String, dynamic>;
+        decoded.forEach((date, kg) {
+          if (DateTime.tryParse(date) != null && kg is num) {
+            _weightByDate[date] = kg.toDouble();
+          }
+        });
+      } catch (_) {
+        _weightByDate.clear();
+      }
+    }
     final raw = prefs.getString(_logsKey);
     if (raw != null) {
       // Salvage per day and per entry: one malformed record must not
@@ -276,6 +334,7 @@ class AppState extends ChangeNotifier {
       if (_profile != null) {
         await prefs.setString(_profileKey, jsonEncode(_profile!.toJson()));
       }
+      await prefs.setString(_weightsKey, jsonEncode(_weightByDate));
       await prefs.setString(
         _logsKey,
         jsonEncode(
