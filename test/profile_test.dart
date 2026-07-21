@@ -42,7 +42,7 @@ Future<AppState> _pumpProfileScreen(
 
   await tester.tap(find.byIcon(Icons.settings_outlined));
   await tester.pumpAndSettle();
-  await tester.tap(find.byIcon(Icons.calculate_outlined));
+  await tester.tap(find.byIcon(Icons.person_add_alt_1_outlined));
   await tester.pumpAndSettle();
   return state;
 }
@@ -257,6 +257,7 @@ void main() {
 
       Future<int> runWith(String goalLabel) async {
         if (!first) {
+          // A profile now exists → the card reads "Recalculate".
           await tester.tap(find.byIcon(Icons.calculate_outlined));
           await tester.pumpAndSettle();
         }

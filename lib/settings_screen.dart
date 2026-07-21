@@ -163,13 +163,20 @@ class SettingsScreen extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
               ),
-              leading: Icon(Icons.calculate_outlined, color: c.accent),
+              // Unset profile (skipped wizard): invite setup rather than
+              // showing a bare "recalculate" with nothing behind it.
+              leading: Icon(
+                state.profile == null
+                    ? Icons.person_add_alt_1_outlined
+                    : Icons.calculate_outlined,
+                color: c.accent,
+              ),
               title: Text(
-                l.recalculateGoal,
+                state.profile == null ? l.setUpProfile : l.recalculateGoal,
                 style: TextStyle(fontWeight: FontWeight.w700, color: c.ink),
               ),
               subtitle: Text(
-                l.profileTitle,
+                state.profile == null ? l.setUpProfileHint : l.profileTitle,
                 style: TextStyle(fontSize: 12, color: c.muted),
               ),
               onTap: () => Navigator.of(context).push(

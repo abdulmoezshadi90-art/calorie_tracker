@@ -155,6 +155,12 @@ class L10n {
       isAr ? 'بين ${fmtInt(min)} و ${fmtInt(max)}' : '${fmtInt(min)}–${fmtInt(max)}';
   String get recalculateGoal =>
       isAr ? 'إعادة حساب الهدف' : 'Recalculate my goal';
+  // Empty/unset profile prompt — shown when the wizard was skipped, so
+  // the profile area invites setup instead of looking blank.
+  String get setUpProfile => isAr ? 'أنشئ ملفك الشخصي' : 'Set up your profile';
+  String get setUpProfileHint => isAr
+      ? 'للحصول على هدف يومي مخصص لك'
+      : 'for a personalized daily goal';
 
   // Wizard step questions — one clear heading per screen.
   String get nameQuestion =>
