@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:calorie_tracker/app_state.dart';
-import 'package:calorie_tracker/history_screen.dart';
+import 'package:calorie_tracker/progress_screen.dart';
 import 'package:calorie_tracker/main.dart';
 import 'package:calorie_tracker/models.dart';
 
@@ -21,8 +21,8 @@ Future<AppState> _pumpApp(WidgetTester tester, {String locale = 'en'}) async {
   return state;
 }
 
-Future<void> _openHistory(WidgetTester tester) async {
-  await tester.tap(find.byIcon(Icons.history));
+Future<void> _openProgress(WidgetTester tester) async {
+  await tester.tap(find.byIcon(Icons.insights_outlined));
   await tester.pumpAndSettle();
 }
 
@@ -31,14 +31,16 @@ void main() {
     tester,
   ) async {
     await _pumpApp(tester);
-    await _openHistory(tester);
+    await _openProgress(tester);
 
     expect(tester.takeException(), isNull);
     // App bar title + bottom-nav tab label both say History.
-    expect(find.text('History'), findsNWidgets(2));
+    expect(find.text('Progress'), findsNWidgets(2));
     expect(find.text('No logged days yet'), findsOneWidget);
-    // No chart on a fully empty history.
-    expect(find.text('Last 7 days'), findsNothing);
+    // The 7-day calorie chart is always present; the weight card shows
+    // its own empty state when no weight is logged.
+    expect(find.text('Last 7 days'), findsOneWidget);
+    expect(find.text('No weight logged yet'), findsOneWidget);
   });
 
   testWidgets('7-day chart renders with data, over-goal and RTL variants', (
@@ -51,7 +53,7 @@ void main() {
     }
     await tester.pumpAndSettle();
 
-    await _openHistory(tester);
+    await _openProgress(tester);
     expect(tester.takeException(), isNull);
     expect(find.text('Last 7 days'), findsOneWidget);
 
@@ -97,7 +99,7 @@ void main() {
     state.addEntry(day, 'kalee_cheese', 2, MealType.snack); // 260 kcal
     await tester.pumpAndSettle();
 
-    await _openHistory(tester);
+    await _openProgress(tester);
     expect(tester.takeException(), isNull);
     expect(find.text('Friday, July 10 · 2026'), findsOneWidget);
     expect(find.text('800 / 2,000 kcal'), findsOneWidget);
@@ -123,7 +125,7 @@ void main() {
     }
     await tester.pumpAndSettle();
 
-    await _openHistory(tester);
+    await _openProgress(tester);
     expect(find.text('Over goal'), findsOneWidget);
     expect(find.text('2,700 / 2,000 kcal'), findsOneWidget);
   });
@@ -142,12 +144,12 @@ void main() {
     }
     await tester.pumpAndSettle();
 
-    await _openHistory(tester);
+    await _openProgress(tester);
     expect(tester.takeException(), isNull);
-    // Newest logged day first.
-    final firstTile = tester.getTopLeft(find.text('Tuesday, July 14 · 2026'));
-    final laterTile = tester.getTopLeft(find.text('Sunday, July 12 · 2026'));
-    expect(firstTile.dy, lessThan(laterTile.dy));
+    // Newest logged day is first in the list order (state guarantees it);
+    // its tile is inflated near the top under the two chart cards.
+    expect(state.loggedDates().first, DateTime(2026, 7, 14));
+    expect(find.text('Tuesday, July 14 · 2026'), findsOneWidget);
     // Scroll to the bottom; list must survive the full range.
     await tester.fling(find.byType(ListView), const Offset(0, -4000), 3000);
     await tester.pumpAndSettle();
@@ -160,13 +162,57 @@ void main() {
     state.addEntry(DateTime(2026, 7, 10), 'bazin', 1, MealType.lunch);
     await tester.pumpAndSettle();
 
-    await _openHistory(tester);
+    await _openProgress(tester);
     expect(tester.takeException(), isNull);
-    // App bar title + bottom-nav tab label both say السجل.
-    expect(find.text('السجل'), findsNWidgets(2));
+    // App bar title + bottom-nav tab label both say التقدّم.
+    expect(find.text('التقدّم'), findsNWidgets(2));
     expect(find.text('الجمعة، 10 يوليو · 2026'), findsOneWidget);
-    final context = tester.element(find.text('السجل').first);
+    final context = tester.element(find.text('التقدّم').first);
     expect(Directionality.of(context), TextDirection.rtl);
     expect(find.textContaining('٢'), findsNothing);
+  });
+
+  testWidgets('weight chart renders with 0, 1, 2, and 30 points', (
+    tester,
+  ) async {
+    for (final n in [0, 1, 2, 30]) {
+      SharedPreferences.setMockInitialValues({'onboarding_done': true});
+      final state = AppState(clock: () => DateTime(2026, 7, 15));
+      await state.load();
+      for (var i = 0; i < n; i++) {
+        await state.logWeight(
+          DateTime(2026, 6, 16).add(Duration(days: i)),
+          80 + (i % 5) * 0.5,
+        );
+      }
+      // Fresh key each iteration so the shell's tab state doesn't carry
+      // over (element reuse would keep Progress selected otherwise).
+      await tester.pumpWidget(CalorieApp(key: UniqueKey(), state: state));
+      await tester.pumpAndSettle();
+      await _openProgress(tester);
+
+      expect(tester.takeException(), isNull, reason: 'n=$n threw');
+      if (n == 0) {
+        expect(find.text('No weight logged yet'), findsOneWidget);
+      } else {
+        final painter =
+            tester
+                    .widget<CustomPaint>(
+                      find.byWidgetPredicate(
+                        (w) =>
+                            w is CustomPaint &&
+                            w.painter is WeightLineChartPainter,
+                      ),
+                    )
+                    .painter
+                as WeightLineChartPainter;
+        expect(painter.kgs.length, n);
+        // A single point shows the trend hint, not a fake line.
+        expect(
+          find.text('Log weight regularly to see your trend'),
+          n == 1 ? findsOneWidget : findsNothing,
+        );
+      }
+    }
   });
 }

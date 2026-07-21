@@ -27,9 +27,9 @@ void main() {
 
     expect(find.text("Today's calories"), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.history));
+    await tester.tap(find.byIcon(Icons.insights_outlined));
     await tester.pumpAndSettle();
-    expect(find.text('Last 7 days'), findsNothing); // no logs → empty state
+    expect(find.text('Last 7 days'), findsOneWidget); // chart always shown
     expect(find.text('No logged days yet'), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.settings_outlined));
@@ -60,7 +60,9 @@ void main() {
   ) async {
     await _pumpApp(tester);
 
-    await tester.tap(find.byIcon(Icons.history));
+    await tester.tap(find.byIcon(Icons.insights_outlined));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Back to today'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Back to today'));
     await tester.pumpAndSettle();

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'app_state.dart';
-import 'history_screen.dart';
 import 'home_screen.dart';
+import 'progress_screen.dart';
 import 'settings_screen.dart';
 import 'theme.dart';
 
@@ -44,7 +44,7 @@ class _AppShellState extends State<AppShell> {
         select: (i) => setState(() => _tab = i),
         child: IndexedStack(
           index: _tab,
-          children: const [HomeScreen(), HistoryScreen(), SettingsScreen()],
+          children: const [HomeScreen(), ProgressScreen(), SettingsScreen()],
         ),
       ),
       // Manual shadow like the cards (elevation renders as solid black
@@ -65,9 +65,9 @@ class _AppShellState extends State<AppShell> {
                   onTap: () => setState(() => _tab = 0),
                 ),
                 _NavItem(
-                  icon: Icons.history,
-                  selectedIcon: Icons.history,
-                  label: l.history,
+                  icon: Icons.insights_outlined,
+                  selectedIcon: Icons.insights,
+                  label: l.progress,
                   selected: _tab == 1,
                   onTap: () => setState(() => _tab = 1),
                 ),

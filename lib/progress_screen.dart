@@ -6,11 +6,13 @@ import 'empty_state.dart';
 import 'food_db.dart';
 import 'models.dart';
 import 'theme.dart';
+import 'weight_log.dart';
 
-/// Scrollable list of past logged days. Tapping a day opens a read-only
-/// view of what was logged. Goal wording stays neutral by design.
-class HistoryScreen extends StatelessWidget {
-  const HistoryScreen({super.key});
+/// Progress: weight trend on top, the 7-day calorie bar chart in the
+/// middle, and the day-history list below. Merges what was the History
+/// tab. Neutral presentation throughout (no alarm styling by design).
+class ProgressScreen extends StatelessWidget {
+  const ProgressScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -18,44 +20,216 @@ class HistoryScreen extends StatelessWidget {
     final c = AppColors.of(context);
     final l = state.l;
     final dates = state.loggedDates();
+    final weights = state.weightEntries();
 
     return Scaffold(
       backgroundColor: c.pageBg,
       appBar: AppBar(
         backgroundColor: c.headerTop,
         foregroundColor: c.onHeader,
-        title: Text(l.history),
+        title: Text(l.progress),
+        actions: [
+          IconButton(
+            tooltip: l.logWeight,
+            icon: const Icon(Icons.add),
+            onPressed: () => showLogWeightSheet(context, state),
+          ),
+        ],
       ),
-      body: dates.isEmpty
-          ? EmptyState(
-              icon: Icons.calendar_month_outlined,
-              line: l.historyEmpty,
-              hint: l.historyEmptyHint,
-              actionLabel: l.backToToday,
-              // In the shell, History is a tab: switch to Today. Falls
-              // back to pop if ever shown as a pushed route.
-              onAction: () {
-                final tabs = AppTabs.maybeOf(context);
-                if (tabs != null) {
-                  tabs.select(0);
-                } else {
-                  Navigator.of(context).maybePop();
-                }
-              },
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _WeightChartCard(weights: weights),
+          const _WeekChartCard(),
+          if (dates.isEmpty)
+            // No history yet: illustration + text (state-handling pass).
+            Padding(
+              padding: const EdgeInsets.only(top: 24),
+              child: EmptyState(
+                icon: Icons.calendar_month_outlined,
+                line: l.historyEmpty,
+                hint: l.historyEmptyHint,
+                actionLabel: l.backToToday,
+                onAction: () {
+                  final tabs = AppTabs.maybeOf(context);
+                  if (tabs != null) {
+                    tabs.select(0);
+                  } else {
+                    Navigator.of(context).maybePop();
+                  }
+                },
+              ),
             )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: dates.length + 1,
-              itemBuilder: (context, i) => i == 0
-                  ? const _WeekChartCard()
-                  : _DayTile(date: dates[i - 1]),
-            ),
+          else
+            for (final date in dates) _DayTile(date: date),
+        ],
+      ),
     );
   }
 }
 
-/// Calorie bar chart of the last 7 days (ending today), drawn by hand —
-/// no charting package by design.
+// ─────────────────────────── Weight trend ───────────────────────────
+
+class _WeightChartCard extends StatelessWidget {
+  const _WeightChartCard({required this.weights});
+  final List<({DateTime date, double kg})> weights;
+
+  @override
+  Widget build(BuildContext context) {
+    final state = AppScope.of(context);
+    final c = AppColors.of(context);
+    final l = state.l;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+      decoration: BoxDecoration(
+        color: c.card,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: c.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${l.weightTrend} (${l.kg})',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: c.ink,
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (weights.isEmpty)
+            // No weight yet: illustration + text, with a log action.
+            EmptyState(
+              icon: Icons.monitor_weight_outlined,
+              line: l.weightEmptyLine,
+              hint: l.weightEmptyHint,
+              actionLabel: l.logWeight,
+              onAction: () => showLogWeightSheet(context, state),
+            )
+          else ...[
+            SizedBox(
+              height: 130,
+              width: double.infinity,
+              child: Semantics(
+                label:
+                    '${l.weightTrend}: '
+                    '${[for (final w in weights) '${w.date.day}: ${_fmt(w.kg)}'].join(', ')}',
+                child: CustomPaint(
+                  painter: WeightLineChartPainter(
+                    kgs: [for (final w in weights) w.kg],
+                    isRtl: l.isAr,
+                    lineColor: c.accent,
+                    dotColor: c.accent,
+                    trackColor: c.macroTrack,
+                    labelColor: c.muted,
+                  ),
+                ),
+              ),
+            ),
+            // A single point can't show a trend — say so, don't fake a line.
+            if (weights.length == 1) ...[
+              const SizedBox(height: 8),
+              Text(
+                l.weightTrendHint,
+                style: TextStyle(fontSize: 12, color: c.muted),
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  static String _fmt(double v) =>
+      v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+}
+
+/// Line chart of weight over time. One point → a centered dot; two+ →
+/// a connected line with dots. Y auto-scales to the data with padding.
+/// Mirrors in RTL (oldest on the right, like the calorie bars).
+class WeightLineChartPainter extends CustomPainter {
+  WeightLineChartPainter({
+    required this.kgs,
+    required this.isRtl,
+    required this.lineColor,
+    required this.dotColor,
+    required this.trackColor,
+    required this.labelColor,
+  });
+
+  final List<double> kgs;
+  final bool isRtl;
+  final Color lineColor;
+  final Color dotColor;
+  final Color trackColor;
+  final Color labelColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final n = kgs.length;
+    if (n == 0) return;
+
+    final minKg = kgs.reduce((a, b) => a < b ? a : b);
+    final maxKg = kgs.reduce((a, b) => a > b ? a : b);
+    // Pad the range so flat/near-flat data isn't a line on the edge.
+    final span = (maxKg - minKg).abs();
+    final pad = span < 1 ? 2.0 : span * 0.25;
+    final lo = minKg - pad;
+    final hi = maxKg + pad;
+
+    double yFor(double kg) =>
+        size.height - ((kg - lo) / (hi - lo)) * size.height;
+    double xFor(int i) {
+      if (n == 1) return size.width / 2;
+      final t = i / (n - 1);
+      return isRtl ? size.width * (1 - t) : size.width * t;
+    }
+
+    // Baseline track.
+    canvas.drawLine(
+      Offset(0, size.height - 1),
+      Offset(size.width, size.height - 1),
+      Paint()
+        ..color = trackColor
+        ..strokeWidth = 1,
+    );
+
+    if (n >= 2) {
+      final path = Path();
+      for (var i = 0; i < n; i++) {
+        final p = Offset(xFor(i), yFor(kgs[i]));
+        if (i == 0) {
+          path.moveTo(p.dx, p.dy);
+        } else {
+          path.lineTo(p.dx, p.dy);
+        }
+      }
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = lineColor
+          ..strokeWidth = 2.5
+          ..style = PaintingStyle.stroke
+          ..strokeJoin = StrokeJoin.round,
+      );
+    }
+
+    final dot = Paint()..color = dotColor;
+    for (var i = 0; i < n; i++) {
+      canvas.drawCircle(Offset(xFor(i), yFor(kgs[i])), n == 1 ? 5 : 3.5, dot);
+    }
+  }
+
+  @override
+  bool shouldRepaint(WeightLineChartPainter old) =>
+      old.kgs.toString() != kgs.toString() || old.isRtl != isRtl;
+}
+
+// ──────────────────── 7-day calorie bar chart ────────────────────
+
 class _WeekChartCard extends StatelessWidget {
   const _WeekChartCard();
 
@@ -98,21 +272,17 @@ class _WeekChartCard extends StatelessWidget {
                   '${l.last7Days}: '
                   '${[for (final d in days) '${d.day}: ${fmtInt(state.totalsFor(d).kcal.round())} ${l.kcal}'].join(', ')}',
               child: CustomPaint(
-              painter: WeekBarChartPainter(
-                // Painter draws start-to-end; pass days in reading order so
-                // RTL shows the oldest day on the right.
-                kcals: [
-                  for (final d in days) state.totalsFor(d).kcal.round(),
-                ],
-                labels: [for (final d in days) '${d.day}'],
-                goal: state.goals.kcal,
-                isRtl: l.isAr,
-                barColor: c.accent,
-                overColor: c.gold,
-                trackColor: c.macroTrack,
-                goalLineColor: c.muted,
-                labelColor: c.muted,
-              ),
+                painter: WeekBarChartPainter(
+                  kcals: [for (final d in days) state.totalsFor(d).kcal.round()],
+                  labels: [for (final d in days) '${d.day}'],
+                  goal: state.goals.kcal,
+                  isRtl: l.isAr,
+                  barColor: c.accent,
+                  overColor: c.gold,
+                  trackColor: c.macroTrack,
+                  goalLineColor: c.muted,
+                  labelColor: c.muted,
+                ),
               ),
             ),
           ),
@@ -156,7 +326,6 @@ class WeekBarChartPainter extends CustomPainter {
     final chartHeight = size.height - _labelHeight;
     final slot = size.width / n;
     final barWidth = slot * 0.5;
-    // Headroom above the goal line so typical days don't hit the ceiling.
     final maxValue = [
       goal * 1.2,
       ...kcals.map((k) => k.toDouble()),
@@ -190,8 +359,6 @@ class WeekBarChartPainter extends CustomPainter {
       final tp = TextPainter(
         text: TextSpan(
           text: labels[i],
-          // Raw TextPainter skips the theme; name the family so golden
-          // tests resolve the loaded Roboto instead of the box font.
           style: TextStyle(
             fontSize: 11,
             color: labelColor,
@@ -201,13 +368,9 @@ class WeekBarChartPainter extends CustomPainter {
         ),
         textDirection: TextDirection.ltr,
       )..layout();
-      tp.paint(
-        canvas,
-        Offset(x + (barWidth - tp.width) / 2, chartHeight + 4),
-      );
+      tp.paint(canvas, Offset(x + (barWidth - tp.width) / 2, chartHeight + 4));
     }
 
-    // Dashed goal line.
     final goalY = chartHeight - (goal / maxValue) * chartHeight;
     final dash = Paint()
       ..color = goalLineColor
@@ -223,6 +386,8 @@ class WeekBarChartPainter extends CustomPainter {
       old.goal != goal ||
       old.isRtl != isRtl;
 }
+
+// ─────────────────────────── Day history ───────────────────────────
 
 class _DayTile extends StatelessWidget {
   const _DayTile({required this.date});
@@ -262,8 +427,6 @@ class _DayTile extends StatelessWidget {
           trailing: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              // Gold for over, green-tint for within: informative, never
-              // alarming (anti-ED design decision).
               color: over ? c.gold.withValues(alpha: 0.25) : c.chipBg,
               borderRadius: BorderRadius.circular(10),
             ),

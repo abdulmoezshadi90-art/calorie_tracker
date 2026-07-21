@@ -134,19 +134,24 @@ void main() {
     );
   });
 
-  testWidgets('history with 7-day chart — English', (tester) async {
+  testWidgets('progress — weight trend + 7-day chart, English', (
+    tester,
+  ) async {
     final state = await _pumpWithSampleData(tester);
-    // A couple of past days so the chart and list have content.
+    // Past days + a couple of weights so both charts have content.
     state.addEntry(DateTime(2026, 7, 13), 'kalee_cheese', 2, MealType.snack);
     for (var i = 0; i < 5; i++) {
       state.addEntry(DateTime(2026, 7, 14), 'bazin', 1, MealType.lunch);
     }
+    await state.logWeight(DateTime(2026, 7, 11), 82);
+    await state.logWeight(DateTime(2026, 7, 13), 81.5);
+    await state.logWeight(DateTime(2026, 7, 15), 81);
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.history));
+    await tester.tap(find.byIcon(Icons.insights_outlined));
     await tester.pumpAndSettle();
     await expectLater(
       find.byType(MaterialApp),
-      matchesGoldenFile('goldens/history_en.png'),
+      matchesGoldenFile('goldens/progress_en.png'),
     );
   });
 
