@@ -37,6 +37,10 @@ class AppState extends ChangeNotifier {
   late DateTime selectedDate;
   final Map<String, List<LogEntry>> _logsByDate = {};
 
+  // Monotonic suffix so entries logged in the same microsecond still get
+  // unique ids (delete and undo target by id).
+  int _idSeq = 0;
+
   L10n get l => L10n(localeCode);
 
   static String dateKey(DateTime d) =>
@@ -122,7 +126,7 @@ class AppState extends ChangeNotifier {
     MealType meal,
   ) async {
     final entry = LogEntry(
-      id: '${DateTime.now().microsecondsSinceEpoch}',
+      id: '${DateTime.now().microsecondsSinceEpoch}_${_idSeq++}',
       foodId: foodId,
       servings: servings,
       meal: meal.name,
