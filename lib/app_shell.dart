@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_state.dart';
+import 'foods_screen.dart';
 import 'home_screen.dart';
 import 'progress_screen.dart';
 import 'settings_screen.dart';
@@ -44,7 +45,12 @@ class _AppShellState extends State<AppShell> {
         select: (i) => setState(() => _tab = i),
         child: IndexedStack(
           index: _tab,
-          children: const [HomeScreen(), ProgressScreen(), SettingsScreen()],
+          children: const [
+            HomeScreen(),
+            ProgressScreen(),
+            FoodsScreen(),
+            SettingsScreen(),
+          ],
         ),
       ),
       // Manual shadow like the cards (elevation renders as solid black
@@ -55,6 +61,8 @@ class _AppShellState extends State<AppShell> {
           top: false,
           child: SizedBox(
             height: 64,
+            // Row-based so the 5-item order (and centered Add) mirror
+            // automatically in RTL.
             child: Row(
               children: [
                 _NavItem(
@@ -81,11 +89,18 @@ class _AppShellState extends State<AppShell> {
                   },
                 ),
                 _NavItem(
+                  icon: Icons.restaurant_menu_outlined,
+                  selectedIcon: Icons.restaurant_menu,
+                  label: l.foods,
+                  selected: _tab == 2,
+                  onTap: () => setState(() => _tab = 2),
+                ),
+                _NavItem(
                   icon: Icons.settings_outlined,
                   selectedIcon: Icons.settings,
                   label: l.settings,
-                  selected: _tab == 2,
-                  onTap: () => setState(() => _tab = 2),
+                  selected: _tab == 3,
+                  onTap: () => setState(() => _tab = 3),
                 ),
               ],
             ),

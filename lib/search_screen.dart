@@ -139,13 +139,17 @@ class _FoodTile extends StatelessWidget {
               color: c.protein,
             ),
           ),
-          onTap: () => _showAddSheet(context),
+          onTap: () => showAddFoodSheet(context, food, meal),
         ),
       ),
     );
   }
+}
 
-  void _showAddSheet(BuildContext context) {
+/// Add-to-meal bottom sheet for [food] and [meal]. Reused by the search
+/// results and the Foods browser tab. Servings stepper + portion presets,
+/// write-safe (inline error on failed save), checkmark flash on success.
+void showAddFoodSheet(BuildContext context, FoodItem food, MealType meal) {
     final state = AppScope.of(context);
     final c = AppColors.of(context);
     var servings = 1.0;
@@ -325,16 +329,15 @@ class _FoodTile extends StatelessWidget {
     );
   }
 
-  Widget _stepBtn(AppColors c, IconData icon, VoidCallback onTap) {
-    return IconButton(
-      onPressed: onTap,
-      icon: Icon(icon, size: 18),
-      style: IconButton.styleFrom(
-        backgroundColor: c.macroTrack,
-        foregroundColor: c.ink,
-      ),
-    );
-  }
+Widget _stepBtn(AppColors c, IconData icon, VoidCallback onTap) {
+  return IconButton(
+    onPressed: onTap,
+    icon: Icon(icon, size: 18),
+    style: IconButton.styleFrom(
+      backgroundColor: c.macroTrack,
+      foregroundColor: c.ink,
+    ),
+  );
 }
 
 /// Portion chip: selected state uses the accent, idle stays neutral.
