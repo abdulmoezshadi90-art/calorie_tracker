@@ -149,6 +149,9 @@ class _FoodTile extends StatelessWidget {
     final state = AppScope.of(context);
     final c = AppColors.of(context);
     var servings = 1.0;
+    // Brief checkmark flash on the confirm button before the sheet pops,
+    // confirming the tap landed (the home meter fill is the fuller cue).
+    var justSaved = false;
 
     showModalBottomSheet(
       context: context,
@@ -263,42 +266,54 @@ class _FoodTile extends StatelessWidget {
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      onPressed: () async {
-                        HapticFeedback.lightImpact();
-                        // Await the write; only proceed on success so the
-                        // meter never confirms an entry that did not save.
-                        final ok = await state.addEntry(
-                          state.selectedDate,
-                          food.id,
-                          servings,
-                          meal,
-                        );
-                        if (!sheetContext.mounted) return;
-                        if (!ok) {
-                          ScaffoldMessenger.of(sheetContext).showSnackBar(
-                            SnackBar(content: Text(l.saveFailed)),
-                          );
-                          return;
-                        }
-                        Navigator.of(sheetContext).pop();
-                        if (!context.mounted) return;
-                        Navigator.of(context).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              '${l.added}: ${l.foodName(food)} · ${fmtInt(kcal)} ${l.kcal}',
+                      // No-op (not null) while flashing so the button keeps
+                      // its accent styling instead of greying out.
+                      onPressed: justSaved
+                          ? () {}
+                          : () async {
+                              HapticFeedback.lightImpact();
+                              // Await the write; only proceed on success so
+                              // the meter never confirms an unsaved entry.
+                              final ok = await state.addEntry(
+                                state.selectedDate,
+                                food.id,
+                                servings,
+                                meal,
+                              );
+                              if (!sheetContext.mounted) return;
+                              if (!ok) {
+                                ScaffoldMessenger.of(sheetContext).showSnackBar(
+                                  SnackBar(content: Text(l.saveFailed)),
+                                );
+                                return;
+                              }
+                              // Flash the checkmark, then pop.
+                              setSheetState(() => justSaved = true);
+                              await Future<void>.delayed(
+                                const Duration(milliseconds: 350),
+                              );
+                              if (!sheetContext.mounted) return;
+                              Navigator.of(sheetContext).pop();
+                              if (!context.mounted) return;
+                              Navigator.of(context).pop();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    '${l.added}: ${l.foodName(food)} · ${fmtInt(kcal)} ${l.kcal}',
+                                  ),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                      child: justSaved
+                          ? Icon(Icons.check, size: 22, color: c.onAccent)
+                          : Text(
+                              '${l.add} · ${fmtInt(kcal)} ${l.kcal}',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                            duration: const Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        '${l.add} · ${fmtInt(kcal)} ${l.kcal}',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
                     ),
                   ),
                 ],

@@ -8,6 +8,39 @@ import 'models.dart';
 import 'search_screen.dart';
 import 'theme.dart';
 
+/// Deletes an entry with a 4-second undo: local-only storage means a
+/// mis-tap has no server backup, so a one-tap restore matters. The
+/// removed entry (and its position) come back from [AppState.removeEntry].
+Future<void> _deleteWithUndo(
+  BuildContext context,
+  AppState state,
+  LogEntry entry,
+) async {
+  final l = state.l;
+  final date = state.selectedDate;
+  HapticFeedback.lightImpact();
+  final removed = await state.removeEntry(date, entry.id);
+  if (!context.mounted) return;
+  final messenger = ScaffoldMessenger.of(context);
+  if (removed == null) {
+    // Nothing was removed (write failed → rolled back): surface the error.
+    messenger.showSnackBar(SnackBar(content: Text(l.saveFailed)));
+    return;
+  }
+  messenger.clearSnackBars();
+  messenger.showSnackBar(
+    SnackBar(
+      content: Text(l.removed),
+      duration: const Duration(seconds: 4),
+      action: SnackBarAction(
+        label: l.undo,
+        onPressed: () =>
+            state.restoreEntry(date, removed.entry, removed.index),
+      ),
+    ),
+  );
+}
+
 class MealDetailScreen extends StatelessWidget {
   const MealDetailScreen({super.key, required this.meal});
   final MealType meal;
@@ -107,13 +140,8 @@ class MealDetailScreen extends StatelessWidget {
                                     size: 20,
                                     color: c.muted,
                                   ),
-                                  onPressed: () {
-                                    HapticFeedback.lightImpact();
-                                    state.removeEntry(
-                                      state.selectedDate,
-                                      entry.id,
-                                    );
-                                  },
+                                  onPressed: () =>
+                                      _deleteWithUndo(context, state, entry),
                                 ),
                               ],
                             ),

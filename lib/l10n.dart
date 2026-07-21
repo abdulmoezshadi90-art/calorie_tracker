@@ -48,6 +48,9 @@ class L10n {
   String get add => isAr ? 'إضافة' : 'Add';
   String get added => isAr ? 'تمت الإضافة' : 'Added';
   String get delete => isAr ? 'حذف' : 'Delete';
+  // Undo pattern: local-only storage has no server backup for a mis-tap.
+  String get removed => isAr ? 'تم الحذف' : 'Removed';
+  String get undo => isAr ? 'تراجع' : 'Undo';
   String get total => isAr ? 'المجموع' : 'Total';
   String get perServing => isAr ? 'لكل حصة' : 'per serving';
   String get toggleLabel => isAr ? 'EN' : 'ع';
