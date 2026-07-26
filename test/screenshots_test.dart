@@ -155,7 +155,7 @@ void main() {
     );
   });
 
-  testWidgets('add-food sheet — English', (tester) async {
+  testWidgets('food detail page — English', (tester) async {
     await _pumpWithSampleData(tester);
     await tester.tap(find.byIcon(Icons.add).first);
     await tester.pumpAndSettle();
@@ -165,7 +165,7 @@ void main() {
     await tester.pumpAndSettle();
     await expectLater(
       find.byType(MaterialApp),
-      matchesGoldenFile('goldens/sheet_en.png'),
+      matchesGoldenFile('goldens/food_detail_en.png'),
     );
   });
 }

@@ -20,14 +20,14 @@ Future<AppState> _pumpApp(WidgetTester tester, {String locale = 'en'}) async {
   return state;
 }
 
-Future<void> _openFoodSheet(WidgetTester tester, String query, String name) async {
+Future<void> _openFoodDetail(WidgetTester tester, String query, String name) async {
   await tester.tap(find.text('Log your first meal'));
   await tester.pumpAndSettle();
   await tester.tap(find.text('Lunch').last);
   await tester.pumpAndSettle();
   await tester.enterText(find.byType(TextField), query);
   await tester.pumpAndSettle();
-  await tester.tap(find.text(name));
+  await tester.tap(find.text(name)); // opens the food detail page
   await tester.pumpAndSettle();
 }
 
@@ -53,39 +53,41 @@ void main() {
     }
   });
 
-  testWidgets('tapping a preset chip sets servings and kcal math', (
+  testWidgets('tapping a unit chip switches kcal and serving math', (
     tester,
   ) async {
     final state = await _pumpApp(tester);
-    await _openFoodSheet(tester, 'bazin', 'Bazin with Sauce');
+    await _openFoodDetail(tester, 'bazin', 'Bazin with Sauce');
 
-    // Chips are visible with gram labels.
-    expect(find.textContaining('Modest share · 250 g'), findsOneWidget);
+    // Base serving unit is selected by default.
+    expect(find.text('1 serving (350 g)'), findsOneWidget);
+    expect(find.textContaining('Add · 540 kcal'), findsOneWidget);
 
-    await tester.tap(find.textContaining('Modest share'));
+    // Switch to the "Modest share" preset (250 g): 540 × 250/350 ≈ 386 kcal.
+    await tester.tap(find.text('Modest share'));
     await tester.pumpAndSettle();
-    // 0.71 servings × 540 kcal = 383.4 → 383.
-    expect(find.text('0.71'), findsOneWidget);
-    expect(find.textContaining('Add · 383 kcal'), findsOneWidget);
+    expect(find.textContaining('Add · 386 kcal'), findsOneWidget);
 
-    // Stepper still fine-adjusts from the preset value.
-    await tester.tap(find.byIcon(Icons.add).last);
+    // Decimal stepper still fine-adjusts from the new unit: +0.5 → 1.5.
+    await tester.tap(find.byIcon(Icons.add));
     await tester.pumpAndSettle();
-    expect(find.text('1.21'), findsOneWidget);
+    expect(find.text('1.5'), findsOneWidget);
+    // 1.5 × 250/350 × 540 ≈ 579 kcal.
+    expect(find.textContaining('Add · 579 kcal'), findsOneWidget);
 
-    // Log it and confirm the preset-based entry persists across reload.
-    await tester.tap(find.textContaining('Add · 653 kcal'));
+    // Log it and confirm the unit-scaled entry persists across reload.
+    await tester.tap(find.textContaining('Add · 579 kcal'));
     await tester.pumpAndSettle();
     await tester.pump();
     final reloaded = AppState(clock: () => DateTime(2026, 7, 15, 9, 30));
     await reloaded.load();
-    expect(
-      reloaded.entriesFor(state.selectedDate).single.servings,
-      1.21,
-    );
+    final entry = reloaded.entriesFor(state.selectedDate).single;
+    expect(entry.unitId, 'Modest share');
+    expect(entry.quantity, 1.5);
+    expect(entry.servings, closeTo(1.0714285714285714, 1e-9));
   });
 
-  testWidgets('preset chips render RTL without overflow', (tester) async {
+  testWidgets('unit chips render RTL without overflow', (tester) async {
     await _pumpApp(tester, locale: 'ar');
     await tester.tap(find.text('سجّل أول وجبة'));
     await tester.pumpAndSettle();
@@ -97,10 +99,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.textContaining('حصة صغيرة · 250 جم'), findsOneWidget);
-    final context = tester.element(find.textContaining('حصة صغيرة'));
+    expect(find.text('حصة صغيرة'), findsOneWidget); // preset unit chip
+    final context = tester.element(find.text('حصة صغيرة'));
     expect(Directionality.of(context), TextDirection.rtl);
-    // Digits in chip labels stay Western.
-    expect(find.textContaining('٢'), findsNothing);
+    // Digits anywhere on the page stay Western.
+    expect(find.textContaining('٥'), findsNothing);
   });
 }

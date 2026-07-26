@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'app_state.dart';
 import 'food_db.dart';
+import 'food_detail_screen.dart';
 import 'models.dart';
-import 'search_screen.dart' show showAddFoodSheet;
 import 'theme.dart';
 
 /// Read-only browser over the food database, grouped by category. Tapping
-/// a food picks a meal, then opens the shared add sheet — browsing turns
+/// a food picks a meal, then opens the food detail page — browsing turns
 /// into logging in one tap. No new data model; a pure view over food_db.
 class FoodsScreen extends StatelessWidget {
   const FoodsScreen({super.key});
@@ -114,21 +115,101 @@ class _FoodRow extends StatelessWidget {
               ],
             ],
           ),
-          trailing: Text(
-            '${fmtInt(food.kcal)} ${l.kcal}',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: c.protein,
-            ),
+          // Row order only — never flipped by hand, so RTL mirrors it.
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '${fmtInt(food.kcal)} ${l.kcal}',
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: c.protein,
+                    ),
+                  ),
+                ),
+              ),
+              // Exact 44×44 footprint (IconButton's own padding would
+              // overflow a SizedBox wrapper) — build the circle directly.
+              Material(
+                color: Colors.transparent,
+                shape: const CircleBorder(),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: () => _pickMealThenQuickAdd(context, state),
+                  child: SizedBox(
+                    width: 44,
+                    height: 44,
+                    child: Icon(Icons.add_circle_outline, color: c.accent),
+                  ),
+                ),
+              ),
+            ],
           ),
-          onTap: () => _pickMealThenAdd(context, state),
+          onTap: () => _pickMealThenOpenDetail(context),
         ),
       ),
     );
   }
 
-  void _pickMealThenAdd(BuildContext context, AppState state) {
+  void _pickMealThenOpenDetail(BuildContext context) {
+    _showMealChooser(
+      context,
+      onPicked: (meal) => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => FoodDetailScreen(food: food, meal: meal),
+        ),
+      ),
+    );
+  }
+
+  void _pickMealThenQuickAdd(BuildContext context, AppState state) {
+    _showMealChooser(
+      context,
+      onPicked: (meal) async {
+        final l = state.l;
+        HapticFeedback.lightImpact();
+        final date = state.selectedDate;
+        final ok = await state.addEntry(date, food.id, 1.0, meal);
+        if (!context.mounted) return;
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.clearSnackBars();
+        if (!ok) {
+          messenger.showSnackBar(SnackBar(content: Text(l.saveFailed)));
+          return;
+        }
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              '${l.added}: ${l.foodName(food)} · ${fmtInt(food.kcal)} ${l.kcal}',
+            ),
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: l.undo,
+              onPressed: () async {
+                final match = state
+                    .entriesFor(date, meal: meal)
+                    .lastWhere(
+                      (e) => e.foodId == food.id && e.quantity == 1.0,
+                    );
+                await state.removeEntry(date, match.id);
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showMealChooser(
+    BuildContext context, {
+    required void Function(MealType meal) onPicked,
+  }) {
+    final state = AppScope.of(context);
     final c = AppColors.of(context);
     final l = state.l;
     showModalBottomSheet<void>(
@@ -168,7 +249,7 @@ class _FoodRow extends StatelessWidget {
                 ),
                 onTap: () {
                   Navigator.of(sheetContext).pop();
-                  showAddFoodSheet(context, food, meal);
+                  onPicked(meal);
                 },
               ),
             const SizedBox(height: 8),

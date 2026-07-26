@@ -50,6 +50,30 @@ class FoodItem {
   double servingsFor(PortionPreset preset) =>
       ((preset.grams / servingGrams!) * 100).round() / 100;
 
+  /// Ways to log this food's quantity: its own named serving, plus any
+  /// household presets it already defines. NOT a universal gram picker —
+  /// each food scales on its own terms (decision: never invent a weight
+  /// for foods whose label states none, e.g. "1 cone", "2 eggs").
+  List<ServingUnit> get servingUnits => [
+    ServingUnit(
+      id: 'serving',
+      labelEn: servingEn,
+      labelAr: servingAr,
+      grams: servingGrams,
+    ),
+    for (final p in presets)
+      ServingUnit(id: p.nameEn, labelEn: p.nameEn, labelAr: p.nameAr, grams: p.grams),
+  ];
+
+  /// Multiplier against the base serving for [quantity] of [unit]. Foods
+  /// with no known gram weight (unit.grams or servingGrams null) treat
+  /// quantity as a plain count of the base serving — identical to the
+  /// stepper behavior that existed before serving units did.
+  double multiplierFor(ServingUnit unit, double quantity) {
+    if (unit.grams == null || servingGrams == null) return quantity;
+    return quantity * unit.grams! / servingGrams!;
+  }
+
   const FoodItem({
     required this.id,
     required this.nameEn,
@@ -69,6 +93,22 @@ class FoodItem {
 }
 
 enum FoodCategory { snack, main, breakfast, sweet, drink }
+
+/// One way to log a food's quantity — the food's OWN serving scale (its
+/// named serving, or one of its household presets), never a universal
+/// gram unit. [grams] is null when the label carries no weight at all.
+class ServingUnit {
+  final String id;
+  final String labelEn;
+  final String labelAr;
+  final double? grams;
+  const ServingUnit({
+    required this.id,
+    required this.labelEn,
+    required this.labelAr,
+    this.grams,
+  });
+}
 
 enum MealType {
   breakfast,
@@ -100,32 +140,50 @@ class MealIcon extends StatelessWidget {
 }
 
 /// One logged food, tied to a meal on a given day.
+///
+/// [servings] is the actual multiplier against the food's per-serving
+/// macros — every totals calculation in the app reads only this, so it
+/// never changes meaning. [unitId] and [quantity] are the serving-unit
+/// picker's own inputs, kept alongside for display ("2 × 100 g") and
+/// carried through unchanged; legacy entries (pre serving-units) have
+/// neither, so they fall back to unit 'serving' with quantity = servings.
 class LogEntry {
   final String id;
   final String foodId;
   final double servings;
   final String meal; // MealType.name
+  final String unitId;
+  final double quantity;
 
   const LogEntry({
     required this.id,
     required this.foodId,
     required this.servings,
     required this.meal,
-  });
+    this.unitId = 'serving',
+    double? quantity,
+  }) : quantity = quantity ?? servings;
 
   Map<String, dynamic> toJson() => {
     'id': id,
     'foodId': foodId,
     'servings': servings,
     'meal': meal,
+    'unitId': unitId,
+    'quantity': quantity,
   };
 
-  factory LogEntry.fromJson(Map<String, dynamic> json) => LogEntry(
-    id: json['id'] as String,
-    foodId: json['foodId'] as String,
-    servings: (json['servings'] as num).toDouble(),
-    meal: json['meal'] as String,
-  );
+  factory LogEntry.fromJson(Map<String, dynamic> json) {
+    final servings = (json['servings'] as num).toDouble();
+    return LogEntry(
+      id: json['id'] as String,
+      foodId: json['foodId'] as String,
+      servings: servings,
+      meal: json['meal'] as String,
+      unitId: json['unitId'] as String? ?? 'serving',
+      quantity: (json['quantity'] as num?)?.toDouble() ?? servings,
+    );
+  }
 }
 
 /// Anti-eating-disorder floors: values below these get a gentle confirm,
@@ -202,4 +260,50 @@ String fmtGrams(double value) {
 String fmtServings(double value) {
   if (value == value.roundToDouble()) return value.toInt().toString();
   return value.toString();
+}
+
+/// Western-digit percent, e.g. "42%".
+String fmtPercent(num value) => '${fmtInt(value)}%';
+
+/// Unicode vulgar fraction glyphs for the app's five quantity presets —
+/// not a general float-to-fraction converter, just these exact values
+/// (Western digits either side by construction: only the glyph varies).
+const _fractionGlyphs = {1: '¼', 2: '⅓', 3: '½', 4: '⅔', 5: '¾'};
+
+/// [whole] plus a preset fraction (1=1/4, 2=1/3, 3=1/2, 4=2/3, 5=3/4, or
+/// 0 for none), e.g. fmtFraction(2, 3) → "2 ½".
+String fmtFraction(int whole, int fractionPreset) {
+  final glyph = _fractionGlyphs[fractionPreset];
+  if (glyph == null) return fmtInt(whole);
+  return whole == 0 ? glyph : '${fmtInt(whole)} $glyph';
+}
+
+/// Calorie-share percentages for carbs/fat/protein (4/9/4 kcal per gram)
+/// that always sum to exactly 100: round each, then push the rounding
+/// remainder onto whichever macro contributes the most calories.
+({int carb, int fat, int protein}) kcalPercents({
+  required double carbsG,
+  required double fatG,
+  required double proteinG,
+}) {
+  final carbKcal = carbsG * 4;
+  final fatKcal = fatG * 9;
+  final proteinKcal = proteinG * 4;
+  final total = carbKcal + fatKcal + proteinKcal;
+  if (total <= 0) return (carb: 0, fat: 0, protein: 0);
+
+  var carb = (carbKcal / total * 100).round();
+  var fat = (fatKcal / total * 100).round();
+  var protein = (proteinKcal / total * 100).round();
+  final diff = 100 - (carb + fat + protein);
+  if (diff != 0) {
+    if (carbKcal >= fatKcal && carbKcal >= proteinKcal) {
+      carb += diff;
+    } else if (fatKcal >= carbKcal && fatKcal >= proteinKcal) {
+      fat += diff;
+    } else {
+      protein += diff;
+    }
+  }
+  return (carb: carb, fat: fat, protein: protein);
 }

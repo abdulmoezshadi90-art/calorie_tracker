@@ -22,6 +22,7 @@ class AppState extends ChangeNotifier {
   static const _onboardingKey = 'onboarding_done';
   static const _profileKey = 'profile';
   static const _weightsKey = 'weights_v1';
+  static const _quantityModeKey = 'quantity_mode';
 
   Goals _goals = Goals.defaults;
   Goals get goals => _goals;
@@ -44,6 +45,10 @@ class AppState extends ChangeNotifier {
   // Monotonic suffix so entries logged in the same microsecond still get
   // unique ids (delete and undo target by id).
   int _idSeq = 0;
+
+  /// 'fraction' or 'decimal' — the food detail page's quantity input mode,
+  /// remembered across sessions like any other preference.
+  String quantityMode = 'decimal';
 
   L10n get l => L10n(localeCode);
 
@@ -155,17 +160,24 @@ class AppState extends ChangeNotifier {
   // surface the inline "couldn't save" error where it matters.
 
   /// Adds a log entry; false (and no visible entry) if the write failed.
+  /// [servings] is the actual multiplier used everywhere in totals math;
+  /// [unitId]/[quantity] are the serving-unit picker's inputs, carried
+  /// along for display only (default to the legacy single-serving shape).
   Future<bool> addEntry(
     DateTime date,
     String foodId,
     double servings,
-    MealType meal,
-  ) async {
+    MealType meal, {
+    String unitId = 'serving',
+    double? quantity,
+  }) async {
     final entry = LogEntry(
       id: '${DateTime.now().microsecondsSinceEpoch}_${_idSeq++}',
       foodId: foodId,
       servings: servings,
       meal: meal.name,
+      unitId: unitId,
+      quantity: quantity ?? servings,
     );
     _logsByDate.putIfAbsent(dateKey(date), () => []).add(entry);
     notifyListeners();
@@ -234,6 +246,16 @@ class AppState extends ChangeNotifier {
     return false;
   }
 
+  Future<bool> setQuantityMode(String mode) async {
+    final previous = quantityMode;
+    quantityMode = mode;
+    notifyListeners();
+    if (await _save()) return true;
+    quantityMode = previous;
+    notifyListeners();
+    return false;
+  }
+
   Future<bool> toggleLocale() => setLocale(localeCode == 'en' ? 'ar' : 'en');
 
   Future<bool> setLocale(String code) async {
@@ -258,6 +280,7 @@ class AppState extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     localeCode = prefs.getString(_localeKey) ?? 'en';
     onboardingDone = prefs.getBool(_onboardingKey) ?? false;
+    quantityMode = prefs.getString(_quantityModeKey) ?? 'decimal';
     // Corrupted storage (interrupted write, flaky flash on cheap phones)
     // must never brick startup: with no backend, an unlaunchable app means
     // reinstall and total data loss. Fall back per key instead of throwing.
@@ -331,6 +354,7 @@ class AppState extends ChangeNotifier {
       await prefs.setString(_localeKey, localeCode);
       await prefs.setString(_goalsKey, jsonEncode(_goals.toJson()));
       await prefs.setBool(_onboardingKey, onboardingDone);
+      await prefs.setString(_quantityModeKey, quantityMode);
       if (_profile != null) {
         await prefs.setString(_profileKey, jsonEncode(_profile!.toJson()));
       }

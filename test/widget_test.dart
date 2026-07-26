@@ -30,4 +30,40 @@ void main() {
     expect(fmtServings(1.0), '1');
     expect(fmtServings(1.5), '1.5');
   });
+
+  test('kcalPercents always sums to 100, including a zero-fat food', () {
+    final mixed = kcalPercents(carbsG: 75, fatG: 15, proteinG: 25);
+    expect(mixed.carb + mixed.fat + mixed.protein, 100);
+
+    // Honey: zero protein and zero fat — an all-carb edge case.
+    final honey = foodById['honey']!;
+    final zeroFat = kcalPercents(
+      carbsG: honey.carbs,
+      fatG: honey.fat,
+      proteinG: honey.protein,
+    );
+    expect(zeroFat.fat, 0);
+    expect(zeroFat.protein, 0);
+    expect(zeroFat.carb, 100);
+
+    for (final f in foodDatabase) {
+      final pct = kcalPercents(carbsG: f.carbs, fatG: f.fat, proteinG: f.protein);
+      final totalKcal = f.carbs * 4 + f.fat * 9 + f.protein * 4;
+      final expectedSum = totalKcal <= 0 ? 0 : 100;
+      expect(pct.carb + pct.fat + pct.protein, expectedSum, reason: f.id);
+    }
+  });
+
+  test('legacy LogEntry JSON without unitId/quantity still decodes', () {
+    final json = {
+      'id': 'x1',
+      'foodId': 'bazin',
+      'servings': 1.5,
+      'meal': 'lunch',
+    };
+    final entry = LogEntry.fromJson(json);
+    expect(entry.unitId, 'serving');
+    expect(entry.quantity, 1.5);
+    expect(entry.servings, 1.5);
+  });
 }

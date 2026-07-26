@@ -44,12 +44,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('Kalee'), findsNWidgets(4));
 
-    // Pick the cheese chips, bump to 1.5 servings, add.
+    // Pick the cheese chips: opens the food detail page (the popup sheet
+    // this used to open was replaced by a full page). Bump quantity to
+    // 1.5 via the decimal stepper, then confirm.
     await tester.tap(find.text('Kalee Chips — Cheese'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.add).last); // stepper +
+    await tester.tap(find.byIcon(Icons.add)); // decimal stepper +0.5
     await tester.pumpAndSettle();
-    expect(find.text('1.5'), findsOneWidget);
     await tester.tap(find.textContaining('Add · 195 kcal'));
     await tester.pumpAndSettle();
 

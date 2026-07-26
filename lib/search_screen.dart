@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'app_state.dart';
 import 'empty_state.dart';
 import 'food_db.dart';
+import 'food_detail_screen.dart';
 import 'models.dart';
 import 'theme.dart';
 
@@ -105,7 +106,8 @@ class _FoodTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    final l = AppScope.of(context).l;
+    final state = AppScope.of(context);
+    final l = state.l;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
@@ -131,248 +133,105 @@ class _FoodTile extends StatelessWidget {
             '${l.servingLabel(food)} · ${l.category(food.category)}',
             style: TextStyle(fontSize: 12, color: c.muted),
           ),
-          trailing: Text(
-            '${fmtInt(food.kcal)} ${l.kcal}',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: c.protein,
-            ),
+          // Row order only — never flipped by hand, so RTL mirrors it.
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '${fmtInt(food.kcal)} ${l.kcal}',
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: c.protein,
+                    ),
+                  ),
+                ),
+              ),
+              _QuickAddButton(food: food, meal: meal),
+            ],
           ),
-          onTap: () => showAddFoodSheet(context, food, meal),
+          // Search is itself a pushed route; when the detail page reports a
+          // successful log (pop(true)), also close search so the user lands
+          // back on Home, matching the old sheet-on-search behavior.
+          onTap: () async {
+            final logged = await Navigator.of(context).push<bool>(
+              MaterialPageRoute<bool>(
+                builder: (_) => FoodDetailScreen(food: food, meal: meal),
+              ),
+            );
+            if (logged == true && context.mounted) {
+              Navigator.of(context).pop();
+            }
+          },
         ),
       ),
     );
   }
 }
 
-/// Add-to-meal bottom sheet for [food] and [meal]. Reused by the search
-/// results and the Foods browser tab. Servings stepper + portion presets,
-/// write-safe (inline error on failed save), checkmark flash on success.
-void showAddFoodSheet(BuildContext context, FoodItem food, MealType meal) {
-    final state = AppScope.of(context);
-    final c = AppColors.of(context);
-    var servings = 1.0;
-    // Brief checkmark flash on the confirm button before the sheet pops,
-    // confirming the tap landed (the home meter fill is the fuller cue).
-    var justSaved = false;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: c.card,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetContext) {
-        final l = state.l;
-        return StatefulBuilder(
-          builder: (sheetContext, setSheetState) {
-            final kcal = (food.kcal * servings).round();
-            // Scrollable: preset chips can push the sheet past short
-            // screens, and the keyboard shrinks the space further.
-            return SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l.foodName(food),
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: c.ink,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${l.servingLabel(food)} · ${fmtInt(food.kcal)} ${l.kcal} ${l.perServing}',
-                    style: TextStyle(fontSize: 13, color: c.muted),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${l.protein}: ${fmtGrams(food.protein)}${l.grams} · '
-                    '${l.carb}: ${fmtGrams(food.carbs)}${l.grams} · '
-                    '${l.fat}: ${fmtGrams(food.fat)}${l.grams}',
-                    style: TextStyle(fontSize: 12, color: c.muted),
-                  ),
-                  // Household portion chips (Phase 4): tapping one sets the
-                  // servings from its exact gram weight; the stepper below
-                  // remains for fine adjustment.
-                  if (food.presets.isNotEmpty && food.servingGrams != null) ...[
-                    const SizedBox(height: 16),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final preset in food.presets)
-                          _PresetChip(
-                            label:
-                                '${l.isAr ? preset.nameAr : preset.nameEn} · ${fmtGrams(preset.grams)} ${l.grams}',
-                            selected:
-                                servings == food.servingsFor(preset),
-                            onTap: () => setSheetState(
-                              () => servings = food.servingsFor(preset),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        l.servings,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: c.ink,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          _stepBtn(c, Icons.remove, () {
-                            if (servings > 0.5) {
-                              setSheetState(() => servings -= 0.5);
-                            }
-                          }),
-                          SizedBox(
-                            width: 48,
-                            child: Text(
-                              fmtServings(servings),
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: c.ink,
-                              ),
-                            ),
-                          ),
-                          _stepBtn(c, Icons.add, () {
-                            if (servings < 10) {
-                              setSheetState(() => servings += 0.5);
-                            }
-                          }),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: c.accent,
-                        foregroundColor: c.onAccent,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      // No-op (not null) while flashing so the button keeps
-                      // its accent styling instead of greying out.
-                      onPressed: justSaved
-                          ? () {}
-                          : () async {
-                              HapticFeedback.lightImpact();
-                              // Await the write; only proceed on success so
-                              // the meter never confirms an unsaved entry.
-                              final ok = await state.addEntry(
-                                state.selectedDate,
-                                food.id,
-                                servings,
-                                meal,
-                              );
-                              if (!sheetContext.mounted) return;
-                              if (!ok) {
-                                ScaffoldMessenger.of(sheetContext).showSnackBar(
-                                  SnackBar(content: Text(l.saveFailed)),
-                                );
-                                return;
-                              }
-                              // Flash the checkmark, then pop.
-                              setSheetState(() => justSaved = true);
-                              await Future<void>.delayed(
-                                const Duration(milliseconds: 350),
-                              );
-                              if (!sheetContext.mounted) return;
-                              Navigator.of(sheetContext).pop();
-                              if (!context.mounted) return;
-                              Navigator.of(context).pop();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    '${l.added}: ${l.foodName(food)} · ${fmtInt(kcal)} ${l.kcal}',
-                                  ),
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
-                            },
-                      child: justSaved
-                          ? Icon(Icons.check, size: 22, color: c.onAccent)
-                          : Text(
-                              '${l.add} · ${fmtInt(kcal)} ${l.kcal}',
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-Widget _stepBtn(AppColors c, IconData icon, VoidCallback onTap) {
-  return IconButton(
-    onPressed: onTap,
-    icon: Icon(icon, size: 18),
-    style: IconButton.styleFrom(
-      backgroundColor: c.macroTrack,
-      foregroundColor: c.ink,
-    ),
-  );
-}
-
-/// Portion chip: selected state uses the accent, idle stays neutral.
-/// Min 44px tall for touch targets; ink ripple on tap.
-class _PresetChip extends StatelessWidget {
-  const _PresetChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
+/// Logs one base serving straight into [meal] without leaving the list:
+/// haptic, then an undo snackbar (mirrors the delete-undo pattern) since
+/// local-only storage has no backup for a mis-tap. Min 44×44 tap target.
+class _QuickAddButton extends StatelessWidget {
+  const _QuickAddButton({required this.food, required this.meal});
+  final FoodItem food;
+  final MealType meal;
 
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final state = AppScope.of(context);
+    // Exact 44×44 footprint: IconButton's own min-tap-target padding would
+    // overflow a SizedBox wrapper, so build the circle directly.
     return Material(
-      color: selected ? c.accent : c.chipBg,
-      borderRadius: BorderRadius.circular(12),
+      color: Colors.transparent,
+      shape: const CircleBorder(),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 44),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: selected ? c.onAccent : c.chipText,
-            ),
-          ),
+        customBorder: const CircleBorder(),
+        onTap: () => _quickAdd(context, state),
+        child: SizedBox(
+          width: 44,
+          height: 44,
+          child: Icon(Icons.add_circle_outline, color: c.accent),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _quickAdd(BuildContext context, AppState state) async {
+    final l = state.l;
+    HapticFeedback.lightImpact();
+    final date = state.selectedDate;
+    final ok = await state.addEntry(date, food.id, 1.0, meal);
+    if (!context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+    if (!ok) {
+      messenger.showSnackBar(SnackBar(content: Text(l.saveFailed)));
+      return;
+    }
+    final kcal = food.kcal;
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text('${l.added}: ${l.foodName(food)} · ${fmtInt(kcal)} ${l.kcal}'),
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: l.undo,
+          onPressed: () async {
+            // Quick add always logs exactly one fresh entry; find and
+            // remove it by matching food+meal+quantity on today's list —
+            // safe because it was just added and ids are unique per tap.
+            final match = state
+                .entriesFor(date, meal: meal)
+                .lastWhere(
+                  (e) => e.foodId == food.id && e.quantity == 1.0,
+                );
+            await state.removeEntry(date, match.id);
+          },
         ),
       ),
     );

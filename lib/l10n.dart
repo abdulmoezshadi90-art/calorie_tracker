@@ -98,6 +98,17 @@ class L10n {
   String get foods => isAr ? 'الأطعمة' : 'Foods';
   String get approxMarker => isAr ? 'تقريبي' : 'approx.';
 
+  // Food detail page.
+  String get unit => isAr ? 'الوحدة' : 'Unit';
+  String get quantity => isAr ? 'الكمية' : 'Quantity';
+  String get fractionMode => isAr ? 'كسور' : 'Fraction';
+  String get decimalMode => isAr ? 'عشري' : 'Decimal';
+  String get whole => isAr ? 'عدد كامل' : 'Whole';
+  String get invalidQuantity => isAr
+      ? 'أدخل كمية بين 0.1 و 99'
+      : 'Enter a quantity between 0.1 and 99';
+  String unitLabel(ServingUnit u) => isAr ? u.labelAr : u.labelEn;
+
   String get history => isAr ? 'السجل' : 'History';
   String get historyEmpty => isAr ? 'لا توجد أيام مسجلة بعد' : 'No logged days yet';
   // Neutral goal wording by design: no alarm colors, no judgement.
