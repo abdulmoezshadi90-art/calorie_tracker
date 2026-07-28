@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'app_state.dart';
+import 'l10n.dart';
 import 'models.dart';
 import 'profile.dart';
 import 'settings_screen.dart';
@@ -23,8 +24,6 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  static const _questionCount = 7; // steps before the result summary
-
   final _controller = PageController();
   int _step = 0;
 
@@ -34,13 +33,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _height = TextEditingController();
   Sex? _sex;
   ActivityLevel? _activity;
-  WeightGoal? _goal;
+  GoalDirection? _goalDirection;
+  GoalRate? _goalRate;
   String? _error;
   MaintenanceResult? _result;
 
   /// Brief pause before revealing the result: the math is instant, the
   /// moment deserves weight. The ONLY loading state besides cold launch.
   bool _calculating = false;
+
+  /// Lose/gain need a rate step; maintain skips straight to the result, so
+  /// the step count (and the progress indicator) is never fixed.
+  bool get _hasRateStep =>
+      _goalDirection == GoalDirection.lose ||
+      _goalDirection == GoalDirection.gain;
+  int get _questionCount => _hasRateStep ? 8 : 7;
 
   @override
   void initState() {
@@ -54,7 +61,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _height.text = fmtServings(p.heightCm);
       _sex = p.sex;
       _activity = p.activity;
-      _goal = p.goal;
+      _goalDirection = p.goalDirection;
+      _goalRate = p.goalRate;
     }
   }
 
@@ -68,17 +76,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  Profile? _buildProfile() {
+  /// Shared by the real submission ([_buildProfile]) and the rate step's
+  /// live per-card preview, which plugs in a candidate rate before the
+  /// user has actually chosen one.
+  Profile? _profileFor(GoalDirection? direction, GoalRate? rate) {
     final age = int.tryParse(_age.text) ?? 0;
     final weight = double.tryParse(_weight.text) ?? 0;
     final height = double.tryParse(_height.text) ?? 0;
     final sex = _sex;
     final activity = _activity;
-    final goal = _goal;
     final valid =
         sex != null &&
         activity != null &&
-        goal != null &&
+        direction != null &&
+        (direction == GoalDirection.maintain || rate != null) &&
         age >= profileRanges.age.min &&
         age <= profileRanges.age.max &&
         weight >= profileRanges.weight.min &&
@@ -93,9 +104,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       weightKg: weight,
       heightCm: height,
       activity: activity,
-      goal: goal,
+      goalDirection: direction,
+      goalRate: direction == GoalDirection.maintain ? null : rate,
     );
   }
+
+  Profile? _buildProfile() => _profileFor(_goalDirection, _goalRate);
 
   void _goTo(int step) {
     setState(() {
@@ -233,28 +247,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             state,
             c,
             question: l.ageQuestion,
-            child: _textField(
-              c,
-              l.ageLabel,
-              _age,
-              hint: l.rangeHint(profileRanges.age.min, profileRanges.age.max),
-            ),
+            child: _textField(c, l.ageLabel, _age),
             onContinue: () => _continueNumeric(state, _age, profileRanges.age),
           ),
           _numericOrTextStep(
             state,
             c,
             question: l.weightQuestion,
-            child: _textField(
-              c,
-              l.weightLabel,
-              _weight,
-              decimal: true,
-              hint: l.rangeHint(
-                profileRanges.weight.min,
-                profileRanges.weight.max,
-              ),
-            ),
+            child: _textField(c, l.weightLabel, _weight, decimal: true),
             onContinue: () =>
                 _continueNumeric(state, _weight, profileRanges.weight),
           ),
@@ -262,16 +262,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             state,
             c,
             question: l.heightQuestion,
-            child: _textField(
-              c,
-              l.heightLabel,
-              _height,
-              decimal: true,
-              hint: l.rangeHint(
-                profileRanges.height.min,
-                profileRanges.height.max,
-              ),
-            ),
+            child: _textField(c, l.heightLabel, _height, decimal: true),
             onContinue: () =>
                 _continueNumeric(state, _height, profileRanges.height),
           ),
@@ -288,24 +279,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _next();
             },
           ),
-          _choiceStep<WeightGoal>(
+          _choiceStep<GoalDirection>(
             c,
             question: l.goalQuestion,
-            // Reference-calculator order: maintain, mild loss, loss, gain.
             values: const [
-              WeightGoal.maintain,
-              WeightGoal.loseGently,
-              WeightGoal.lose,
-              WeightGoal.gain,
+              GoalDirection.lose,
+              GoalDirection.maintain,
+              GoalDirection.gain,
             ],
-            selected: _goal,
-            label: l.weightGoalName,
-            description: l.goalDesc,
+            selected: _goalDirection,
+            label: l.goalDirectionName,
             onSelect: (v) {
-              setState(() => _goal = v);
+              // A new direction invalidates any previously chosen rate
+              // (also covers backing up from the rate step and switching).
+              setState(() {
+                _goalDirection = v;
+                _goalRate = null;
+              });
               _next();
             },
           ),
+          if (_hasRateStep) _rateStep(state, c),
           _resultStep(state, c),
         ],
       ),
@@ -334,6 +328,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _question(AppColors c, String text) => Text(
     text,
+    textAlign: TextAlign.center,
     style: TextStyle(
       fontSize: 22,
       fontWeight: FontWeight.w800,
@@ -355,7 +350,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child,
         if (_error != null) ...[
           const SizedBox(height: 10),
-          Text(_error!, style: TextStyle(fontSize: 13, color: c.fat)),
+          Text(
+            _error!,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: c.fat),
+          ),
         ],
         const SizedBox(height: 24),
         FilledButton(
@@ -406,10 +405,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 6),
           Text(
             helper,
+            textAlign: TextAlign.center,
             style: TextStyle(fontSize: 11, height: 1.4, color: c.muted),
           ),
         ],
       ],
+    );
+  }
+
+  /// Rate step (lose/gain only — maintain skips it). Each card previews the
+  /// resulting daily target live from the answers already given, using a
+  /// candidate profile for that specific rate.
+  Widget _rateStep(AppState state, AppColors c) {
+    final l = state.l;
+    final direction = _goalDirection;
+    if (direction == null || direction == GoalDirection.maintain) {
+      return const SizedBox.shrink(); // unreachable — guarded by _hasRateStep
+    }
+    return _stepShell([
+        _question(c, l.goalRateQuestion(direction)),
+        const SizedBox(height: 20),
+        for (final rate in GoalRate.values) ...[
+          _rateOptionCard(l, direction, rate),
+          const SizedBox(height: 10),
+        ],
+      ],
+    );
+  }
+
+  Widget _rateOptionCard(L10n l, GoalDirection direction, GoalRate rate) {
+    final preview = _profileFor(direction, rate);
+    final result = preview == null ? null : calculateMaintenance(preview);
+    return _OptionCard(
+      label: l.goalRateName(direction, rate),
+      description: l.goalRateKgLine(rate),
+      detail: result == null ? null : '${fmtInt(result.goals.kcal)} ${l.kcal}',
+      note: result != null && result.clamped ? l.goalFloorNote : null,
+      selected: rate == _goalRate,
+      onTap: () {
+        setState(() => _goalRate = rate);
+        _next();
+      },
     );
   }
 
@@ -462,6 +498,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 l.maintenanceLine(result.maintenanceKcal),
                 style: TextStyle(fontSize: 12, color: c.muted),
               ),
+              if (result.clamped) ...[
+                const SizedBox(height: 4),
+                // Neutral wording by design: a note, never a block or alarm.
+                Text(
+                  l.goalFloorNote,
+                  style: TextStyle(fontSize: 12, height: 1.4, color: c.muted),
+                ),
+              ],
               const SizedBox(height: 8),
               Text(
                 '${l.protein} ${fmtInt(g.protein)}${l.grams} · '
@@ -536,10 +580,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     TextEditingController controller, {
     bool numeric = true,
     bool decimal = false,
-    String? hint,
   }) {
     return TextField(
       controller: controller,
+      textAlign: TextAlign.center,
       keyboardType: numeric
           ? TextInputType.numberWithOptions(decimal: decimal)
           : TextInputType.name,
@@ -553,8 +597,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       style: TextStyle(color: c.ink, fontWeight: FontWeight.w600),
       decoration: InputDecoration(
         labelText: label,
-        helperText: hint,
-        helperStyle: TextStyle(fontSize: 10, color: c.muted),
         labelStyle: TextStyle(fontSize: 13, color: c.muted),
         filled: true,
         fillColor: c.macroTrack,
@@ -567,17 +609,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-/// One selectable option: label, optional one-line description, tap to
-/// choose (the wizard auto-advances).
+/// One selectable option: label, optional description line(s), tap to
+/// choose (the wizard auto-advances). [detail] is the live-computed daily
+/// target (rate step); [note] is the floor-guard note when it clamped.
+/// Content is centered, not left-aligned, even though the card itself
+/// stays full width (Change 1 — layout-driven, no RTL-specific code).
 class _OptionCard extends StatelessWidget {
   const _OptionCard({
     required this.label,
     this.description,
+    this.detail,
+    this.note,
     required this.selected,
     required this.onTap,
   });
   final String label;
   final String? description;
+  final String? detail;
+  final String? note;
   final bool selected;
   final VoidCallback onTap;
 
@@ -601,10 +650,11 @@ class _OptionCard extends StatelessWidget {
             ),
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
                 label,
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -615,7 +665,28 @@ class _OptionCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   description!,
+                  textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12, height: 1.4, color: c.muted),
+                ),
+              ],
+              if (detail != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  detail!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: selected ? c.chipText : c.accent,
+                  ),
+                ),
+              ],
+              if (note != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  note!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 11, height: 1.4, color: c.muted),
                 ),
               ],
             ],

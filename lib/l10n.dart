@@ -183,6 +183,8 @@ class L10n {
   String get adjust => isAr ? 'تعديل' : 'Adjust';
   String get completeFields =>
       isAr ? 'أكمل الحقول أعلاه' : 'Complete the fields above';
+  // Used by the standalone weight-log entry field (weight_log.dart) — the
+  // profile wizard's own age/weight/height steps no longer show this.
   String rangeHint(int min, int max) =>
       isAr ? 'بين ${fmtInt(min)} و ${fmtInt(max)}' : '${fmtInt(min)}–${fmtInt(max)}';
   String get recalculateGoal =>
@@ -206,6 +208,20 @@ class L10n {
   String get activityQuestion =>
       isAr ? 'ما مستوى نشاطك؟' : 'What is your training intensity?';
   String get goalQuestion => isAr ? 'ما هدفك؟' : 'What is your goal?';
+  String goalRateQuestion(GoalDirection d) => switch (d) {
+    GoalDirection.lose => isAr
+        ? 'كم بسرعة تريد إنقاص وزنك؟'
+        : 'How fast do you want to lose weight?',
+    GoalDirection.gain => isAr
+        ? 'كم بسرعة تريد زيادة وزنك؟'
+        : 'How fast do you want to gain weight?',
+    GoalDirection.maintain => '', // unreachable — maintain skips this step
+  };
+  // Note shown under the daily target when the floor guard clamps it —
+  // plain sentence, no alarm wording (design decision 2).
+  String get goalFloorNote => isAr
+      ? 'تم رفع هدفك إلى الحد الأدنى الآمن.'
+      : 'Your target was raised to a safe minimum.';
   String get continueLabel => isAr ? 'متابعة' : 'Continue';
   String get exerciseHelper => isAr
       ? 'التمرين يعني نشاطًا يرفع نبض القلب لمدة 15-30 دقيقة أو أكثر'
@@ -229,18 +245,36 @@ class L10n {
         : 'Very intense daily training or a physical job',
   };
 
-  // Weekly-rate phrasing (TDEE-calculator mental model). Never a raw
-  // kcal number in the option — the kcal appears on the result summary.
-  // Rates from the standard adjustments: −500/day ≈ 0.5 kg/wk,
-  // −250 ≈ 0.25, +300 ≈ 0.27 (shown as ~0.25).
-  String goalDesc(WeightGoal g) => switch (g) {
-    WeightGoal.maintain => isAr ? '0 كجم أسبوعيًا' : '0 kg per week',
-    WeightGoal.loseGently => isAr
-        ? '~0.25 كجم أسبوعيًا'
-        : '~0.25 kg per week',
-    WeightGoal.lose => isAr ? '~0.5 كجم أسبوعيًا' : '~0.5 kg per week',
-    WeightGoal.gain => isAr ? '~0.25 كجم أسبوعيًا' : '~0.25 kg per week',
+  // Direction step: verb-first phrasing (Lose/Maintain/Gain weight).
+  String goalDirectionName(GoalDirection d) => switch (d) {
+    GoalDirection.lose => isAr ? 'إنقاص الوزن' : 'Lose weight',
+    GoalDirection.maintain => isAr ? 'تثبيت الوزن' : 'Maintain weight',
+    GoalDirection.gain => isAr ? 'زيادة الوزن' : 'Gain weight',
   };
+
+  /// Rate-step card title, mirrored per direction: "Mild/—/Extreme weight
+  /// loss" vs "Mild/—/Fast weight gain".
+  String goalRateName(GoalDirection d, GoalRate r) => switch ((d, r)) {
+    (GoalDirection.lose, GoalRate.mild) => isAr ? 'إنقاص خفيف' : 'Mild weight loss',
+    (GoalDirection.lose, GoalRate.normal) => isAr ? 'إنقاص الوزن' : 'Weight loss',
+    (GoalDirection.lose, GoalRate.extreme) => isAr
+        ? 'إنقاص شديد للوزن'
+        : 'Extreme weight loss',
+    (GoalDirection.gain, GoalRate.mild) => isAr
+        ? 'زيادة خفيفة للوزن'
+        : 'Mild weight gain',
+    (GoalDirection.gain, GoalRate.normal) => isAr ? 'زيادة الوزن' : 'Weight gain',
+    (GoalDirection.gain, GoalRate.extreme) => isAr
+        ? 'زيادة سريعة للوزن'
+        : 'Fast weight gain',
+    (GoalDirection.maintain, _) => '', // unreachable — no rate step to maintain
+  };
+
+  /// "0.25 kg per week" — the exact chosen rate, not an approximation, so
+  /// no "~" (unlike the old flat-adjustment phrasing it replaces).
+  String goalRateKgLine(GoalRate r) => isAr
+      ? '${fmtServings(r.kgPerWeek)} كجم أسبوعيًا'
+      : '${fmtServings(r.kgPerWeek)} kg per week';
 
   String sexName(Sex s) => switch (s) {
     Sex.male => isAr ? 'ذكر' : 'Male',
@@ -253,13 +287,6 @@ class L10n {
     ActivityLevel.moderate => isAr ? 'متوسط' : 'Moderate',
     ActivityLevel.high => isAr ? 'عالي' : 'High',
     ActivityLevel.athlete => isAr ? 'رياضي' : 'Athlete',
-  };
-
-  String weightGoalName(WeightGoal g) => switch (g) {
-    WeightGoal.maintain => isAr ? 'تثبيت الوزن' : 'Maintain weight',
-    WeightGoal.loseGently => isAr ? 'إنقاص خفيف' : 'Mild weight loss',
-    WeightGoal.lose => isAr ? 'إنقاص الوزن' : 'Weight loss',
-    WeightGoal.gain => isAr ? 'زيادة الوزن' : 'Weight gain',
   };
 
   String mealName(MealType meal) => switch (meal) {

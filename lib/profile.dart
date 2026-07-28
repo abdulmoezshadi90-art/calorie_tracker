@@ -19,14 +19,30 @@ enum ActivityLevel {
   final double multiplier;
 }
 
-enum WeightGoal {
-  lose(-500),
-  loseGently(-250),
-  maintain(0),
-  gain(300);
+/// Which way the goal moves. [rate] is required on [Profile] whenever this
+/// is not [maintain] (see [dailyKcalDelta]).
+enum GoalDirection { lose, maintain, gain }
 
-  const WeightGoal(this.kcalAdjustment);
-  final int kcalAdjustment;
+/// How fast, in kg per week. The sign/direction comes from [GoalDirection];
+/// this only carries the magnitude.
+enum GoalRate {
+  mild(0.25),
+  normal(0.5),
+  extreme(1.0);
+
+  const GoalRate(this.kgPerWeek);
+  final double kgPerWeek;
+}
+
+/// 7700 kcal per kg of body mass (design decision), spread over 7 days.
+const _kcalPerKgPerWeek = 7700;
+
+/// Daily calorie delta for a goal direction/rate pair — pure and testable
+/// on its own, independent of the rest of the Mifflin St Jeor math.
+int dailyKcalDelta(GoalDirection direction, GoalRate? rate) {
+  if (direction == GoalDirection.maintain || rate == null) return 0;
+  final magnitude = (rate.kgPerWeek * _kcalPerKgPerWeek / 7).round();
+  return direction == GoalDirection.lose ? -magnitude : magnitude;
 }
 
 /// Validation ranges for the profile inputs (decision 8).
@@ -44,7 +60,11 @@ class Profile {
   final double weightKg;
   final double heightCm;
   final ActivityLevel activity;
-  final WeightGoal goal;
+  final GoalDirection goalDirection;
+
+  /// Required whenever [goalDirection] is not [GoalDirection.maintain];
+  /// null when it is.
+  final GoalRate? goalRate;
 
   const Profile({
     required this.name,
@@ -53,7 +73,8 @@ class Profile {
     required this.weightKg,
     required this.heightCm,
     required this.activity,
-    required this.goal,
+    required this.goalDirection,
+    this.goalRate,
   });
 
   Map<String, dynamic> toJson() => {
@@ -63,7 +84,8 @@ class Profile {
     'weightKg': weightKg,
     'heightCm': heightCm,
     'activity': activity.name,
-    'goal': goal.name,
+    'goalDirection': goalDirection.name,
+    'goalRate': goalRate?.name,
   };
 
   static int _intOr(Object? v, int fallback) =>
@@ -73,17 +95,49 @@ class Profile {
 
   /// Null tolerant like Goals.fromJson: malformed fields fall back to
   /// harmless defaults so older saves keep loading as fields are added.
-  factory Profile.fromJson(Map<String, dynamic> json) => Profile(
-    name: json['name'] is String ? json['name'] as String : '',
-    sex: Sex.values.asNameMap()[json['sex']] ?? Sex.male,
-    age: _intOr(json['age'], 30),
-    weightKg: _doubleOr(json['weightKg'], 70),
-    heightCm: _doubleOr(json['heightCm'], 170),
-    activity:
-        ActivityLevel.values.asNameMap()[json['activity']] ??
-        ActivityLevel.moderate,
-    goal: WeightGoal.values.asNameMap()[json['goal']] ?? WeightGoal.maintain,
-  );
+  ///
+  /// Pre-split saves carry a single 'goal' string (old WeightGoal names:
+  /// lose/loseGently/maintain/gain). Mapped onto the nearest new rate by
+  /// kcal distance so existing profiles keep their intent: loseGently
+  /// (-250) → mild (-275), lose (-500) → normal (-550), gain (+300) → mild
+  /// (+275, closer than normal's +550).
+  factory Profile.fromJson(Map<String, dynamic> json) {
+    GoalDirection direction;
+    GoalRate? rate;
+    if (json.containsKey('goalDirection')) {
+      direction =
+          GoalDirection.values.asNameMap()[json['goalDirection']] ??
+          GoalDirection.maintain;
+      rate = GoalRate.values.asNameMap()[json['goalRate']];
+    } else {
+      switch (json['goal']) {
+        case 'loseGently':
+          direction = GoalDirection.lose;
+          rate = GoalRate.mild;
+        case 'lose':
+          direction = GoalDirection.lose;
+          rate = GoalRate.normal;
+        case 'gain':
+          direction = GoalDirection.gain;
+          rate = GoalRate.mild;
+        default:
+          direction = GoalDirection.maintain;
+          rate = null;
+      }
+    }
+    return Profile(
+      name: json['name'] is String ? json['name'] as String : '',
+      sex: Sex.values.asNameMap()[json['sex']] ?? Sex.male,
+      age: _intOr(json['age'], 30),
+      weightKg: _doubleOr(json['weightKg'], 70),
+      heightCm: _doubleOr(json['heightCm'], 170),
+      activity:
+          ActivityLevel.values.asNameMap()[json['activity']] ??
+          ActivityLevel.moderate,
+      goalDirection: direction,
+      goalRate: direction == GoalDirection.maintain ? null : rate,
+    );
+  }
 }
 
 class MaintenanceResult {
@@ -121,12 +175,17 @@ MaintenanceResult calculateMaintenance(Profile p) {
   final maintenance = bmr * p.activity.multiplier;
 
   final maintenanceOnly = p.age < 18;
-  final adjustment = maintenanceOnly ? 0 : p.goal.kcalAdjustment;
+  final adjustment = maintenanceOnly
+      ? 0
+      : dailyKcalDelta(p.goalDirection, p.goalRate);
 
   var kcal = _roundTo50(maintenance + adjustment);
   var clamped = false;
-  if (kcal < goalFloors.kcal) {
-    kcal = goalFloors.kcal;
+  // Sex-specific floor for this calculation only (the manual goals editor
+  // keeps its own flat goalFloors.kcal warning, untouched).
+  final floor = p.sex == Sex.male ? 1500 : goalFloors.kcal;
+  if (kcal < floor) {
+    kcal = floor;
     clamped = true;
   }
 

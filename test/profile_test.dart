@@ -14,7 +14,8 @@ Profile _profile({
   double weightKg = 80,
   double heightCm = 180,
   ActivityLevel activity = ActivityLevel.moderate,
-  WeightGoal goal = WeightGoal.maintain,
+  GoalDirection goalDirection = GoalDirection.maintain,
+  GoalRate? goalRate,
 }) => Profile(
   name: '',
   sex: sex,
@@ -22,14 +23,16 @@ Profile _profile({
   weightKg: weightKg,
   heightCm: heightCm,
   activity: activity,
-  goal: goal,
+  goalDirection: goalDirection,
+  goalRate: goalRate,
 );
 
 Future<AppState> _pumpProfileScreen(
   WidgetTester tester, {
   String locale = 'en',
+  Size size = const Size(375, 812),
 }) async {
-  tester.view.physicalSize = const Size(375, 812);
+  tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
 
@@ -51,16 +54,18 @@ void main() {
   group('calculateMaintenance', () {
     test('male calculation matches Mifflin St Jeor exactly', () {
       // BMR = 10×80 + 6.25×180 − 5×30 + 5 = 1780; ×1.55 = 2759;
-      // −500 (lose) = 2259 → 2250 to the nearest 50.
-      final r = calculateMaintenance(_profile(goal: WeightGoal.lose));
-      expect(r.goals.kcal, 2250);
+      // lose + normal rate (0.5 kg/wk = −550/day) → 2209 → 2200.
+      final r = calculateMaintenance(
+        _profile(goalDirection: GoalDirection.lose, goalRate: GoalRate.normal),
+      );
+      expect(r.goals.kcal, 2200);
       expect(r.maintenanceKcal, 2750); // 2759 → nearest 50
       expect(r.clamped, isFalse);
       expect(r.maintenanceOnly, isFalse);
       // Macros: 25/30/45% at 4/9/4 kcal per gram, whole grams.
-      expect(r.goals.protein, (2250 * 0.25 / 4).round());
-      expect(r.goals.fat, (2250 * 0.30 / 9).round());
-      expect(r.goals.carbs, (2250 * 0.45 / 4).round());
+      expect(r.goals.protein, (2200 * 0.25 / 4).round());
+      expect(r.goals.fat, (2200 * 0.30 / 9).round());
+      expect(r.goals.carbs, (2200 * 0.45 / 4).round());
     });
 
     test('female calculation uses the −161 constant', () {
@@ -78,9 +83,9 @@ void main() {
       expect(r.clamped, isFalse);
     });
 
-    test('deficit clamps at the goal floors', () {
+    test('deficit clamps at the female floor (1200)', () {
       // BMR = 400 + 906.25 − 300 − 161 = 845.25; ×1.2 = 1014.3;
-      // −500 = 514.3 → 500, below the 1200 floor → clamped to 1200.
+      // normal rate (−550) = 464.3 → 450, below the 1200 floor → clamped.
       final r = calculateMaintenance(
         _profile(
           sex: Sex.female,
@@ -88,48 +93,123 @@ void main() {
           weightKg: 40,
           heightCm: 145,
           activity: ActivityLevel.sedentary,
-          goal: WeightGoal.lose,
+          goalDirection: GoalDirection.lose,
+          goalRate: GoalRate.normal,
         ),
       );
       expect(r.clamped, isTrue);
-      expect(r.goals.kcal, goalFloors.kcal);
+      expect(r.goals.kcal, 1200);
       expect(r.goals.protein, greaterThanOrEqualTo(goalFloors.protein));
       expect(r.goals.fat, greaterThanOrEqualTo(goalFloors.fat));
       expect(r.goals.carbs, greaterThanOrEqualTo(goalFloors.carbs));
     });
 
+    test(
+      'deficit clamps at the male floor (1500); a normal target is untouched',
+      () {
+        // BMR = 550 + 1031.25 − 225 + 5 = 1361.25; ×1.2 = 1633.5;
+        // extreme rate (−1100) = 533.5 → 550, below the 1500 male floor.
+        final small = calculateMaintenance(
+          _profile(
+            sex: Sex.male,
+            age: 45,
+            weightKg: 55,
+            heightCm: 165,
+            activity: ActivityLevel.sedentary,
+            goalDirection: GoalDirection.lose,
+            goalRate: GoalRate.extreme,
+          ),
+        );
+        expect(small.clamped, isTrue);
+        expect(small.goals.kcal, 1500);
+
+        // A comfortably-above-floor male target is untouched.
+        final normal = calculateMaintenance(
+          _profile(goalDirection: GoalDirection.lose, goalRate: GoalRate.mild),
+        );
+        expect(normal.clamped, isFalse);
+      },
+    );
+
     test('under 18 gets maintenance only, deficit ignored', () {
       final withDeficit = calculateMaintenance(
-        _profile(age: 16, goal: WeightGoal.lose),
+        _profile(
+          age: 16,
+          goalDirection: GoalDirection.lose,
+          goalRate: GoalRate.normal,
+        ),
       );
       final maintain = calculateMaintenance(
-        _profile(age: 16, goal: WeightGoal.maintain),
+        _profile(age: 16, goalDirection: GoalDirection.maintain),
       );
       expect(withDeficit.maintenanceOnly, isTrue);
       expect(withDeficit.goals.kcal, maintain.goals.kcal);
     });
 
-    test('gentle option applies −250 and gain +300', () {
-      final base = calculateMaintenance(_profile()).goals.kcal;
-      final gentle = calculateMaintenance(
-        _profile(goal: WeightGoal.loseGently),
-      ).goals.kcal;
-      final gain = calculateMaintenance(
-        _profile(goal: WeightGoal.gain),
-      ).goals.kcal;
-      expect(base - gentle, 250);
-      expect(gain - base, 300);
-    });
-
     test('profile JSON round trip is null tolerant', () {
-      final p = _profile(sex: Sex.female, goal: WeightGoal.gain);
+      final p = _profile(
+        sex: Sex.female,
+        goalDirection: GoalDirection.gain,
+        goalRate: GoalRate.mild,
+      );
       final back = Profile.fromJson(p.toJson());
       expect(back.sex, Sex.female);
-      expect(back.goal, WeightGoal.gain);
+      expect(back.goalDirection, GoalDirection.gain);
+      expect(back.goalRate, GoalRate.mild);
       // Malformed input falls back instead of throwing.
       final fallback = Profile.fromJson({'sex': 'bogus', 'age': 'x'});
       expect(fallback.sex, Sex.male);
       expect(fallback.age, 30);
+      expect(fallback.goalDirection, GoalDirection.maintain);
+    });
+
+    test('legacy single-field "goal" JSON still decodes', () {
+      Map<String, dynamic> legacy(String goal) => {
+        'name': '',
+        'sex': 'female',
+        'age': 40,
+        'weightKg': 65,
+        'heightCm': 165,
+        'activity': 'light',
+        'goal': goal,
+      };
+
+      final maintain = Profile.fromJson(legacy('maintain'));
+      expect(maintain.goalDirection, GoalDirection.maintain);
+      expect(maintain.goalRate, isNull);
+
+      final loseGently = Profile.fromJson(legacy('loseGently'));
+      expect(loseGently.goalDirection, GoalDirection.lose);
+      expect(loseGently.goalRate, GoalRate.mild);
+
+      final lose = Profile.fromJson(legacy('lose'));
+      expect(lose.goalDirection, GoalDirection.lose);
+      expect(lose.goalRate, GoalRate.normal);
+
+      final gain = Profile.fromJson(legacy('gain'));
+      expect(gain.goalDirection, GoalDirection.gain);
+      expect(gain.goalRate, GoalRate.mild); // nearest to the old +300
+    });
+  });
+
+  group('dailyKcalDelta', () {
+    test('rates produce the spec deltas per direction', () {
+      expect(dailyKcalDelta(GoalDirection.lose, GoalRate.mild), -275);
+      expect(dailyKcalDelta(GoalDirection.lose, GoalRate.normal), -550);
+      expect(dailyKcalDelta(GoalDirection.lose, GoalRate.extreme), -1100);
+      expect(dailyKcalDelta(GoalDirection.gain, GoalRate.mild), 275);
+      expect(dailyKcalDelta(GoalDirection.gain, GoalRate.normal), 550);
+      expect(dailyKcalDelta(GoalDirection.gain, GoalRate.extreme), 1100);
+      expect(dailyKcalDelta(GoalDirection.maintain, null), 0);
+    });
+
+    test('gain mirrors loss with the sign flipped', () {
+      for (final rate in GoalRate.values) {
+        expect(
+          dailyKcalDelta(GoalDirection.gain, rate),
+          -dailyKcalDelta(GoalDirection.lose, rate),
+        );
+      }
     });
   });
 
@@ -150,7 +230,18 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('wizard end to end produces the same Goals as before', (
+    /// Walks name → sex → age/weight/height → activity (Moderate), landing
+    /// on the direction step. Matches the standard test profile.
+    Future<void> walkToDirection(WidgetTester tester) async {
+      await walkToAge(tester);
+      await enterAndContinue(tester, '30');
+      await enterAndContinue(tester, '80');
+      await enterAndContinue(tester, '180');
+      await tester.tap(find.text('Moderate'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('wizard end to end produces the same-shape Goals as before', (
       tester,
     ) async {
       final state = await _pumpProfileScreen(tester);
@@ -174,22 +265,35 @@ void main() {
       await tester.tap(find.text('Moderate'));
       await tester.pumpAndSettle();
 
-      // Goal step: weekly-rate phrasing, no raw kcal in the options.
-      expect(find.text('~0.5 kg per week'), findsOneWidget);
+      // Direction step: plain labels, no kcal leaked into the options yet.
+      expect(find.text('7/7'), findsOneWidget);
+      expect(find.text('Lose weight'), findsOneWidget);
+      expect(find.text('Maintain weight'), findsOneWidget);
+      expect(find.text('Gain weight'), findsOneWidget);
       expect(find.textContaining('kcal'), findsNothing);
+      await tester.tap(find.text('Lose weight'));
+      await tester.pumpAndSettle();
+
+      // Rate step: mirrored, weekly-rate phrasing, live kcal per card.
+      expect(find.text('8/8'), findsOneWidget);
+      expect(find.text('0.5 kg per week'), findsOneWidget);
+      expect(find.textContaining('kcal'), findsWidgets);
       await tester.tap(find.text('Weight loss'));
       await tester.pumpAndSettle();
 
       // Result summary (title shows in both the header slot and the card):
-      // the math must not have changed with the UX rework.
+      // the math must not have changed shape with the UX rework.
       expect(find.text('Your suggested daily goal'), findsWidgets);
       await tester.tap(find.text('Use this goal'));
       await tester.pumpAndSettle();
 
-      expect(state.goals.kcal, 2250); // same inputs, same result as v1
-      expect(state.goals.protein, (2250 * 0.25 / 4).round());
+      // 2759 maintenance − 550 (normal rate) = 2209 → 2200.
+      expect(state.goals.kcal, 2200);
+      expect(state.goals.protein, (2200 * 0.25 / 4).round());
       expect(state.profile, isNotNull);
       expect(state.profile!.weightKg, 80);
+      expect(state.profile!.goalDirection, GoalDirection.lose);
+      expect(state.profile!.goalRate, GoalRate.normal);
     });
 
     testWidgets('every activity option shows its description, incl. High', (
@@ -242,55 +346,83 @@ void main() {
       expect(state.profile!.weightKg, 81.5);
       expect(state.profile!.heightCm, 175.5);
       // Mifflin with decimals: 10×81.5 + 6.25×175.5 − 150 + 5 = 1766.875;
-      // ×1.55 = 2738.66 → 2750 to the nearest 50.
+      // ×1.55 = 2738.66 → 2750 to the nearest 50 (maintain, no adjustment).
       expect(state.goals.kcal, 2750);
     });
 
-    testWidgets('rate-phrased goal options map to the spec adjustments', (
+    testWidgets('choosing maintain skips the rate step entirely', (
       tester,
     ) async {
-      // Maintenance for the standard test profile is 2759 → the option
-      // picked must apply exactly the decision-8 kcal adjustment. One app
-      // instance; reruns go through settings' recalculate (prefilled).
       final state = await _pumpProfileScreen(tester);
-      var first = true;
+      await walkToDirection(tester);
 
-      Future<int> runWith(String goalLabel) async {
-        if (!first) {
-          // A profile now exists → the card reads "Recalculate".
-          await tester.tap(find.byIcon(Icons.calculate_outlined));
-          await tester.pumpAndSettle();
-        }
-        await tester.tap(find.text('Continue')); // name
+      expect(find.text('7/7'), findsOneWidget);
+      await tester.tap(find.text('Maintain weight'));
+      await tester.pumpAndSettle();
+
+      // Lands directly on the result step — no rate cards, no "8/8".
+      expect(find.text('8/8'), findsNothing);
+      expect(find.textContaining('kg per week'), findsNothing);
+      expect(find.text('Your suggested daily goal'), findsWidgets);
+      await tester.tap(find.text('Use this goal'));
+      await tester.pumpAndSettle();
+
+      expect(state.goals.kcal, 2750); // maintenance only, no adjustment
+      expect(state.profile!.goalDirection, GoalDirection.maintain);
+      expect(state.profile!.goalRate, isNull);
+    });
+
+    testWidgets(
+      'gain mirrors loss with the sign flipped, in the wizard UI',
+      (tester) async {
+        final state = await _pumpProfileScreen(tester);
+        await walkToDirection(tester);
+        await tester.tap(find.text('Gain weight'));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Male'));
-        await tester.pumpAndSettle();
-        if (first) {
-          await enterAndContinue(tester, '30');
-          await enterAndContinue(tester, '80');
-          await enterAndContinue(tester, '180');
-        } else {
-          // Prefilled from the saved profile — just continue through.
-          for (var i = 0; i < 3; i++) {
-            await tester.tap(find.text('Continue'));
-            await tester.pumpAndSettle();
-          }
-        }
-        await tester.tap(find.text('Moderate'));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text(goalLabel));
+
+        expect(find.text('Mild weight gain'), findsOneWidget);
+        expect(find.text('Weight gain'), findsOneWidget);
+        expect(find.text('Fast weight gain'), findsOneWidget);
+        await tester.tap(find.text('Weight gain'));
         await tester.pumpAndSettle();
         await tester.tap(find.text('Use this goal'));
         await tester.pumpAndSettle();
-        first = false;
-        return state.goals.kcal;
-      }
 
-      expect(await runWith('Maintain weight'), 2750); // 2759 → nearest 50
-      expect(await runWith('Mild weight loss'), 2500); // 2509 (−250)
-      expect(await runWith('Weight loss'), 2250); // 2259 (−500)
-      expect(await runWith('Weight gain'), 3050); // 3059 (+300)
-    });
+        // 2759 + 550 (normal rate) = 3309 → 3300.
+        expect(state.goals.kcal, 3300);
+      },
+    );
+
+    testWidgets(
+      'back from the rate step preserves direction; switching clears the rate',
+      (tester) async {
+        await _pumpProfileScreen(tester);
+        await walkToDirection(tester);
+        await tester.tap(find.text('Lose weight'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Mild weight loss'));
+        await tester.pumpAndSettle();
+        expect(find.text('Your suggested daily goal'), findsWidgets);
+
+        // Back to the rate step, back again to direction: still "Lose".
+        await tester.tap(find.byIcon(Icons.arrow_back));
+        await tester.pumpAndSettle();
+        expect(find.text('Mild weight loss'), findsOneWidget);
+        await tester.tap(find.byIcon(Icons.arrow_back));
+        await tester.pumpAndSettle();
+        expect(find.text('Lose weight'), findsOneWidget);
+
+        // Switch to Gain: the stale "lose" rate must not carry over — the
+        // gain cards start with nothing selected (no accent border check
+        // available via text finders, so assert the mirrored labels show
+        // instead of the old lose ones).
+        await tester.tap(find.text('Gain weight'));
+        await tester.pumpAndSettle();
+        expect(find.text('Mild weight gain'), findsOneWidget);
+        expect(find.text('Mild weight loss'), findsNothing);
+      },
+    );
 
     testWidgets('age field still rejects a decimal point', (tester) async {
       await _pumpProfileScreen(tester);
@@ -358,6 +490,25 @@ void main() {
       expect(state.goals.kcal, 2000); // unchanged
     });
 
+    testWidgets(
+      'age, weight and height steps show no visible range hint',
+      (tester) async {
+        await _pumpProfileScreen(tester);
+        expect(find.textContaining('–'), findsNothing);
+        await tester.tap(find.text('Continue'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Male'));
+        await tester.pumpAndSettle();
+
+        for (final value in ['30', '80', '180']) {
+          expect(find.textContaining('–'), findsNothing);
+          await tester.enterText(find.byType(TextField), value);
+          await tester.tap(find.text('Continue'));
+          await tester.pumpAndSettle();
+        }
+      },
+    );
+
     testWidgets('back arrow steps backward, first step pops the screen', (
       tester,
     ) async {
@@ -374,5 +525,106 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(ProfileScreen), findsNothing); // popped to settings
     });
+
+    testWidgets('rate step and maintain result use only Western digits', (
+      tester,
+    ) async {
+      await _pumpProfileScreen(tester, locale: 'ar');
+      await tester.tap(find.text('متابعة'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('ذكر'));
+      await tester.pumpAndSettle();
+      for (final v in ['30', '80', '180']) {
+        await tester.enterText(find.byType(TextField), v);
+        await tester.tap(find.text('متابعة'));
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(find.text('متوسط')); // Moderate
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('إنقاص الوزن')); // Lose weight
+      await tester.pumpAndSettle();
+
+      for (final digit in '٠١٢٣٤٥٦٧٨٩'.split('')) {
+        expect(find.textContaining(digit), findsNothing, reason: digit);
+      }
+      expect(find.textContaining('0.5'), findsOneWidget);
+      expect(find.textContaining('2,200'), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('تثبيت الوزن')); // Maintain weight
+      await tester.pumpAndSettle();
+
+      for (final digit in '٠١٢٣٤٥٦٧٨٩'.split('')) {
+        expect(find.textContaining(digit), findsNothing, reason: digit);
+      }
+      // Headline number only — the maintenance line below it also
+      // contains "2,750" (maintain has zero adjustment, so they match).
+      expect(find.text('2,750 سعرة'), findsOneWidget);
+    });
+
+    for (final size in [const Size(375, 812), const Size(320, 640)]) {
+      for (final locale in ['en', 'ar']) {
+        testWidgets(
+          'no overflow across every step at '
+          '${size.width.toInt()}x${size.height.toInt()} ($locale)',
+          (tester) async {
+            await _pumpProfileScreen(tester, locale: locale, size: size);
+            expect(tester.takeException(), isNull);
+
+            final continueLabel = locale == 'ar' ? 'متابعة' : 'Continue';
+            final maleLabel = locale == 'ar' ? 'ذكر' : 'Male';
+            final moderateLabel = locale == 'ar' ? 'متوسط' : 'Moderate';
+            final loseLabel = locale == 'ar' ? 'إنقاص الوزن' : 'Lose weight';
+            final gainLabel = locale == 'ar' ? 'زيادة الوزن' : 'Gain weight';
+            final maintainLabel = locale == 'ar'
+                ? 'تثبيت الوزن'
+                : 'Maintain weight';
+            final mildLoss = locale == 'ar' ? 'إنقاص خفيف' : 'Mild weight loss';
+
+            await tester.tap(find.text(continueLabel)); // name
+            await tester.pumpAndSettle();
+            expect(tester.takeException(), isNull);
+            await tester.tap(find.text(maleLabel));
+            await tester.pumpAndSettle();
+            expect(tester.takeException(), isNull);
+            for (final v in ['30', '80', '180']) {
+              await tester.enterText(find.byType(TextField), v);
+              await tester.tap(find.text(continueLabel));
+              await tester.pumpAndSettle();
+              expect(tester.takeException(), isNull);
+            }
+            await tester.tap(find.text(moderateLabel));
+            await tester.pumpAndSettle();
+            expect(tester.takeException(), isNull);
+
+            // Lose path: direction + rate step.
+            await tester.tap(find.text(loseLabel));
+            await tester.pumpAndSettle();
+            expect(tester.takeException(), isNull);
+            await tester.tap(find.text(mildLoss));
+            await tester.pumpAndSettle();
+            expect(tester.takeException(), isNull);
+
+            // Back to direction (result → rate → direction), try Gain,
+            // then Maintain (shortest path).
+            await tester.tap(find.byIcon(Icons.arrow_back));
+            await tester.pumpAndSettle();
+            await tester.tap(find.byIcon(Icons.arrow_back));
+            await tester.pumpAndSettle();
+            expect(find.text(gainLabel), findsOneWidget); // back on direction
+            await tester.tap(find.text(gainLabel));
+            await tester.pumpAndSettle();
+            expect(tester.takeException(), isNull);
+
+            await tester.tap(find.byIcon(Icons.arrow_back));
+            await tester.pumpAndSettle();
+            await tester.tap(find.text(maintainLabel));
+            await tester.pumpAndSettle();
+            expect(tester.takeException(), isNull);
+          },
+        );
+      }
+    }
   });
 }

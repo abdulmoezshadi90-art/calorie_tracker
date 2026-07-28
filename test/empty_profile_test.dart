@@ -47,7 +47,7 @@ void main() {
         weightKg: 80,
         heightCm: 180,
         activity: ActivityLevel.moderate,
-        goal: WeightGoal.maintain,
+        goalDirection: GoalDirection.maintain,
       ),
     );
     await tester.pumpWidget(CalorieApp(state: state));

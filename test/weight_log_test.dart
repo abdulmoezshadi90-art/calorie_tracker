@@ -52,7 +52,7 @@ void main() {
           weightKg: 82,
           heightCm: 180,
           activity: ActivityLevel.moderate,
-          goal: WeightGoal.maintain,
+          goalDirection: GoalDirection.maintain,
         ),
       );
       expect(state.weightEntries().single.kg, 82);
@@ -67,7 +67,8 @@ void main() {
           weightKg: 70, // different profile weight
           heightCm: 180,
           activity: ActivityLevel.high,
-          goal: WeightGoal.lose,
+          goalDirection: GoalDirection.lose,
+          goalRate: GoalRate.normal,
         ),
       );
       expect(state.weightEntries().single.kg, 81); // real log preserved

@@ -155,6 +155,33 @@ void main() {
     );
   });
 
+  testWidgets('profile wizard — goal rate step, English', (tester) async {
+    await _pumpWithSampleData(tester);
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.person_add_alt_1_outlined));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Continue')); // name, skipped
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Male'));
+    await tester.pumpAndSettle();
+    for (final v in ['30', '80', '180']) {
+      await tester.enterText(find.byType(TextField), v);
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(find.text('Moderate'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Lose weight'));
+    await tester.pumpAndSettle();
+
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('goldens/profile_rate_step_en.png'),
+    );
+  });
+
   testWidgets('food detail page — English', (tester) async {
     await _pumpWithSampleData(tester);
     await tester.tap(find.byIcon(Icons.add).first);
