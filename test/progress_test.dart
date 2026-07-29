@@ -47,9 +47,9 @@ void main() {
     tester,
   ) async {
     final state = await _pumpApp(tester);
-    state.addEntry(DateTime(2026, 7, 13), 'kalee_cheese', 1, MealType.snack);
+    state.addEntry(DateTime(2026, 7, 13), 'sample_snack_1', 1, MealType.snack);
     for (var i = 0; i < 5; i++) {
-      state.addEntry(DateTime(2026, 7, 14), 'bazin', 1, MealType.lunch);
+      state.addEntry(DateTime(2026, 7, 14), 'sample_main_1', 1, MealType.lunch);
     }
     await tester.pumpAndSettle();
 
@@ -95,8 +95,8 @@ void main() {
   ) async {
     final state = await _pumpApp(tester);
     final day = DateTime(2026, 7, 10);
-    state.addEntry(day, 'bazin', 1, MealType.lunch); // 540 kcal
-    state.addEntry(day, 'kalee_cheese', 2, MealType.snack); // 260 kcal
+    state.addEntry(day, 'sample_main_1', 1, MealType.lunch); // 540 kcal
+    state.addEntry(day, 'sample_snack_1', 2, MealType.snack); // 260 kcal
     await tester.pumpAndSettle();
 
     await _openProgress(tester);
@@ -111,7 +111,7 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Lunch'), findsOneWidget);
     expect(find.text('Snack'), findsOneWidget);
-    expect(find.text('Bazin with Sauce'), findsOneWidget);
+    expect(find.text('Sample Main Dish A'), findsOneWidget);
     expect(find.text('Total'), findsOneWidget);
     expect(find.text('800 kcal'), findsOneWidget);
     expect(find.byIcon(Icons.delete_outline), findsNothing);
@@ -121,7 +121,7 @@ void main() {
     final state = await _pumpApp(tester);
     final day = DateTime(2026, 7, 9);
     for (var i = 0; i < 5; i++) {
-      state.addEntry(day, 'bazin', 1, MealType.lunch); // 5 × 540 = 2,700
+      state.addEntry(day, 'sample_main_1', 1, MealType.lunch); // 5 × 540 = 2,700
     }
     await tester.pumpAndSettle();
 
@@ -137,7 +137,7 @@ void main() {
     for (var i = 1; i <= 30; i++) {
       state.addEntry(
         DateTime(2026, 7, 15).subtract(Duration(days: i)),
-        'kalee_cheese',
+        'sample_snack_1',
         1,
         MealType.snack,
       );
@@ -159,7 +159,7 @@ void main() {
 
   testWidgets('history renders RTL with Western digits', (tester) async {
     final state = await _pumpApp(tester, locale: 'ar');
-    state.addEntry(DateTime(2026, 7, 10), 'bazin', 1, MealType.lunch);
+    state.addEntry(DateTime(2026, 7, 10), 'sample_main_1', 1, MealType.lunch);
     await tester.pumpAndSettle();
 
     await _openProgress(tester);

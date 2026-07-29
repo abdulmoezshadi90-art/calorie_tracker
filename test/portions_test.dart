@@ -33,16 +33,18 @@ Future<void> _openFoodDetail(WidgetTester tester, String query, String name) asy
 
 void main() {
   test('servingsFor converts preset grams to tidy serving counts', () {
-    final bazin = foodById['bazin']!;
-    expect(bazin.servingGrams, 350);
-    expect(bazin.servingsFor(bazin.presets[0]), 0.71); // 250g modest share
-    expect(bazin.servingsFor(bazin.presets[1]), 1.0); // 350g = base serving
-    expect(bazin.servingsFor(bazin.presets[2]), 1.43); // 500g generous
+    final sample = foodById['sample_main_1']!;
+    expect(sample.servingGrams, 350);
+    expect(sample.servingsFor(sample.presets[0]), 0.71); // 250g modest share
+    expect(sample.servingsFor(sample.presets[1]), 1.0); // 350g = base serving
+    expect(sample.servingsFor(sample.presets[2]), 1.43); // 500g generous
   });
 
   test('every preset food has servingGrams and 2+ presets', () {
     final withPresets = foodDatabase.where((f) => f.presets.isNotEmpty);
-    expect(withPresets.length, greaterThanOrEqualTo(10));
+    // The placeholder database is intentionally minimal (see food_db.dart);
+    // this just guards that presets stay well-formed as real data lands.
+    expect(withPresets.length, greaterThanOrEqualTo(2));
     for (final f in withPresets) {
       expect(f.servingGrams, isNotNull, reason: f.id);
       expect(f.presets.length, greaterThanOrEqualTo(2), reason: f.id);
@@ -57,7 +59,7 @@ void main() {
     tester,
   ) async {
     final state = await _pumpApp(tester);
-    await _openFoodDetail(tester, 'bazin', 'Bazin with Sauce');
+    await _openFoodDetail(tester, 'sample main dish a', 'Sample Main Dish A');
 
     // Base serving unit is selected by default.
     expect(find.text('1 serving (350 g)'), findsOneWidget);
@@ -93,9 +95,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('الغداء').last);
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'بازين');
+    await tester.enterText(find.byType(TextField), 'طبق رئيسي تجريبي أ');
     await tester.pumpAndSettle();
-    await tester.tap(find.text('بازين').last); // the tile, not the field text
+    await tester.tap(find.text('طبق رئيسي تجريبي أ').last); // the tile, not the field text
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);

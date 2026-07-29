@@ -36,7 +36,7 @@ void main() {
     // Banner disappears once something is logged.
     await tester.pageBack();
     await tester.pumpAndSettle();
-    state.addEntry(state.selectedDate, 'kalee_cheese', 1, MealType.snack);
+    state.addEntry(state.selectedDate, 'sample_snack_1', 1, MealType.snack);
     await tester.pumpAndSettle();
     expect(find.text('Nothing logged today yet'), findsNothing);
   });

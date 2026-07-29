@@ -5,9 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:calorie_tracker/app_state.dart';
 import 'package:calorie_tracker/main.dart';
 
-/// Navigates nav-add → Lunch → search "bazin" → tap the row to open the
-/// food detail page, at the given viewport size and locale.
-Future<AppState> _openBazinDetail(
+/// Navigates nav-add → Lunch → search for the sample main dish → tap the
+/// row to open the food detail page, at the given viewport size and locale.
+Future<AppState> _openSampleMainDetail(
   WidgetTester tester, {
   String locale = 'en',
   Size size = const Size(375, 812),
@@ -29,11 +29,13 @@ Future<AppState> _openBazinDetail(
   await tester.pumpAndSettle();
   await tester.enterText(
     find.byType(TextField),
-    locale == 'ar' ? 'بازين' : 'bazin',
+    locale == 'ar' ? 'طبق رئيسي تجريبي أ' : 'sample main dish a',
   );
   await tester.pumpAndSettle();
   await tester.tap(
-    find.text(locale == 'ar' ? 'بازين' : 'Bazin with Sauce').last,
+    find
+        .text(locale == 'ar' ? 'طبق رئيسي تجريبي أ' : 'Sample Main Dish A')
+        .last,
   );
   await tester.pumpAndSettle();
   return state;
@@ -45,7 +47,7 @@ void main() {
       'food detail page renders without overflow at '
       '${size.width.toInt()}x${size.height.toInt()}',
       (tester) async {
-        await _openBazinDetail(tester, size: size);
+        await _openSampleMainDetail(tester, size: size);
         expect(tester.takeException(), isNull);
         expect(find.textContaining('Add ·'), findsOneWidget);
       },
@@ -53,10 +55,10 @@ void main() {
   }
 
   testWidgets('food detail page is RTL with Western digits', (tester) async {
-    await _openBazinDetail(tester, locale: 'ar');
+    await _openSampleMainDetail(tester, locale: 'ar');
     expect(tester.takeException(), isNull);
 
-    final context = tester.element(find.text('بازين').first);
+    final context = tester.element(find.text('طبق رئيسي تجريبي أ').first);
     expect(Directionality.of(context), TextDirection.rtl);
 
     // No Eastern-Arabic-Indic digit ever appears; numbers render Western.
@@ -69,7 +71,7 @@ void main() {
   testWidgets(
     'fractional and decimal modes produce the same total for the same value',
     (tester) async {
-      await _openBazinDetail(tester);
+      await _openSampleMainDetail(tester);
 
       // Decimal mode: default 1 → step +0.5 → 1.5 servings × 540 kcal = 810.
       await tester.tap(find.byIcon(Icons.add));

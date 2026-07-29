@@ -21,8 +21,8 @@ void main() {
     state.setGoals(
       const Goals(kcal: 500, carbs: 50, fat: 20, protein: 30),
     );
-    // bazin: 540 kcal, 75c/15fat/25p per serving — over kcal and carbs.
-    state.addEntry(state.selectedDate, 'bazin', 1, MealType.lunch);
+    // sample_main_1: 540 kcal, 75c/15fat/25p per serving — over kcal, carbs.
+    state.addEntry(state.selectedDate, 'sample_main_1', 1, MealType.lunch);
     await tester.pumpWidget(CalorieApp(state: state));
     await tester.pumpAndSettle();
 

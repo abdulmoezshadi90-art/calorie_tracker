@@ -35,12 +35,12 @@ void main() {
     final mixed = kcalPercents(carbsG: 75, fatG: 15, proteinG: 25);
     expect(mixed.carb + mixed.fat + mixed.protein, 100);
 
-    // Honey: zero protein and zero fat — an all-carb edge case.
-    final honey = foodById['honey']!;
+    // Zero protein and zero fat — an all-carb edge case.
+    final zeroFatFood = foodById['sample_breakfast_4']!;
     final zeroFat = kcalPercents(
-      carbsG: honey.carbs,
-      fatG: honey.fat,
-      proteinG: honey.protein,
+      carbsG: zeroFatFood.carbs,
+      fatG: zeroFatFood.fat,
+      proteinG: zeroFatFood.protein,
     );
     expect(zeroFat.fat, 0);
     expect(zeroFat.protein, 0);
@@ -57,7 +57,7 @@ void main() {
   test('legacy LogEntry JSON without unitId/quantity still decodes', () {
     final json = {
       'id': 'x1',
-      'foodId': 'bazin',
+      'foodId': 'sample_main_1',
       'servings': 1.5,
       'meal': 'lunch',
     };

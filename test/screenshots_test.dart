@@ -43,10 +43,10 @@ Future<AppState> _pumpWithSampleData(
   state.localeCode = locale;
   state.userName = locale == 'ar' ? 'مها' : 'Maha';
   // A sample day: breakfast, lunch and a snack logged; dinner still open.
-  state.addEntry(state.selectedDate, 'boiled_eggs', 1, MealType.breakfast);
-  state.addEntry(state.selectedDate, 'khubz', 1, MealType.breakfast);
-  state.addEntry(state.selectedDate, 'rice_chicken', 1, MealType.lunch);
-  state.addEntry(state.selectedDate, 'kalee_cheese', 2, MealType.snack);
+  state.addEntry(state.selectedDate, 'sample_breakfast_2', 1, MealType.breakfast);
+  state.addEntry(state.selectedDate, 'sample_breakfast_3', 1, MealType.breakfast);
+  state.addEntry(state.selectedDate, 'sample_main_2', 1, MealType.lunch);
+  state.addEntry(state.selectedDate, 'sample_snack_1', 2, MealType.snack);
   await tester.pumpWidget(CalorieApp(state: state));
   // Asset images never decode under the fake-async test clock; precache the
   // meal glyphs for real so goldens show them.
@@ -126,7 +126,7 @@ void main() {
     // Dinner is the only unlogged meal, so its row carries the only meal "+".
     await tester.tap(find.byIcon(Icons.add).first);
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'كالي');
+    await tester.enterText(find.byType(TextField), 'وجبة خفيفة');
     await tester.pumpAndSettle();
     await expectLater(
       find.byType(MaterialApp),
@@ -139,9 +139,9 @@ void main() {
   ) async {
     final state = await _pumpWithSampleData(tester);
     // Past days + a couple of weights so both charts have content.
-    state.addEntry(DateTime(2026, 7, 13), 'kalee_cheese', 2, MealType.snack);
+    state.addEntry(DateTime(2026, 7, 13), 'sample_snack_1', 2, MealType.snack);
     for (var i = 0; i < 5; i++) {
-      state.addEntry(DateTime(2026, 7, 14), 'bazin', 1, MealType.lunch);
+      state.addEntry(DateTime(2026, 7, 14), 'sample_main_1', 1, MealType.lunch);
     }
     await state.logWeight(DateTime(2026, 7, 11), 82);
     await state.logWeight(DateTime(2026, 7, 13), 81.5);
@@ -186,9 +186,9 @@ void main() {
     await _pumpWithSampleData(tester);
     await tester.tap(find.byIcon(Icons.add).first);
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'kalee');
+    await tester.enterText(find.byType(TextField), 'sample snack a');
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Kalee Chips — Cheese'));
+    await tester.tap(find.text('Sample Snack A'));
     await tester.pumpAndSettle();
     await expectLater(
       find.byType(MaterialApp),

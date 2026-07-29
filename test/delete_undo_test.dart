@@ -14,7 +14,7 @@ Future<AppState> _pumpWithLunch(WidgetTester tester) async {
   SharedPreferences.setMockInitialValues({'onboarding_done': true});
   final state = AppState();
   await state.load();
-  await state.addEntry(state.selectedDate, 'bazin', 1, MealType.lunch);
+  await state.addEntry(state.selectedDate, 'sample_main_1', 1, MealType.lunch);
   await tester.pumpWidget(CalorieApp(state: state));
   await tester.pumpAndSettle();
   return state;
@@ -47,7 +47,7 @@ void main() {
     expect(state.entriesFor(date, meal: MealType.lunch).length, 1);
     expect(
       state.entriesFor(date, meal: MealType.lunch).first.foodId,
-      'bazin',
+      'sample_main_1',
     );
   });
 
@@ -56,9 +56,9 @@ void main() {
     final state = AppState();
     await state.load();
     final day = DateTime(2026, 7, 15);
-    await state.addEntry(day, 'bazin', 1, MealType.lunch);
-    await state.addEntry(day, 'kalee_cheese', 1, MealType.lunch);
-    await state.addEntry(day, 'ful', 1, MealType.lunch);
+    await state.addEntry(day, 'sample_main_1', 1, MealType.lunch);
+    await state.addEntry(day, 'sample_snack_1', 1, MealType.lunch);
+    await state.addEntry(day, 'sample_breakfast_1', 1, MealType.lunch);
 
     // Remove the middle one, then restore it.
     final middle = state.entriesFor(day, meal: MealType.lunch)[1];
@@ -70,6 +70,6 @@ void main() {
         .entriesFor(day, meal: MealType.lunch)
         .map((e) => e.foodId)
         .toList();
-    expect(foods, ['bazin', 'kalee_cheese', 'ful']); // order preserved
+    expect(foods, ['sample_main_1', 'sample_snack_1', 'sample_breakfast_1']); // order preserved
   });
 }

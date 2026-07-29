@@ -31,11 +31,11 @@ void main() {
       // key is not a date at all.
       final logs = {
         '2026-07-15': [
-          {'id': 'a', 'foodId': 'bazin', 'servings': 1, 'meal': 'lunch'},
+          {'id': 'a', 'foodId': 'sample_main_1', 'servings': 1, 'meal': 'lunch'},
           {'id': 'b', 'bogus': true}, // malformed → skipped
         ],
         'not-a-date': [
-          {'id': 'c', 'foodId': 'bazin', 'servings': 1, 'meal': 'lunch'},
+          {'id': 'c', 'foodId': 'sample_main_1', 'servings': 1, 'meal': 'lunch'},
         ],
       };
       SharedPreferences.setMockInitialValues({
@@ -65,14 +65,14 @@ void main() {
     await tester.pumpWidget(CalorieApp(state: state));
     await tester.pumpAndSettle();
 
-    // Open Add → search bazin → tap it → confirm.
+    // Open Add → search for the sample main dish → tap it → confirm.
     await tester.tap(find.byKey(const Key('nav-add')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Breakfast').last);
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'bazin');
+    await tester.enterText(find.byType(TextField), 'sample main dish a');
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Bazin with Sauce'));
+    await tester.tap(find.text('Sample Main Dish A'));
     await tester.pumpAndSettle();
     await tester.tap(find.textContaining('Add · 540'));
     await tester.pumpAndSettle();
@@ -91,7 +91,7 @@ void main() {
 
     final added = await state.addEntry(
       state.selectedDate,
-      'bazin',
+      'sample_main_1',
       1,
       MealType.lunch,
     );

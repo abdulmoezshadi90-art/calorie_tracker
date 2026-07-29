@@ -58,8 +58,8 @@ void main() {
 
     final state = await _pumpApp(tester);
 
-    // Log 2 servings of Kalee cheese chips (130 kcal each) to Snack.
-    state.addEntry(state.selectedDate, 'kalee_cheese', 2, MealType.snack);
+    // Log 2 servings of Sample Snack A (130 kcal each) to Snack.
+    state.addEntry(state.selectedDate, 'sample_snack_1', 2, MealType.snack);
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);

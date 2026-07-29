@@ -113,14 +113,14 @@ void main() {
     expect(find.text('Foods'), findsNWidgets(2)); // app bar + nav label
     expect(find.text('Snacks'), findsOneWidget); // a category header
 
-    // Bazin is under Mains. Scroll to a food a few rows below it so Bazin
-    // lands mid-viewport, clear of the bottom nav, then log it.
+    // Sample Main Dish A is under Mains. Scroll to a food a few rows below
+    // it so it lands mid-viewport, clear of the bottom nav, then log it.
     await tester.scrollUntilVisible(
-      find.text('Rishda'),
+      find.text('Sample Main Dish C'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.text('Bazin with Sauce'));
+    await tester.tap(find.text('Sample Main Dish A'));
     await tester.pumpAndSettle();
     expect(find.text('Choose a meal'), findsOneWidget);
     await tester.tap(find.text('Lunch').last);

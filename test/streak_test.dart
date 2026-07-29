@@ -13,7 +13,7 @@ void main() {
   }
 
   void log(AppState s, DateTime day) =>
-      s.addEntry(day, 'bazin', 1, MealType.lunch);
+      s.addEntry(day, 'sample_main_1', 1, MealType.lunch);
 
   test('no logs → streak 0', () {
     expect(state().streak, 0);

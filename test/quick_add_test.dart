@@ -22,7 +22,7 @@ Future<AppState> _openSearchForLunch(WidgetTester tester) async {
   await tester.pumpAndSettle();
   await tester.tap(find.text('Lunch').last);
   await tester.pumpAndSettle();
-  await tester.enterText(find.byType(TextField), 'bazin');
+  await tester.enterText(find.byType(TextField), 'sample main dish a');
   await tester.pumpAndSettle();
   return state;
 }
@@ -54,13 +54,13 @@ void main() {
       final date = state.selectedDate;
       final entries = state.entriesFor(date, meal: MealType.lunch);
       expect(entries.length, 1);
-      expect(entries.single.foodId, 'bazin');
+      expect(entries.single.foodId, 'sample_main_1');
       expect(entries.single.unitId, 'serving');
       expect(entries.single.quantity, 1.0);
       expect(entries.single.servings, 1.0);
       expect(haptics, ['HapticFeedbackType.lightImpact']);
 
-      expect(find.textContaining('Bazin with Sauce'), findsWidgets);
+      expect(find.textContaining('Sample Main Dish A'), findsWidgets);
       expect(find.textContaining('540'), findsWidgets);
       expect(find.text('Undo'), findsOneWidget);
     },
