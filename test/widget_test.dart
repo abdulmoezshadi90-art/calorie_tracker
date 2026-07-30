@@ -22,8 +22,15 @@ void main() {
     for (final f in foodDatabase) {
       expect(f.sourceNote, isNotEmpty, reason: f.id);
     }
-    // Nothing is verified until it passes the Phase 2 label pipeline.
-    expect(foodDatabase.where((f) => f.verified), isEmpty);
+    // Verified foods exist now (Phase 2 milk batch); every verified food
+    // must still carry a real sourceNote, not the placeholder default.
+    for (final f in foodDatabase.where((f) => f.verified)) {
+      expect(
+        f.sourceNote,
+        isNot('Placeholder — unverified development estimate'),
+        reason: f.id,
+      );
+    }
   });
 
   test('fmtServings drops trailing .0', () {

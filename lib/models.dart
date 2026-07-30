@@ -36,6 +36,11 @@ class FoodItem {
   /// recipe reference, or the placeholder marker. Never empty.
   final String sourceNote;
 
+  /// EAN/UPC from the label, collected now for the Phase 9 barcode scanner
+  /// (see CLAUDE.md → DATA PIPELINE). Not read anywhere in the app yet; null
+  /// when the label's barcode wasn't captured.
+  final String? barcode;
+
   /// Grams of ONE base serving, transcribed from the serving label (null
   /// when the label has no gram weight). Nutrition stays per serving;
   /// presets are gram multiples of this.
@@ -87,6 +92,7 @@ class FoodItem {
     required this.category,
     this.verified = false,
     this.sourceNote = 'Placeholder — unverified development estimate',
+    this.barcode,
     this.servingGrams,
     this.presets = const [],
   });

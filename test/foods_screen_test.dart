@@ -33,11 +33,16 @@ void main() {
 
       expect(tester.takeException(), isNull);
       // Every category header is present (scroll through the whole list).
+      // Small delta + generous maxScrolls: the milk batch made Drinks long
+      // enough that the sliver list's extent estimate keeps growing as
+      // more children get measured, and a coarse step can drift right past
+      // a header before the check between drags ever sees it.
       for (final category in FoodCategory.values) {
         await tester.scrollUntilVisible(
           find.text(l.category(category)),
-          200,
+          50,
           scrollable: find.byType(Scrollable).first,
+          maxScrolls: 300,
         );
         expect(find.text(l.category(category)), findsOneWidget);
         expect(tester.takeException(), isNull);
@@ -52,9 +57,15 @@ void main() {
 
   testWidgets('approximate marker shows on unverified foods', (tester) async {
     await _openFoods(tester);
-    // All current foods are unverified placeholders → marker present.
+    // Placeholder sample_* foods are still unverified → marker present.
     expect(find.text('approx.'), findsWidgets);
-    // Sanity: the database is indeed all-unverified for now.
-    expect(foodDatabase.every((f) => !f.verified), isTrue);
+    // Sanity: the placeholder foods are indeed unverified (verified data,
+    // e.g. the milk batch, is expected alongside them from Phase 2 on).
+    expect(
+      foodDatabase.where((f) => f.id.startsWith('sample_')).every(
+        (f) => !f.verified,
+      ),
+      isTrue,
+    );
   });
 }
