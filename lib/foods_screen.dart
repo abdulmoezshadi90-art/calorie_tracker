@@ -128,7 +128,7 @@ class _FoodRow extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: c.protein,
+                      color: c.kcalAccent,
                     ),
                   ),
                 ),

@@ -79,14 +79,123 @@ void main() {
       expect(find.text('1.5'), findsOneWidget);
       expect(find.textContaining('Add · 810 kcal'), findsOneWidget);
 
-      // Switch to fraction mode: 1 whole + ½ = 1.5 — same total.
+      // Switch to fraction mode: the value CONVERTS (1.5 → 1 whole + ½),
+      // it does not reset — same total with no further chip taps.
       await tester.tap(find.text('Fraction'));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('½'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('½'));
-      await tester.pumpAndSettle();
       expect(find.textContaining('Add · 810 kcal'), findsOneWidget);
+
+      // And back to decimal: converts again, doesn't reset to 1.
+      await tester.tap(find.text('Decimal'));
+      await tester.pumpAndSettle();
+      expect(find.text('1.5'), findsOneWidget);
+      expect(find.textContaining('Add · 810 kcal'), findsOneWidget);
+    },
+  );
+
+  testWidgets('fractional 2 and 1/2 equals decimal 2.5 in the logged entry', (
+    tester,
+  ) async {
+    final state = await _openSampleMainDetail(tester);
+
+    await tester.tap(find.text('Fraction'));
+    await tester.pumpAndSettle();
+    // Default whole is 1 — bump to 2, then add the ½ chip.
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('½'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Add · 1,350 kcal'), findsOneWidget); // 2.5×540
+
+    await tester.tap(find.textContaining('Add · 1,350 kcal'));
+    await tester.pumpAndSettle();
+    await tester.pump();
+
+    final entry = state.entriesFor(state.selectedDate).single;
+    expect(entry.quantity, 2.5);
+    expect(entry.servings, 2.5); // base 'serving' unit: multiplier == quantity
+  });
+
+  testWidgets(
+    'picking a generic weight unit changes kcal and macro grams by the right ratio',
+    (tester) async {
+      await _openSampleMainDetail(tester);
+      // Base: 1 serving (350 g) = 540 kcal, 75 c / 15 f / 25 p.
+      expect(find.text('1 serving (350 g)'), findsOneWidget);
+
+      await tester.tap(find.text('1 serving (350 g)'));
+      await tester.pumpAndSettle();
+      expect(find.text('This food\'s servings'), findsOneWidget);
+      expect(find.text('Weight units'), findsOneWidget);
+
+      await tester.tap(find.text('100 g'));
+      await tester.pumpAndSettle();
+
+      // 100/350 of the base serving.
+      expect(find.textContaining('Add · 154 kcal'), findsOneWidget);
+      expect(find.text('21g'), findsOneWidget); // carbs: 75 × 100/350 ≈ 21
+    },
+  );
+
+  testWidgets('a liquid food\'s picker sheet offers volume units, not weight', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    SharedPreferences.setMockInitialValues({'onboarding_done': true});
+    final state = AppState(clock: () => DateTime(2026, 7, 15, 9, 30));
+    await state.load();
+    await tester.pumpWidget(CalorieApp(state: state));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('nav-add')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Lunch').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'hawaa full cream');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Hawaa Full Cream Milk (UHT)'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('1 glass (250 ml)'));
+    await tester.pumpAndSettle();
+    expect(find.text('Volume units'), findsOneWidget);
+    expect(find.text('Weight units'), findsNothing);
+    expect(find.text('cup'), findsOneWidget);
+    expect(find.text('oz'), findsNothing);
+  });
+
+  group('no overflow with the unit picker sheet open', () {
+    for (final locale in ['en', 'ar']) {
+      for (final size in [const Size(375, 812), const Size(320, 640)]) {
+        testWidgets(
+          '$locale at ${size.width.toInt()}x${size.height.toInt()}',
+          (tester) async {
+            await _openSampleMainDetail(tester, locale: locale, size: size);
+            final servingLabel = locale == 'ar'
+                ? 'حصة (350 جم)'
+                : '1 serving (350 g)';
+            await tester.tap(find.text(servingLabel));
+            await tester.pumpAndSettle();
+            expect(tester.takeException(), isNull);
+          },
+        );
+      }
+    }
+  });
+
+  testWidgets(
+    'unit picker sheet and fraction chips stay Western-digit in Arabic',
+    (tester) async {
+      await _openSampleMainDetail(tester, locale: 'ar');
+      await tester.tap(find.text('كسور')); // Fraction mode
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('حصة (350 جم)'));
+      await tester.pumpAndSettle();
+
+      for (final digit in '٠١٢٣٤٥٦٧٨٩'.split('')) {
+        expect(find.textContaining(digit), findsNothing, reason: digit);
+      }
     },
   );
 }

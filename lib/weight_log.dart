@@ -143,7 +143,7 @@ class _LogWeightSheetState extends State<_LogWeightSheet> {
           ),
           if (_error != null) ...[
             const SizedBox(height: 10),
-            Text(_error!, style: TextStyle(fontSize: 13, color: c.fat)),
+            Text(_error!, style: TextStyle(fontSize: 13, color: c.fieldError)),
           ],
           const SizedBox(height: 20),
           Row(

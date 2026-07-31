@@ -353,7 +353,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Text(
             _error!,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: c.fat),
+            style: TextStyle(fontSize: 13, color: c.fieldError),
           ),
         ],
         const SizedBox(height: 24),
@@ -532,7 +532,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               if (_error != null) ...[
                 const SizedBox(height: 8),
-                Text(_error!, style: TextStyle(fontSize: 13, color: c.fat)),
+                Text(_error!, style: TextStyle(fontSize: 13, color: c.fieldError)),
               ],
               const SizedBox(height: 12),
               Row(

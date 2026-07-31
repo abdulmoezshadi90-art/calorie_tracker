@@ -492,7 +492,7 @@ class DayViewScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: c.protein,
+                    color: c.kcalAccent,
                   ),
                 ),
               ],
@@ -568,7 +568,7 @@ class _MealSection extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: c.protein,
+                          color: c.kcalAccent,
                         ),
                       ),
                     ),

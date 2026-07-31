@@ -43,22 +43,36 @@ class FoodItem {
 
   /// Grams of ONE base serving, transcribed from the serving label (null
   /// when the label has no gram weight). Nutrition stays per serving;
-  /// presets are gram multiples of this.
+  /// presets are gram multiples of this. Also the anchor [genericUnits]
+  /// needs to convert a generic weight/volume quantity into base servings —
+  /// foods without it get named servings only (see [genericUnits]).
   final double? servingGrams;
 
   /// Household portions shown as chips in the add sheet. Empty for foods
   /// not yet populated (top staples first; refined with beta data).
   final List<PortionPreset> presets;
 
+  /// True for foods measured by volume (milk, drinks) rather than weight —
+  /// gates which [GenericUnitKind] set [genericUnits] offers. Defaults to
+  /// false (solid); set explicitly per food in food_db.dart.
+  final bool isLiquid;
+
+  /// Grams per millilitre for [isLiquid] foods — the only thing standing
+  /// between a generic volume unit (ml, cup, tbsp…) and the grams the
+  /// macro math runs on. Defaults to water's density (1 g/ml) until a
+  /// specific food's label states otherwise; override per food when that
+  /// data lands (do not guess it now).
+  final double densityGPerMl;
+
   /// Servings equivalent of [preset], rounded to 2 decimals so displayed
   /// serving counts stay tidy. Requires [servingGrams].
   double servingsFor(PortionPreset preset) =>
       ((preset.grams / servingGrams!) * 100).round() / 100;
 
-  /// Ways to log this food's quantity: its own named serving, plus any
-  /// household presets it already defines. NOT a universal gram picker —
-  /// each food scales on its own terms (decision: never invent a weight
-  /// for foods whose label states none, e.g. "1 cone", "2 eggs").
+  /// Ways to log this food's quantity via its OWN named serving, plus any
+  /// household presets it already defines. Never invents a weight for foods
+  /// whose label states none (e.g. "1 cone", "2 eggs") — see [genericUnits]
+  /// for the separate, opt-in-when-anchored universal weight/volume picker.
   List<ServingUnit> get servingUnits => [
     ServingUnit(
       id: 'serving',
@@ -69,6 +83,31 @@ class FoodItem {
     for (final p in presets)
       ServingUnit(id: p.nameEn, labelEn: p.nameEn, labelAr: p.nameAr, grams: p.grams),
   ];
+
+  /// Standard weight or volume units alongside this food's named servings —
+  /// the conversion factors in [GenericUnitKind] are fixed physical
+  /// constants, never per-food data, so offering them never risks inventing
+  /// a number. Empty when [servingGrams] is null: there is no anchor to
+  /// convert a gram/ml quantity into base servings, so offering these units
+  /// would silently compute wrong macros rather than merely looking odd.
+  List<ServingUnit> get genericUnits {
+    if (servingGrams == null) return const [];
+    final kinds = isLiquid
+        ? GenericUnitKind.liquidKinds
+        : GenericUnitKind.solidKinds;
+    return [
+      for (final k in kinds)
+        ServingUnit(
+          id: GenericUnitKind.idFor(k),
+          // Real display text comes from L10n.unitLabel, which recognizes
+          // this id and overrides it with the localized generic label;
+          // these are just non-displayed structural fallbacks.
+          labelEn: k.name,
+          labelAr: k.name,
+          grams: isLiquid ? k.unitsPerBase * densityGPerMl : k.unitsPerBase,
+        ),
+    ];
+  }
 
   /// Multiplier against the base serving for [quantity] of [unit]. Foods
   /// with no known gram weight (unit.grams or servingGrams null) treat
@@ -95,14 +134,18 @@ class FoodItem {
     this.barcode,
     this.servingGrams,
     this.presets = const [],
+    this.isLiquid = false,
+    this.densityGPerMl = 1.0,
   });
 }
 
 enum FoodCategory { snack, main, breakfast, sweet, drink }
 
 /// One way to log a food's quantity — the food's OWN serving scale (its
-/// named serving, or one of its household presets), never a universal
-/// gram unit. [grams] is null when the label carries no weight at all.
+/// named serving, or one of its household presets), or a generic
+/// weight/volume unit (id `generic_<kind name>`, see
+/// [FoodItem.genericUnits]). [grams] is null only for a food-specific unit
+/// whose label carries no weight at all; generic units always have one.
 class ServingUnit {
   final String id;
   final String labelEn;
@@ -114,6 +157,52 @@ class ServingUnit {
     required this.labelAr,
     this.grams,
   });
+}
+
+/// Universal weight/volume units offered alongside a food's own named
+/// servings (see [FoodItem.genericUnits]). [unitsPerBase] is grams for the
+/// solid kinds, millilitres for the liquid ones — fixed physical
+/// conversion factors, never per-food nutrition data.
+enum GenericUnitKind {
+  gram(1),
+  hundredGrams(100),
+  kilogram(1000),
+  ounce(28.3495),
+  pound(453.592),
+  milliliter(1),
+  hundredMilliliters(100),
+  liter(1000),
+  // Nutrition-label reference amounts (FDA-style rounding), matching the
+  // convention this app's own data already uses (e.g. "1 cup (240 ml)")
+  // rather than the precise US customary fluid ounce (29.5735 ml).
+  fluidOunce(30),
+  cup(240),
+  tablespoon(15),
+  teaspoon(5);
+
+  const GenericUnitKind(this.unitsPerBase);
+  final double unitsPerBase;
+
+  static const solidKinds = [gram, hundredGrams, kilogram, ounce, pound];
+  static const liquidKinds = [
+    milliliter,
+    hundredMilliliters,
+    liter,
+    fluidOunce,
+    cup,
+    tablespoon,
+    teaspoon,
+  ];
+
+  static String idFor(GenericUnitKind k) => 'generic_${k.name}';
+
+  /// Null when [id] isn't a generic-unit id (a food-specific ServingUnit).
+  static GenericUnitKind? fromUnitId(String id) {
+    for (final k in values) {
+      if (id == idFor(k)) return k;
+    }
+    return null;
+  }
 }
 
 enum MealType {

@@ -453,7 +453,7 @@ class _GoalsEditorState extends State<_GoalsEditor> {
             const SizedBox(height: 10),
             Text(
               _error!,
-              style: TextStyle(fontSize: 13, color: c.fat),
+              style: TextStyle(fontSize: 13, color: c.fieldError),
             ),
           ],
           const SizedBox(height: 20),

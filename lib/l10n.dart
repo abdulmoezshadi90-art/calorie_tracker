@@ -107,7 +107,36 @@ class L10n {
   String get invalidQuantity => isAr
       ? 'أدخل كمية بين 0.1 و 99'
       : 'Enter a quantity between 0.1 and 99';
-  String unitLabel(ServingUnit u) => isAr ? u.labelAr : u.labelEn;
+
+  /// A [ServingUnit]'s display label — generic weight/volume units (never
+  /// per-food data) are recognized by id and localized here; food-specific
+  /// units use the label strings food_db.dart already stored on them.
+  String unitLabel(ServingUnit u) {
+    final generic = GenericUnitKind.fromUnitId(u.id);
+    if (generic != null) return genericUnitLabel(generic);
+    return isAr ? u.labelAr : u.labelEn;
+  }
+
+  String genericUnitLabel(GenericUnitKind k) => switch (k) {
+    GenericUnitKind.gram => isAr ? 'غرام' : 'g',
+    GenericUnitKind.hundredGrams => isAr ? '100 غرام' : '100 g',
+    GenericUnitKind.kilogram => isAr ? 'كيلوغرام' : 'kg',
+    GenericUnitKind.ounce => isAr ? 'أونصة' : 'oz',
+    GenericUnitKind.pound => isAr ? 'رطل' : 'lb',
+    GenericUnitKind.milliliter => isAr ? 'مل' : 'ml',
+    GenericUnitKind.hundredMilliliters => isAr ? '100 مل' : '100 ml',
+    GenericUnitKind.liter => isAr ? 'لتر' : 'l',
+    GenericUnitKind.fluidOunce => isAr ? 'أونصة سائلة' : 'fl oz',
+    GenericUnitKind.cup => isAr ? 'كوب' : 'cup',
+    GenericUnitKind.tablespoon => isAr ? 'ملعقة كبيرة' : 'tbsp',
+    GenericUnitKind.teaspoon => isAr ? 'ملعقة صغيرة' : 'tsp',
+  };
+
+  // Serving-unit picker sheet (Change 2: bottom sheet replacing inline chips).
+  String get chooseUnit => isAr ? 'اختر الوحدة' : 'Choose a unit';
+  String get namedServingsSection => isAr ? 'حصص هذا الطعام' : "This food's servings";
+  String get weightUnitsSection => isAr ? 'وحدات الوزن' : 'Weight units';
+  String get volumeUnitsSection => isAr ? 'وحدات الحجم' : 'Volume units';
 
   String get history => isAr ? 'السجل' : 'History';
   String get historyEmpty => isAr ? 'لا توجد أيام مسجلة بعد' : 'No logged days yet';

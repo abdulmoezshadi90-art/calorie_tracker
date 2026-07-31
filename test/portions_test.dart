@@ -66,6 +66,9 @@ void main() {
     expect(find.textContaining('Add · 540 kcal'), findsOneWidget);
 
     // Switch to the "Modest share" preset (250 g): 540 × 250/350 ≈ 386 kcal.
+    // The serving row (showing the selected unit) opens the picker sheet.
+    await tester.tap(find.text('1 serving (350 g)'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Modest share'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Add · 386 kcal'), findsOneWidget);
@@ -101,7 +104,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.text('حصة صغيرة'), findsOneWidget); // preset unit chip
+    // Serving row opens the unit picker sheet; presets are listed there.
+    await tester.tap(find.text('حصة (350 جم)'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('حصة صغيرة'), findsOneWidget); // preset in the sheet
     final context = tester.element(find.text('حصة صغيرة'));
     expect(Directionality.of(context), TextDirection.rtl);
     // Digits anywhere on the page stay Western.

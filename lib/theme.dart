@@ -44,6 +44,14 @@ class AppColors {
   final Color protein;
   final Color macroTrack;
   final Color divider;
+  // Non-macro reuses of the old carb/fat/protein look, kept stable when the
+  // macro palette changed underneath them: kcalAccent is every kcal-amount
+  // figure app-wide (home meal rows, search/foods rows, meal detail, progress
+  // day totals — never a macro itself); fieldError is every inline
+  // validation message (food detail quantity, profile steps, goals editor,
+  // weight log).
+  final Color kcalAccent;
+  final Color fieldError;
   // Meal icon circles
   final Color mealIconColor;
   final Map<MealType, Color> mealTint;
@@ -81,6 +89,8 @@ class AppColors {
     required this.protein,
     required this.macroTrack,
     required this.divider,
+    required this.kcalAccent,
+    required this.fieldError,
     required this.mealIconColor,
     required this.mealTint,
   });
@@ -131,11 +141,14 @@ class AppColors {
     leftPillText: Color(0xFF2E6B45),
     chipBg: Color(0xFFE7F0E1),
     chipText: Color(0xFF4C6B54),
-    carb: Color(0xFFE0A72E),
-    fat: Color(0xFFD06A4F),
-    protein: Color(0xFF2F8F5B),
+    carb: Color(0xFFF59E0B),
+    fat: Color(0xFF8B5CF6),
+    protein: Color(0xFFEF4444),
     macroTrack: Color(0xFFE9E5D6),
     divider: Color(0xFFDAD6C6),
+    // Old macro hexes, kept alive under new names for the non-macro reuses.
+    kcalAccent: Color(0xFF2F8F5B),
+    fieldError: Color(0xFFD06A4F),
     mealIconColor: Color(0xFF3B4A34),
     mealTint: {
       MealType.breakfast: Color(0xFFFBF0D8),
@@ -176,11 +189,13 @@ class AppColors {
     leftPillText: Color(0xFFE7F0E1),
     chipBg: Color(0xFF26351F),
     chipText: Color(0xFFBFD3B6),
-    carb: Color(0xFFE0A72E),
-    fat: Color(0xFFD0765C),
-    protein: Color(0xFF3FA873),
+    carb: Color(0xFFF59E0B),
+    fat: Color(0xFF8B5CF6),
+    protein: Color(0xFFEF4444),
     macroTrack: Color(0xFF2A311F),
     divider: Color(0xFF2C3326),
+    kcalAccent: Color(0xFF3FA873),
+    fieldError: Color(0xFFD0765C),
     mealIconColor: Color(0xFFC7D2BC),
     mealTint: {
       MealType.breakfast: Color(0xFF3A3320),

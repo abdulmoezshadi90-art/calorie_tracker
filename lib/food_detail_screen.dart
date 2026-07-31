@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'app_state.dart';
+import 'l10n.dart';
 import 'models.dart';
 import 'settings_screen.dart' show WesternDigitsFormatter;
 import 'theme.dart';
@@ -58,6 +59,38 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
   double get _multiplier =>
       widget.food.multiplierFor(_unit, _quantityValid ? _quantity : 0);
 
+  /// Carries the current quantity across a mode switch instead of resetting
+  /// it — 0.5 becomes ½, and a value with no clean fraction snaps silently
+  /// to the nearest chip combination (design: say nothing, just move it).
+  void _switchMode(String mode, AppState state) {
+    final current = _quantity; // reads via the OLD _mode, before it flips.
+    setState(() {
+      if (mode == 'decimal') {
+        _decimalController.text = fmtServings((current * 10).round() / 10);
+      } else {
+        _whole = current.floor().clamp(0, 98);
+        _fractionPreset = _nearestFractionPreset(current - _whole);
+      }
+      _mode = mode;
+    });
+    state.setQuantityMode(mode);
+  }
+
+  /// Nearest fraction chip (0 = none) to [frac], by absolute distance —
+  /// the silent snap the task calls for when a decimal has no exact match.
+  int _nearestFractionPreset(double frac) {
+    var bestKey = 0;
+    var bestDiff = frac.abs();
+    for (final entry in _fractionValues.entries) {
+      final diff = (entry.value - frac).abs();
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestKey = entry.key;
+      }
+    }
+    return bestKey;
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
@@ -86,32 +119,9 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-          _MacroChipsRow(carbs: carbs, fat: fat, protein: protein, pct: pct),
-          const SizedBox(height: 20),
-          _DonutCard(kcal: kcal, pct: pct),
-          const SizedBox(height: 20),
-          _sectionLabel(c, l.unit),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final u in food.servingUnits)
-                ChoiceChip(
-                  label: Text(l.unitLabel(u)),
-                  selected: u.id == _unit.id,
-                  onSelected: (_) => setState(() => _unit = u),
-                  selectedColor: c.chipBg,
-                  labelStyle: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: u.id == _unit.id ? c.chipText : c.ink,
-                  ),
-                  side: BorderSide(
-                    color: u.id == _unit.id ? c.accent : c.divider,
-                  ),
-                  backgroundColor: c.card,
-                ),
-            ],
+          _ServingRow(
+            label: l.unitLabel(_unit),
+            onTap: () => _showUnitPicker(context),
           ),
           const SizedBox(height: 20),
           Row(
@@ -122,10 +132,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                 mode: _mode,
                 fractionLabel: l.fractionMode,
                 decimalLabel: l.decimalMode,
-                onChanged: (mode) {
-                  setState(() => _mode = mode);
-                  state.setQuantityMode(mode);
-                },
+                onChanged: (mode) => _switchMode(mode, state),
               ),
             ],
           ),
@@ -144,8 +151,18 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
             }),
           if (_error != null) ...[
             const SizedBox(height: 10),
-            Text(_error!, style: TextStyle(fontSize: 13, color: c.fat)),
+            Text(_error!, style: TextStyle(fontSize: 13, color: c.fieldError)),
           ],
+          const SizedBox(height: 20),
+          _MacroChipsRow(
+            carbs: carbs,
+            fat: fat,
+            protein: protein,
+            pct: pct,
+            zeroCal: kcal <= 0,
+          ),
+          const SizedBox(height: 20),
+          _DonutCard(kcal: kcal, pct: pct),
           const SizedBox(height: 90),
         ],
         ),
@@ -227,6 +244,175 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
     text,
     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: c.ink),
   );
+
+  /// Bottom sheet listing this food's own named servings first, then the
+  /// generic weight/volume units (only when the food has a servingGrams
+  /// anchor to convert them through — see [FoodItem.genericUnits]).
+  void _showUnitPicker(BuildContext context) {
+    final c = AppColors.of(context);
+    final state = AppScope.of(context);
+    final l = state.l;
+    final food = widget.food;
+    final generic = food.genericUnits;
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: c.card,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(
+                  l.chooseUnit,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: c.ink,
+                  ),
+                ),
+              ),
+            ),
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _unitSection(
+                      c,
+                      l,
+                      l.namedServingsSection,
+                      food.servingUnits,
+                      sheetContext,
+                    ),
+                    if (generic.isNotEmpty)
+                      _unitSection(
+                        c,
+                        l,
+                        food.isLiquid ? l.volumeUnitsSection : l.weightUnitsSection,
+                        generic,
+                        sheetContext,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _unitSection(
+    AppColors c,
+    L10n l,
+    String label,
+    List<ServingUnit> units,
+    BuildContext sheetContext,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 4),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: c.muted,
+            ),
+          ),
+        ),
+        for (final u in units)
+          ListTile(
+            title: Text(
+              l.unitLabel(u),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: c.ink,
+              ),
+            ),
+            trailing: u.id == _unit.id
+                ? Icon(Icons.check, color: c.accent)
+                : null,
+            onTap: () {
+              Navigator.of(sheetContext).pop();
+              setState(() => _unit = u);
+            },
+          ),
+      ],
+    );
+  }
+}
+
+/// Serving row: shows the selected unit and opens the picker sheet on tap.
+class _ServingRow extends StatelessWidget {
+  const _ServingRow({required this.label, required this.onTap});
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final l = AppScope.of(context).l;
+    return Container(
+      decoration: BoxDecoration(
+        color: c.card,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: c.cardShadow,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l.unit,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: c.muted,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: c.ink,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.keyboard_arrow_down, color: c.muted),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _MacroChipsRow extends StatelessWidget {
@@ -235,11 +421,13 @@ class _MacroChipsRow extends StatelessWidget {
     required this.fat,
     required this.protein,
     required this.pct,
+    required this.zeroCal,
   });
   final double carbs;
   final double fat;
   final double protein;
   final ({int carb, int fat, int protein}) pct;
+  final bool zeroCal;
 
   @override
   Widget build(BuildContext context) {
@@ -254,6 +442,7 @@ class _MacroChipsRow extends StatelessWidget {
             grams: carbs,
             percent: pct.carb,
             color: c.carb,
+            zeroCal: zeroCal,
           ),
         ),
         const SizedBox(width: 8),
@@ -263,6 +452,7 @@ class _MacroChipsRow extends StatelessWidget {
             grams: fat,
             percent: pct.fat,
             color: c.fat,
+            zeroCal: zeroCal,
           ),
         ),
         const SizedBox(width: 8),
@@ -272,6 +462,7 @@ class _MacroChipsRow extends StatelessWidget {
             grams: protein,
             percent: pct.protein,
             color: c.protein,
+            zeroCal: zeroCal,
           ),
         ),
       ],
@@ -285,11 +476,13 @@ class _MacroChip extends StatelessWidget {
     required this.grams,
     required this.percent,
     required this.color,
+    required this.zeroCal,
   });
   final String label;
   final double grams;
   final int percent;
   final Color color;
+  final bool zeroCal;
 
   @override
   Widget build(BuildContext context) {
@@ -327,7 +520,9 @@ class _MacroChip extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            fmtPercent(percent),
+            // A zero-calorie food can't have a calorie SHARE — showing 0%
+            // for all three would misleadingly imply an even split.
+            zeroCal ? '–' : fmtPercent(percent),
             style: TextStyle(fontSize: 11, color: c.muted),
           ),
         ],

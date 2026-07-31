@@ -806,7 +806,7 @@ class _MealRow extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: c.protein,
+                            color: c.kcalAccent,
                           ),
                         ),
                       ],
