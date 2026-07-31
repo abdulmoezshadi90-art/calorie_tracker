@@ -137,3 +137,57 @@ class _StripedBarPainter extends CustomPainter {
       old.gradient != gradient ||
       old.isRtl != isRtl;
 }
+
+/// [StripedBar] with the fill easing to a new [value] instead of snapping —
+/// every logged or deleted entry, and every day switched to, glides rather
+/// than jumps. Same fill/stripe painting; only the animated value differs.
+/// Mirrors the donut chart's animation pattern in food_detail_screen.dart.
+class AnimatedStripedBar extends ImplicitlyAnimatedWidget {
+  const AnimatedStripedBar({
+    super.key,
+    required this.value,
+    required this.goal,
+    required this.height,
+    required this.track,
+    this.color,
+    this.gradient,
+  }) : assert(color != null || gradient != null),
+       super(duration: const Duration(milliseconds: 450), curve: Curves.easeOutCubic);
+
+  final double value;
+  final double goal;
+  final double height;
+  final Color track;
+  final Color? color;
+  final List<Color>? gradient;
+
+  @override
+  ImplicitlyAnimatedWidgetState<AnimatedStripedBar> createState() =>
+      _AnimatedStripedBarState();
+}
+
+class _AnimatedStripedBarState
+    extends ImplicitlyAnimatedWidgetState<AnimatedStripedBar> {
+  Tween<double>? _value;
+
+  @override
+  void forEachTween(TweenVisitor<dynamic> visitor) {
+    _value = visitor(
+      _value,
+      widget.value,
+      (v) => Tween<double>(begin: v as double),
+    ) as Tween<double>;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StripedBar(
+      value: _value!.evaluate(animation),
+      goal: widget.goal,
+      height: widget.height,
+      track: widget.track,
+      color: widget.color,
+      gradient: widget.gradient,
+    );
+  }
+}

@@ -514,7 +514,7 @@ class _CalorieCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          StripedBar(
+          AnimatedStripedBar(
             value: totals.kcal,
             goal: goal.toDouble(),
             height: 10,
@@ -676,7 +676,7 @@ class _MacroCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        StripedBar(
+        AnimatedStripedBar(
           value: value,
           goal: goal,
           height: 8,

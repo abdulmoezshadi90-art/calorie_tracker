@@ -107,7 +107,12 @@ class AppColors {
     // Darkened from 7E8C7F (3.0:1) to meet WCAG 4.5:1 for small text on
     // both pageBg and card; same green-gray hue.
     muted: Color(0xFF5F6E62),
+    // Two layers read as more considered than one: a tight, barely-there
+    // contact shadow for edge definition, under the existing soft ambient
+    // wash for lift. Same "soft shadow" language (hard requirement 3),
+    // just built with the depth real light actually has.
     cardShadow: [
+      BoxShadow(color: Color(0x0F000000), blurRadius: 3, offset: Offset(0, 1)),
       BoxShadow(
         color: Color(0x14000000),
         blurRadius: 24,
@@ -156,6 +161,7 @@ class AppColors {
     inkStrong: Color(0xFFF2F7EC),
     muted: Color(0xFF8F9C86),
     cardShadow: [
+      BoxShadow(color: Color(0x26000000), blurRadius: 4, offset: Offset(0, 2)),
       BoxShadow(color: Color(0x33000000), blurRadius: 20, offset: Offset(0, 8)),
     ],
     accent: Color(0xFF34A96B),
