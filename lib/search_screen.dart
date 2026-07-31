@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -8,6 +10,21 @@ import 'food_detail_screen.dart';
 import 'models.dart';
 import 'theme.dart';
 
+/// One food's search text, folded to lowercase (EN only — Arabic has no
+/// letter case) exactly once at startup. Filtering a keystroke then never
+/// re-lowercases the whole database inside build(); it was the measured
+/// cause of per-keystroke jank once the database grew past a couple dozen
+/// items (see the profiling notes on the perf-fix commit).
+class _SearchEntry {
+  const _SearchEntry(this.food, this.enLower);
+  final FoodItem food;
+  final String enLower;
+}
+
+final List<_SearchEntry> _searchIndex = [
+  for (final f in foodDatabase) _SearchEntry(f, f.nameEn.toLowerCase()),
+];
+
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key, required this.meal});
   final MealType meal;
@@ -17,23 +34,84 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
+  static const _pageSize = 20;
+  static const _debounceDelay = Duration(milliseconds: 200);
+  static const _loadMoreAt = 0.8; // fraction of scroll extent
+
   final _searchController = TextEditingController();
-  String _query = '';
+  final _scrollController = ScrollController();
+  Timer? _debounce;
+
+  // The full filtered set for the last APPLIED query, recomputed only when
+  // that query actually changes — never on every keystroke or unrelated
+  // rebuild (diagnosis #2/#3). _visible windows it down to _visibleCount
+  // rows; more of the already-filtered list appends silently near the
+  // bottom of the scroll (no spinner: this is local data, there is nothing
+  // to wait for).
+  List<FoodItem> _filtered = foodDatabase;
+  int _visibleCount = _pageSize;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_maybeLoadMore);
+  }
 
   @override
   void dispose() {
+    _debounce?.cancel();
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
-  List<FoodItem> get _results {
-    final q = _query.trim().toLowerCase();
-    if (q.isEmpty) return foodDatabase;
-    return foodDatabase
-        .where(
-          (f) => f.nameEn.toLowerCase().contains(q) || f.nameAr.contains(q),
-        )
-        .toList();
+  void _onQueryChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(_debounceDelay, () => _applyQuery(value));
+  }
+
+  void _applyQuery(String value) {
+    final q = value.trim().toLowerCase();
+    final filtered = q.isEmpty
+        ? foodDatabase
+        : [
+            for (final entry in _searchIndex)
+              if (entry.enLower.contains(q) || entry.food.nameAr.contains(q))
+                entry.food,
+          ];
+    setState(() {
+      _filtered = filtered;
+      _visibleCount = _pageSize;
+    });
+    // A changed query always starts the list from the top — the old
+    // scroll offset has no meaning against a different result set. This
+    // never fires for reasons OTHER than the query changing, so scroll
+    // position stays put across unrelated rebuilds.
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
+  }
+
+  void _maybeLoadMore() {
+    if (!_scrollController.hasClients || _visibleCount >= _filtered.length) {
+      return;
+    }
+    final position = _scrollController.position;
+    if (position.maxScrollExtent <= 0) return;
+    if (position.pixels >= position.maxScrollExtent * _loadMoreAt) {
+      setState(() {
+        _visibleCount = (_visibleCount + _pageSize).clamp(
+          0,
+          _filtered.length,
+        );
+      });
+    }
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    _debounce?.cancel();
+    _applyQuery('');
   }
 
   @override
@@ -41,7 +119,7 @@ class _SearchScreenState extends State<SearchScreen> {
     final state = AppScope.of(context);
     final c = AppColors.of(context);
     final l = state.l;
-    final results = _results;
+    final visible = _filtered.take(_visibleCount).toList();
 
     return Scaffold(
       backgroundColor: c.pageBg,
@@ -57,7 +135,7 @@ class _SearchScreenState extends State<SearchScreen> {
             child: TextField(
               controller: _searchController,
               autofocus: true,
-              onChanged: (v) => setState(() => _query = v),
+              onChanged: _onQueryChanged,
               style: TextStyle(color: c.ink),
               decoration: InputDecoration(
                 hintText: l.searchHint,
@@ -74,22 +152,21 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           ),
           Expanded(
-            child: results.isEmpty
+            child: _filtered.isEmpty
                 ? EmptyState(
                     icon: Icons.search_off_outlined,
                     line: l.noResults,
                     hint: l.searchEmptyHint,
                     actionLabel: l.clearSearch,
-                    onAction: () {
-                      _searchController.clear();
-                      setState(() => _query = '');
-                    },
+                    onAction: _clearSearch,
                   )
                 : ListView.builder(
+                    controller: _scrollController,
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    itemCount: results.length,
-                    itemBuilder: (context, i) =>
-                        _FoodTile(food: results[i], meal: widget.meal),
+                    itemCount: visible.length,
+                    itemBuilder: (context, i) => RepaintBoundary(
+                      child: _FoodTile(food: visible[i], meal: widget.meal),
+                    ),
                   ),
           ),
         ],
