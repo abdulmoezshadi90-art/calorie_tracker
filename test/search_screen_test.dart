@@ -151,13 +151,16 @@ void main() {
     });
   });
 
-  testWidgets('quick add works on a row from the second page', (
-    tester,
-  ) async {
+  testWidgets('quick add works on a row from the second page', (tester) async {
     final state = await _openSearch(tester);
     await _enterQuery(tester, 'milk');
 
-    final lastFood = foodDatabase.last;
+    // The last MILK result, not foodDatabase.last — later categories appended
+    // after the dairy batch (e.g. meat) would otherwise end the database on
+    // an item this 'milk' query never matches.
+    final lastFood = foodDatabase
+        .where((f) => f.nameEn.toLowerCase().contains('milk'))
+        .last;
     await _scrollDownUntil(tester, find.text(lastFood.nameEn));
     await tester.pumpAndSettle();
 
