@@ -97,7 +97,7 @@ class CalorieApp extends StatelessWidget {
         ],
         theme: buildTheme(Brightness.light),
         darkTheme: buildTheme(Brightness.dark),
-        themeMode: ThemeMode.system,
+        themeMode: state.themeMode,
         builder: (context, child) =>
             AppScope(state: state, child: _PhoneFrame(child: child!)),
         home: state.onboardingDone

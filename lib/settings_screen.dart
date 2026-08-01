@@ -142,6 +142,23 @@ class SettingsScreen extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
               ),
+              leading: Icon(Icons.brightness_6_outlined, color: c.accent),
+              title: Text(
+                l.appearance,
+                style: TextStyle(fontWeight: FontWeight.w700, color: c.ink),
+              ),
+              trailing: _ThemeModeSegments(
+                value: state.themeModeCode,
+                onChanged: state.setThemeMode,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _SettingsCard(
+            child: ListTile(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
               leading: Icon(Icons.flag_outlined, color: c.accent),
               title: Text(
                 l.dailyGoals,
@@ -282,6 +299,61 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// System/Light/Dark picker — same rounded-pill segmented pattern as the
+/// food detail page's fraction/decimal toggle, icon-only (with Semantics
+/// labels) so three options stay compact at 320dp width.
+class _ThemeModeSegments extends StatelessWidget {
+  const _ThemeModeSegments({required this.value, required this.onChanged});
+  final String value; // 'system' | 'light' | 'dark'
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final l = AppScope.of(context).l;
+
+    Widget seg(String code, IconData icon, String label) {
+      final selected = value == code;
+      return Semantics(
+        button: true,
+        selected: selected,
+        label: label,
+        child: GestureDetector(
+          onTap: () => onChanged(code),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: selected ? c.chipBg : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              size: 18,
+              color: selected ? c.chipText : c.muted,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: c.macroTrack,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          seg('system', Icons.brightness_auto_outlined, l.themeSystem),
+          seg('light', Icons.light_mode_outlined, l.themeLight),
+          seg('dark', Icons.dark_mode_outlined, l.themeDark),
         ],
       ),
     );

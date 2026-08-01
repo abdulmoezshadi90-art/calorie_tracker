@@ -23,6 +23,7 @@ class AppState extends ChangeNotifier {
   static const _profileKey = 'profile';
   static const _weightsKey = 'weights_v1';
   static const _quantityModeKey = 'quantity_mode';
+  static const _themeModeKey = 'theme_mode';
 
   Goals _goals = Goals.defaults;
   Goals get goals => _goals;
@@ -49,6 +50,17 @@ class AppState extends ChangeNotifier {
   /// 'fraction' or 'decimal' — the food detail page's quantity input mode,
   /// remembered across sessions like any other preference.
   String quantityMode = 'decimal';
+
+  /// 'system' (default), 'light', or 'dark' — the settings appearance
+  /// toggle. Stored as the raw preference string (like [quantityMode]) so
+  /// an unrecognized future value can't crash [themeMode]'s mapping.
+  String themeModeCode = 'system';
+
+  ThemeMode get themeMode => switch (themeModeCode) {
+    'light' => ThemeMode.light,
+    'dark' => ThemeMode.dark,
+    _ => ThemeMode.system,
+  };
 
   L10n get l => L10n(localeCode);
 
@@ -256,6 +268,16 @@ class AppState extends ChangeNotifier {
     return false;
   }
 
+  Future<bool> setThemeMode(String code) async {
+    final previous = themeModeCode;
+    themeModeCode = code;
+    notifyListeners();
+    if (await _save()) return true;
+    themeModeCode = previous;
+    notifyListeners();
+    return false;
+  }
+
   Future<bool> toggleLocale() => setLocale(localeCode == 'en' ? 'ar' : 'en');
 
   Future<bool> setLocale(String code) async {
@@ -281,6 +303,7 @@ class AppState extends ChangeNotifier {
     localeCode = prefs.getString(_localeKey) ?? 'en';
     onboardingDone = prefs.getBool(_onboardingKey) ?? false;
     quantityMode = prefs.getString(_quantityModeKey) ?? 'decimal';
+    themeModeCode = prefs.getString(_themeModeKey) ?? 'system';
     // Corrupted storage (interrupted write, flaky flash on cheap phones)
     // must never brick startup: with no backend, an unlaunchable app means
     // reinstall and total data loss. Fall back per key instead of throwing.
@@ -355,6 +378,7 @@ class AppState extends ChangeNotifier {
       await prefs.setString(_goalsKey, jsonEncode(_goals.toJson()));
       await prefs.setBool(_onboardingKey, onboardingDone);
       await prefs.setString(_quantityModeKey, quantityMode);
+      await prefs.setString(_themeModeKey, themeModeCode);
       if (_profile != null) {
         await prefs.setString(_profileKey, jsonEncode(_profile!.toJson()));
       }

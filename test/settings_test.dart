@@ -181,4 +181,54 @@ void main() {
     await tester.pumpAndSettle();
     expect(state.goals.kcal, 1000);
   });
+
+  group('appearance (light/dark toggle)', () {
+    testWidgets('defaults to system and switches to dark live, no restart', (
+      tester,
+    ) async {
+      final state = await _pumpSettings(tester);
+      expect(state.themeModeCode, 'system');
+
+      await tester.tap(find.byIcon(Icons.dark_mode_outlined));
+      await tester.pumpAndSettle();
+
+      expect(state.themeModeCode, 'dark');
+      final context = tester.element(find.byType(Scaffold).first);
+      expect(Theme.of(context).brightness, Brightness.dark);
+    });
+
+    testWidgets('switches back to light live', (tester) async {
+      final state = await _pumpSettings(tester);
+
+      await tester.tap(find.byIcon(Icons.dark_mode_outlined));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.light_mode_outlined));
+      await tester.pumpAndSettle();
+
+      expect(state.themeModeCode, 'light');
+      final context = tester.element(find.byType(Scaffold).first);
+      expect(Theme.of(context).brightness, Brightness.light);
+    });
+
+    testWidgets('persists across an AppState reload', (tester) async {
+      await _pumpSettings(tester);
+
+      await tester.tap(find.byIcon(Icons.dark_mode_outlined));
+      await tester.pumpAndSettle();
+      await tester.pump(); // let the fire-and-forget _save() finish
+
+      final reloaded = AppState();
+      await reloaded.load();
+      expect(reloaded.themeModeCode, 'dark');
+      expect(reloaded.themeMode, ThemeMode.dark);
+    });
+
+    testWidgets('renders RTL with the localized labels', (tester) async {
+      final state = await _pumpSettings(tester, locale: 'ar');
+      expect(state.themeModeCode, 'system');
+      expect(find.text('المظهر'), findsOneWidget); // Appearance
+      expect(find.byIcon(Icons.dark_mode_outlined), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
 }

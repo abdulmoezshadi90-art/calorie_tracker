@@ -62,6 +62,10 @@ class L10n {
   String get cancel => isAr ? 'إلغاء' : 'Cancel';
   String get language => isAr ? 'اللغة' : 'Language';
   String get languageName => isAr ? 'العربية' : 'English';
+  String get appearance => isAr ? 'المظهر' : 'Appearance';
+  String get themeSystem => isAr ? 'النظام' : 'System';
+  String get themeLight => isAr ? 'فاتح' : 'Light';
+  String get themeDark => isAr ? 'داكن' : 'Dark';
   String get about => isAr ? 'حول التطبيق' : 'About';
   String get version => isAr ? 'الإصدار' : 'Version';
   String get disclaimerTitle => isAr ? 'إخلاء مسؤولية' : 'Disclaimer';
