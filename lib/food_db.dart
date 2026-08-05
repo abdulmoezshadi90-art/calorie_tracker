@@ -2201,6 +2201,126 @@ const List<FoodItem> foodDatabase = [
         'USDA FoodData Central FDC ID 172187 (Egg, whole, cooked, scrambled), per 100g. https://tools.myfooddata.com/nutrition-facts/172187/100g. Generic reference food, not a branded/labeled product. USDA\'s scrambled-egg entry assumes milk and fat are mixed in during cooking — this is why protein is noticeably lower and carbs higher than the other 3 egg entries. Understates protein / overstates carbs versus plain scrambled egg with no milk added. A scrambled portion from one egg (with milk/butter) weighs about 61g.',
     servingGrams: 100,
   ),
+
+  // ── Oils & Fats (generic, unbranded reference foods; USDA FoodData
+  // Central via myfooddata.com) ── Same convention as the batches above:
+  // no packaging/barcode/brand, base serving 100g matching USDA's own
+  // basis exactly (no scaling math). category: FoodCategory.main — no
+  // dedicated oil/fat bucket in the enum; these are cooking ingredients,
+  // same reasoning as the Vegetables batch.
+  // verified: false on all entries, matching the source doc's own DRAFT
+  // status — no "all verified" override came with this batch (same as
+  // the Eggs batch just before it).
+  // Salted Butter from this doc is DELIBERATELY NOT included: it cites
+  // the same FDC ID (173410) as dairy_butter_salted_raw above but reports
+  // different numbers (717 kcal/81.1g fat here vs. 729 kcal/82.1g fat
+  // there) — a real conflict between two source docs for the same
+  // product, not something to silently pick a side on. Flagged to the
+  // owner instead of adding a second, disagreeing "salted butter" entry.
+  // Corn, peanut, soybean, and coconut oil are also not included — the
+  // source doc explicitly left them out (corn oil: no clean unambiguous
+  // FDC match found; peanut/soybean: found but never fetched/verified;
+  // coconut: verified but judged not typical in Libyan cooking).
+  FoodItem(
+    id: 'oil_olive',
+    nameEn: 'Olive Oil',
+    nameAr: 'زيت زيتون',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 884,
+    protein: 0,
+    carbs: 0,
+    fat: 100,
+    category: FoodCategory.main,
+    isLiquid: true,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 171413 (Oil, olive, salad or cooking), per 100g. https://tools.myfooddata.com/nutrition-facts/171413/100g. Generic reference food, not a branded/labeled product. Pure oil is close to 100% fat by weight, stable across brands.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'oil_sunflower',
+    nameEn: 'Sunflower Oil',
+    nameAr: 'زيت دوار الشمس',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 884,
+    protein: 0,
+    carbs: 0,
+    fat: 100,
+    category: FoodCategory.main,
+    isLiquid: true,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 171017 (Oil, sunflower, linoleic, less than 60%), per 100g. https://tools.myfooddata.com/nutrition-facts/171017/100g. Generic reference food, not a branded/labeled product. This is the standard/common linoleic type; a high-oleic sunflower oil product would have a different fat profile, though calories/total fat stay about the same.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'oil_sesame',
+    nameEn: 'Sesame Oil',
+    nameAr: 'زيت السمسم',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 884,
+    protein: 0,
+    carbs: 0,
+    fat: 100,
+    category: FoodCategory.main,
+    isLiquid: true,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 171016 (Oil, sesame, salad or cooking), per 100g. https://tools.myfooddata.com/nutrition-facts/171016/100g. Generic reference food, not a branded/labeled product. Pure oil is close to 100% fat by weight, stable across brands.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'oil_canola',
+    nameEn: 'Canola Oil',
+    nameAr: 'زيت الكانولا',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 884,
+    protein: 0,
+    carbs: 0,
+    fat: 100,
+    category: FoodCategory.main,
+    isLiquid: true,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 172336 (Oil, canola), per 100g. https://tools.myfooddata.com/nutrition-facts/172336/100g. Generic reference food, not a branded/labeled product. Not on the original request list but included as a common generic "vegetable oil" sold in Libyan markets alongside sunflower oil. Contains 0.4g trans fat per 100g per this USDA entry, not unusual for a refined oil.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'ghee',
+    nameEn: 'Ghee (Clarified Butter)',
+    nameAr: 'سمن',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 876,
+    protein: 0.28,
+    carbs: 0,
+    fat: 99.5,
+    category: FoodCategory.main,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 173412 (Butter oil, anhydrous — labeled "Ghee" on myfooddata), per 100g. https://tools.myfooddata.com/nutrition-facts/173412/100g. Generic reference food, not a branded/labeled product. May be more locally recognizable in the UI as "samn"/"سمن" than "ghee" — same clarified-butter product either name.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'margarine',
+    nameEn: 'Margarine',
+    nameAr: 'مارجرين',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 719,
+    protein: 0.9,
+    carbs: 0.9,
+    fat: 80.5,
+    category: FoodCategory.main,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 171018 (Margarine, regular, hard, soybean, hydrogenated), per 100g. https://tools.myfooddata.com/nutrition-facts/171018/100g. Generic reference food, not a branded/labeled product. This is a generic hydrogenated stick margarine, higher in sodium than soft tub margarines or "light" spreads, which vary quite a bit from this figure.',
+    servingGrams: 100,
+  ),
 ];
 
 final Map<String, FoodItem> foodById = {for (final f in foodDatabase) f.id: f};
