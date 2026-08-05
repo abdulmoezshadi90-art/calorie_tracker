@@ -1934,6 +1934,185 @@ const List<FoodItem> foodDatabase = [
         'USDA FoodData Central FDC ID 169247 (Lettuce, cos or romaine, raw), already per 100g. https://fdc.nal.usda.gov/food-details/169247/nutrients. Generic reference food, not a branded/labeled product. Romaine chosen over iceberg as more nutrient-dense and commonly sold; iceberg runs lower in most vitamins and slightly fewer calories if that turns out to be the more common local type.',
     servingGrams: 100,
   ),
+
+  // ── Nuts & Seeds (generic, unbranded reference foods; USDA FoodData
+  // Central) ── Same convention as Meat/Dairy/Fruit/Vegetable above: no
+  // packaging/barcode/brand, base serving 100g matching USDA's own basis
+  // exactly (no scaling math). category: FoodCategory.snack — no
+  // dedicated nut bucket in the enum; nuts/seeds are quintessential snack
+  // food, so this is the closest natural fit (unlike vegetables, which
+  // went to main as cooking ingredients).
+  // The source doc shipped every entry as verified: false by default
+  // (official DB, not yet spot-checked); the owner explicitly said "all
+  // verified" when handing this batch over, so verified: true is set per
+  // that live instruction, same pattern as the fruit and vegetable
+  // batches.
+  // All 10 are raw/dried, unroasted, unsalted forms — roasted/salted
+  // variants (very common locally, especially peanuts/almonds/pistachios
+  // sold as snacks) are NOT included; different calorie/sodium values,
+  // would need separate entries later. No tahini entry either — it's a
+  // distinct prepared product from whole sesame seeds, not part of this
+  // batch.
+  FoodItem(
+    id: 'nut_almonds_raw',
+    nameEn: 'Almonds',
+    nameAr: 'لوز',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 579,
+    protein: 21.2,
+    carbs: 21.6,
+    fat: 49.9,
+    category: FoodCategory.snack,
+    verified: true,
+    sourceNote:
+        'USDA FoodData Central FDC ID 170567 (Nuts, almonds), already per 100g. https://fdc.nal.usda.gov/food-details/170567/nutrients. Generic reference food, not a branded/labeled product. Raw, unroasted, unsalted.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'nut_walnuts_raw',
+    nameEn: 'Walnuts',
+    nameAr: 'جوز',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 654,
+    protein: 15.2,
+    carbs: 13.7,
+    fat: 65.2,
+    category: FoodCategory.snack,
+    verified: true,
+    sourceNote:
+        'USDA FoodData Central FDC ID 170187 (Nuts, walnuts, english), already per 100g. https://fdc.nal.usda.gov/food-details/170187/nutrients. Generic reference food, not a branded/labeled product. Raw, unroasted, unsalted.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'nut_pistachios_raw',
+    nameEn: 'Pistachios',
+    nameAr: 'فستق حلبي',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 560,
+    protein: 20.2,
+    carbs: 27.2,
+    fat: 45.3,
+    category: FoodCategory.snack,
+    verified: true,
+    sourceNote:
+        'USDA FoodData Central FDC ID 170184 (Nuts, pistachio nuts, raw), already per 100g. https://fdc.nal.usda.gov/food-details/170184/nutrients. Generic reference food, not a branded/labeled product. Raw, unroasted, unsalted.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'nut_peanuts_raw',
+    nameEn: 'Peanuts',
+    nameAr: 'فول سوداني',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 567,
+    protein: 25.8,
+    carbs: 16.1,
+    fat: 49.2,
+    category: FoodCategory.snack,
+    verified: true,
+    sourceNote:
+        'USDA FoodData Central FDC ID 172430 (Peanuts, all types, raw), already per 100g. https://fdc.nal.usda.gov/food-details/172430/nutrients. Generic reference food, not a branded/labeled product. Botanically a legume, grouped with nuts here since that is the intuitive place users will look for them. Raw, unroasted, unsalted.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'nut_cashews_raw',
+    nameEn: 'Cashews',
+    nameAr: 'كاجو',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 553,
+    protein: 18.2,
+    carbs: 30.2,
+    fat: 43.9,
+    category: FoodCategory.snack,
+    verified: true,
+    sourceNote:
+        'USDA FoodData Central FDC ID 170162 (Nuts, cashew nuts, raw), already per 100g. https://fdc.nal.usda.gov/food-details/170162/nutrients. Generic reference food, not a branded/labeled product. Raw, unroasted, unsalted.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'nut_macadamia_raw',
+    nameEn: 'Macadamia Nuts',
+    nameAr: 'مكاداميا',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 718,
+    protein: 7.9,
+    carbs: 13.8,
+    fat: 75.8,
+    category: FoodCategory.snack,
+    verified: true,
+    sourceNote:
+        'USDA FoodData Central FDC ID 170178 (Nuts, macadamia nuts, raw), already per 100g. https://fdc.nal.usda.gov/food-details/170178/nutrients. Generic reference food, not a branded/labeled product. Bonus item discovered while sourcing sesame seeds (a guessed sesame ID resolved to this instead) — legitimately sourced, kept as an extra. Less commonly used in Libyan cooking than the rest of this batch.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'nut_sesame_seeds_dried',
+    nameEn: 'Sesame Seeds',
+    nameAr: 'سمسم',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 573,
+    protein: 17.7,
+    carbs: 23.5,
+    fat: 49.7,
+    category: FoodCategory.snack,
+    verified: true,
+    sourceNote:
+        'USDA FoodData Central FDC ID 170150 (Seeds, sesame seeds, whole, dried), already per 100g. https://fdc.nal.usda.gov/food-details/170150/nutrients. Generic reference food, not a branded/labeled product. An initial guessed ID (170178) mismatched to macadamia nuts and was discarded before this correct ID was confirmed. Whole seeds, not tahini (sesame paste) — a distinct prepared product not covered by this entry.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'nut_sunflower_seeds_dried',
+    nameEn: 'Sunflower Seeds',
+    nameAr: 'بذور دوار الشمس',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 584,
+    protein: 20.8,
+    carbs: 20,
+    fat: 51.5,
+    category: FoodCategory.snack,
+    verified: true,
+    sourceNote:
+        'USDA FoodData Central FDC ID 170562 (Seeds, sunflower seed kernels, dried), already per 100g. https://fdc.nal.usda.gov/food-details/170562/nutrients. Generic reference food, not a branded/labeled product. An initial guessed ID (170554) mismatched to chia seeds and was discarded before this correct ID was confirmed.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'nut_pumpkin_seeds_dried',
+    nameEn: 'Pumpkin Seeds',
+    nameAr: 'بذور اليقطين',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 559,
+    protein: 30.2,
+    carbs: 10.7,
+    fat: 49.1,
+    category: FoodCategory.snack,
+    verified: true,
+    sourceNote:
+        'USDA FoodData Central FDC ID 170556 (Seeds, pumpkin and squash seed kernels, dried), already per 100g. https://fdc.nal.usda.gov/food-details/170556/nutrients. Generic reference food, not a branded/labeled product.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'nut_chia_seeds_dried',
+    nameEn: 'Chia Seeds',
+    nameAr: 'بذور شيا',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 486,
+    protein: 16.5,
+    carbs: 42.1,
+    fat: 30.7,
+    category: FoodCategory.snack,
+    verified: true,
+    sourceNote:
+        'USDA FoodData Central FDC ID 170554 (Seeds, chia seeds, dried), already per 100g. https://fdc.nal.usda.gov/food-details/170554/nutrients. Generic reference food, not a branded/labeled product. Bonus item discovered while sourcing sunflower seeds (a guessed sunflower ID resolved to this instead) — legitimately sourced, kept as an extra. Not a traditional Libyan ingredient but a common health-food add-in.',
+    servingGrams: 100,
+  ),
 ];
 
 final Map<String, FoodItem> foodById = {for (final f in foodDatabase) f.id: f};
