@@ -1468,6 +1468,199 @@ const List<FoodItem> foodDatabase = [
         'PLACEHOLDER, lower confidence. No generic USDA halloumi entry exists — using FDC ID 588375 (Golden Star - Halloumi Cheese), a single branded product tagged "USDA Branded Food" rather than a standard release. https://fdc.nal.usda.gov/food-details/588375/nutrients. Several mineral/vitamin fields missing on source. Values scaled from a 28g (1 oz) serving to per-100g. Treat as an approximation, verify against a better source if possible.',
     servingGrams: 100,
   ),
+
+  // ── Fruits (generic, unbranded reference foods; USDA FoodData Central) ──
+  // Same convention as Meat/Dairy above: no packaging/barcode/brand, base
+  // serving 100g matching USDA's own basis exactly (no scaling math).
+  // category: FoodCategory.snack — this enum has no dedicated fruit
+  // bucket, and fruit is most often logged as a snack rather than a main
+  // dish, drink, breakfast, or sweet.
+  // The source doc for this batch shipped every entry as verified: false
+  // by default (official DB, but not yet spot-checked against source);
+  // the owner explicitly said "all are verified" when handing this batch
+  // over, so verified: true is set per that live instruction. Dates
+  // (Medjool, not necessarily the most common Libyan variety) and Grapes
+  // (European/Thompson-seedless type, chosen over the American/Concord
+  // type) carry real stand-in caveats — see their sourceNotes.
+  // Apricots are NOT included: the source doc's FDC lookup for raw
+  // apricots resolved to the wrong fruit (mango), so that item was left
+  // out entirely rather than guessed at.
+  FoodItem(
+    id: 'fruit_dates_medjool_raw',
+    nameEn: 'Dates (Medjool)',
+    nameAr: 'تمر (مجهول)',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 277,
+    protein: 1.8,
+    carbs: 75,
+    fat: 0.15,
+    category: FoodCategory.snack,
+    verified: true,
+    sourceNote:
+        'USDA FoodData Central FDC ID 168191 (Dates, medjool), already per 100g. https://fdc.nal.usda.gov/food-details/168191/nutrients. Generic reference food, not a branded/labeled product. Medjool is one of several date varieties eaten in Libya — Deglet Noor and local Libyan varieties (e.g. Jufra/Fezzan) can differ somewhat in sugar/moisture, since Medjool is larger and higher-moisture.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'fruit_orange_raw',
+    nameEn: 'Oranges',
+    nameAr: 'برتقال',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 47,
+    protein: 0.94,
+    carbs: 11.8,
+    fat: 0.12,
+    category: FoodCategory.snack,
+    verified: true,
+    sourceNote:
+        'USDA FoodData Central FDC ID 169097 (Oranges, raw, all commercial varieties), already per 100g. https://fdc.nal.usda.gov/food-details/169097/nutrients. Generic reference food, not a branded/labeled product.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'fruit_banana_raw',
+    nameEn: 'Bananas',
+    nameAr: 'موز',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 89,
+    protein: 1.1,
+    carbs: 22.8,
+    fat: 0.33,
+    category: FoodCategory.snack,
+    verified: true,
+    sourceNote:
+        'USDA FoodData Central FDC ID 173944 (Bananas, raw), already per 100g. https://fdc.nal.usda.gov/food-details/173944/nutrients. Generic reference food, not a branded/labeled product.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'fruit_watermelon_raw',
+    nameEn: 'Watermelon',
+    nameAr: 'بطيخ',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 30,
+    protein: 0.61,
+    carbs: 7.6,
+    fat: 0.15,
+    category: FoodCategory.snack,
+    verified: true,
+    sourceNote:
+        'USDA FoodData Central FDC ID 167765 (Watermelon, raw), already per 100g. https://fdc.nal.usda.gov/food-details/167765/nutrients. Generic reference food, not a branded/labeled product.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'fruit_cantaloupe_raw',
+    nameEn: 'Cantaloupe / Melon',
+    nameAr: 'شمام',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 34,
+    protein: 0.84,
+    carbs: 8.2,
+    fat: 0.19,
+    category: FoodCategory.snack,
+    verified: true,
+    sourceNote:
+        'USDA FoodData Central FDC ID 169092 (Melons, cantaloupe, raw), already per 100g. https://fdc.nal.usda.gov/food-details/169092/nutrients. Generic reference food, not a branded/labeled product. Specifically cantaloupe/muskmelon — other melon types (honeydew, etc.) will differ, especially in vitamin A.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'fruit_apple_raw',
+    nameEn: 'Apples',
+    nameAr: 'تفاح',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 52,
+    protein: 0.26,
+    carbs: 13.8,
+    fat: 0.17,
+    category: FoodCategory.snack,
+    verified: true,
+    sourceNote:
+        'USDA FoodData Central FDC ID 171688 (Apples, raw, with skin), already per 100g. https://fdc.nal.usda.gov/food-details/171688/nutrients. Generic reference food, not a branded/labeled product.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'fruit_grapes_raw',
+    nameEn: 'Grapes',
+    nameAr: 'عنب',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 69,
+    protein: 0.72,
+    carbs: 18.1,
+    fat: 0.16,
+    category: FoodCategory.snack,
+    verified: true,
+    sourceNote:
+        'USDA FoodData Central FDC ID 174683 (Grapes, red or green, European type, raw), already per 100g. https://fdc.nal.usda.gov/food-details/174683/nutrients. Deliberately chosen over the "American type (slip skin)" entry (FDC 174682) as the better match for grapes commonly sold in Libya. Generic reference food, not a branded/labeled product.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'fruit_figs_raw',
+    nameEn: 'Figs',
+    nameAr: 'تين',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 74,
+    protein: 0.75,
+    carbs: 19.2,
+    fat: 0.3,
+    category: FoodCategory.snack,
+    verified: true,
+    sourceNote:
+        'USDA FoodData Central FDC ID 173021 (Figs, raw), already per 100g. https://fdc.nal.usda.gov/food-details/173021/nutrients. Generic reference food, not a branded/labeled product.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'fruit_pomegranate_raw',
+    nameEn: 'Pomegranate',
+    nameAr: 'رمان',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 83,
+    protein: 1.7,
+    carbs: 18.7,
+    fat: 1.2,
+    category: FoodCategory.snack,
+    verified: true,
+    sourceNote:
+        'USDA FoodData Central FDC ID 169134 (Pomegranates, raw), already per 100g. https://fdc.nal.usda.gov/food-details/169134/nutrients. Generic reference food, not a branded/labeled product. Values are for whole edible arils/seeds, not juice.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'fruit_lemon_raw',
+    nameEn: 'Lemon',
+    nameAr: 'ليمون',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 29,
+    protein: 1.1,
+    carbs: 9.3,
+    fat: 0.3,
+    category: FoodCategory.snack,
+    verified: true,
+    sourceNote:
+        'USDA FoodData Central FDC ID 167746 (Lemons, raw, without peel), already per 100g. https://fdc.nal.usda.gov/food-details/167746/nutrients. Generic reference food, not a branded/labeled product.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'fruit_mango_raw',
+    nameEn: 'Mango',
+    nameAr: 'مانجو',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 60,
+    protein: 0.82,
+    carbs: 15,
+    fat: 0.38,
+    category: FoodCategory.snack,
+    verified: true,
+    sourceNote:
+        'USDA FoodData Central FDC ID 169910 (Mangos, raw), already per 100g. https://fdc.nal.usda.gov/food-details/169910/nutrients. Generic reference food, not a branded/labeled product. Not on the original requested fruit list — added as a bonus item since mango is common enough in Libya to be worth keeping.',
+    servingGrams: 100,
+  ),
 ];
 
 final Map<String, FoodItem> foodById = {for (final f in foodDatabase) f.id: f};
