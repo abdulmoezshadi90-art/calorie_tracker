@@ -50,12 +50,15 @@ Finder _searchScrollable() => find.descendant(
 /// Small steps + a generous scroll budget: a coarse step can drift past a
 /// target on a long, incrementally-measured sliver list (see the Foods-tab
 /// scroll fix in foods_screen_test.dart for the same underlying reason).
+/// maxScrolls is sized with headroom above the current foodDatabase length,
+/// not just enough for today's count — the data pipeline (CLAUDE.md) keeps
+/// adding categories, so a tight budget here breaks again with every batch.
 Future<void> _scrollDownUntil(WidgetTester tester, Finder target) async {
   await tester.scrollUntilVisible(
     target,
     50,
     scrollable: _searchScrollable(),
-    maxScrolls: 400,
+    maxScrolls: 1200,
   );
 }
 
