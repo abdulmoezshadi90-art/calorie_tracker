@@ -1661,6 +1661,22 @@ const List<FoodItem> foodDatabase = [
         'USDA FoodData Central FDC ID 169910 (Mangos, raw), already per 100g. https://fdc.nal.usda.gov/food-details/169910/nutrients. Generic reference food, not a branded/labeled product. Not on the original requested fruit list — added as a bonus item since mango is common enough in Libya to be worth keeping.',
     servingGrams: 100,
   ),
+  FoodItem(
+    id: 'fruit_apricot_raw',
+    nameEn: 'Apricots',
+    nameAr: 'مشمش',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 48,
+    protein: 1.4,
+    carbs: 11.12,
+    fat: 0.39,
+    category: FoodCategory.snack,
+    verified: true,
+    sourceNote:
+        'USDA FoodData Central FDC ID 171697 (Apricots, raw, SR Legacy), already per 100g. https://fdc.nal.usda.gov/food-details/171697/nutrients. Generic reference food, not a branded/labeled product. The original fruit reference source doc tried to add this item but its FDC lookup resolved to the wrong fruit (mango) and left it out; this is a fresh, independently confirmed lookup (cross-checked via the FDC search API and the FDC food API, which agreed) done at the owner\'s request to fill that gap.',
+    servingGrams: 100,
+  ),
 ];
 
 final Map<String, FoodItem> foodById = {for (final f in foodDatabase) f.id: f};
