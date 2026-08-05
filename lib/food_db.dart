@@ -2113,6 +2113,94 @@ const List<FoodItem> foodDatabase = [
         'USDA FoodData Central FDC ID 170554 (Seeds, chia seeds, dried), already per 100g. https://fdc.nal.usda.gov/food-details/170554/nutrients. Generic reference food, not a branded/labeled product. Bonus item discovered while sourcing sunflower seeds (a guessed sunflower ID resolved to this instead) — legitimately sourced, kept as an extra. Not a traditional Libyan ingredient but a common health-food add-in.',
     servingGrams: 100,
   ),
+
+  // ── Eggs (generic, unbranded reference foods; USDA FoodData Central,
+  // via myfooddata.com) ── Same convention as Meat/Dairy/Fruit/Vegetable/
+  // Nut above: no packaging/barcode/brand, base serving 100g matching
+  // USDA's own basis exactly (no scaling math). category:
+  // FoodCategory.breakfast — eggs are the first reference batch that maps
+  // cleanly onto an existing enum value rather than needing snack/main as
+  // a fallback.
+  // Unlike the fruit/vegetable/nut batches, this one was NOT accompanied
+  // by an "all verified" instruction — the source doc itself is marked
+  // DRAFT with every entry verified: false, so that default is kept as-
+  // is here rather than assumed overridden.
+  // The doc suggests per-single-egg serving weights (raw/boiled ~50g,
+  // fried ~46g, scrambled ~61g) instead of 100g, since that is how eggs
+  // are actually logged — NOT applied here, since doing so would require
+  // scaling the kcal/macro figures off their 100g basis (arithmetic this
+  // project avoids doing on the app's behalf); flagging it as a good
+  // Phase 4 portion-preset candidate instead.
+  // Fried and Scrambled carry real caveats worth reading before treating
+  // as exact: Fried assumes a "typical" amount of added cooking fat (real
+  // fat/calories vary by how much oil/butter is actually used); Scrambled
+  // is USDA's "with milk added" version (protein runs lower and carbs
+  // higher than plain egg because of the milk) — worth a clear "milk
+  // added" label in the UI so it is not confused with plain cooked egg.
+  FoodItem(
+    id: 'egg_raw',
+    nameEn: 'Egg, Whole (Raw)',
+    nameAr: 'بيضة نيئة',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 143,
+    protein: 12.6,
+    carbs: 0.72,
+    fat: 9.5,
+    category: FoodCategory.breakfast,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 171287 (Egg, whole, raw, fresh), per 100g. https://tools.myfooddata.com/nutrition-facts/171287/100g. Generic reference food, not a branded/labeled product. A typical single large raw egg weighs about 50g.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'egg_boiled',
+    nameEn: 'Egg, Whole (Boiled)',
+    nameAr: 'بيضة مسلوقة',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 155,
+    protein: 12.6,
+    carbs: 1.1,
+    fat: 10.6,
+    category: FoodCategory.breakfast,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 173424 (Egg, whole, cooked, hard-boiled), per 100g. https://tools.myfooddata.com/nutrition-facts/173424/100g. Generic reference food, not a branded/labeled product. A typical single large hard-boiled egg weighs about 50g.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'egg_fried',
+    nameEn: 'Egg, Whole (Fried)',
+    nameAr: 'بيضة مقلية',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 196,
+    protein: 13.6,
+    carbs: 0.83,
+    fat: 14.8,
+    category: FoodCategory.breakfast,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 173423 (Egg, whole, cooked, fried), per 100g. https://tools.myfooddata.com/nutrition-facts/173423/100g. Generic reference food, not a branded/labeled product. This is USDA\'s generic "fried egg" entry — fried in a typical amount of fat (butter/oil); actual fat/calories shift with noticeably more or less oil than that reference method. A typical single large fried egg weighs about 46g (after moisture loss).',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'egg_scrambled',
+    nameEn: 'Egg, Whole (Scrambled)',
+    nameAr: 'بيضة مخفوقة',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 149,
+    protein: 10,
+    carbs: 1.6,
+    fat: 11,
+    category: FoodCategory.breakfast,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 172187 (Egg, whole, cooked, scrambled), per 100g. https://tools.myfooddata.com/nutrition-facts/172187/100g. Generic reference food, not a branded/labeled product. USDA\'s scrambled-egg entry assumes milk and fat are mixed in during cooking — this is why protein is noticeably lower and carbs higher than the other 3 egg entries. Understates protein / overstates carbs versus plain scrambled egg with no milk added. A scrambled portion from one egg (with milk/butter) weighs about 61g.',
+    servingGrams: 100,
+  ),
 ];
 
 final Map<String, FoodItem> foodById = {for (final f in foodDatabase) f.id: f};
