@@ -72,7 +72,8 @@ class L10n {
   String get disclaimerBody => isAr
       ? 'القيم الغذائية في هذا التطبيق تقريبية. قيم المنتجات المعبأة مأخوذة من ملصقات المنتجات، وقيم الأطباق المنزلية تقديرية بناءً على وصفات شائعة. هذا التطبيق لا يقدم استشارة طبية. إذا كنت تعاني من حالة صحية مثل السكري، استشر طبيبك أو أخصائي التغذية.'
       : 'Nutrition values in this app are approximate. Packaged food values come from product labels. Home dish values are estimates based on typical recipes. This app does not provide medical advice. If you manage a medical condition such as diabetes, consult your doctor or dietitian.';
-  String get invalidNumber => isAr ? 'أدخل رقمًا صحيحًا' : 'Enter a valid number';
+  String get invalidNumber =>
+      isAr ? 'أدخل رقمًا صحيحًا' : 'Enter a valid number';
   String get valueTooLow => isAr
       ? 'هذه القيمة أقل من المعتاد. هل تريد المتابعة؟'
       : 'This value is lower than typical. Continue anyway?';
@@ -108,9 +109,8 @@ class L10n {
   String get fractionMode => isAr ? 'كسور' : 'Fraction';
   String get decimalMode => isAr ? 'عشري' : 'Decimal';
   String get whole => isAr ? 'عدد كامل' : 'Whole';
-  String get invalidQuantity => isAr
-      ? 'أدخل كمية بين 0.1 و 99'
-      : 'Enter a quantity between 0.1 and 99';
+  String get invalidQuantity =>
+      isAr ? 'أدخل كمية بين 0.1 و 99' : 'Enter a quantity between 0.1 and 99';
 
   /// A [ServingUnit]'s display label — generic weight/volume units (never
   /// per-food data) are recognized by id and localized here; food-specific
@@ -138,12 +138,14 @@ class L10n {
 
   // Serving-unit picker sheet (Change 2: bottom sheet replacing inline chips).
   String get chooseUnit => isAr ? 'اختر الوحدة' : 'Choose a unit';
-  String get namedServingsSection => isAr ? 'حصص هذا الطعام' : "This food's servings";
+  String get namedServingsSection =>
+      isAr ? 'حصص هذا الطعام' : "This food's servings";
   String get weightUnitsSection => isAr ? 'وحدات الوزن' : 'Weight units';
   String get volumeUnitsSection => isAr ? 'وحدات الحجم' : 'Volume units';
 
   String get history => isAr ? 'السجل' : 'History';
-  String get historyEmpty => isAr ? 'لا توجد أيام مسجلة بعد' : 'No logged days yet';
+  String get historyEmpty =>
+      isAr ? 'لا توجد أيام مسجلة بعد' : 'No logged days yet';
   // Neutral goal wording by design: no alarm colors, no judgement.
   String get withinGoal => isAr ? 'ضمن الهدف' : 'Within goal';
   String get overGoal => isAr ? 'فوق الهدف' : 'Over goal';
@@ -162,21 +164,20 @@ class L10n {
   String get introBody => isAr
       ? 'ابحث عن الأطعمة الليبية — من شيبسي كالي إلى البازين — وأضفها إلى وجباتك بضغطة. يعمل التطبيق بدون إنترنت وبياناتك تبقى على هاتفك.'
       : 'Search Libyan foods — from Kalee chips to bazin — and add them to your meals with a tap. Works offline, and your data stays on your phone.';
-  String get onboardGoalsTitle => isAr ? 'حدد أهدافك اليومية' : 'Set your daily goals';
+  String get onboardGoalsTitle =>
+      isAr ? 'حدد أهدافك اليومية' : 'Set your daily goals';
   String get onboardGoalsBody => isAr
       ? 'يمكنك البدء بالأهداف الافتراضية وتغييرها في أي وقت من الإعدادات.'
       : 'You can start with the defaults and change them anytime in settings.';
   String get replayOnboarding => isAr ? 'إعادة عرض المقدمة' : 'Replay intro';
   String get sendFeedback => isAr ? 'أرسل ملاحظاتك' : 'Send feedback';
-  String get feedbackCopied => isAr
-      ? 'تم نسخ عنوان البريد الإلكتروني'
-      : 'Email address copied';
+  String get feedbackCopied =>
+      isAr ? 'تم نسخ عنوان البريد الإلكتروني' : 'Email address copied';
 
   // Empty states: short friendly line + one clear action each.
   String get emptyTodayLine =>
       isAr ? 'لم تسجّل شيئًا اليوم بعد' : 'Nothing logged today yet';
-  String get emptyTodayAction =>
-      isAr ? 'سجّل أول وجبة' : 'Log your first meal';
+  String get emptyTodayAction => isAr ? 'سجّل أول وجبة' : 'Log your first meal';
   String get searchEmptyHint => isAr
       ? 'جرّب اسمًا آخر، بالعربية أو الإنجليزية'
       : 'Try another name, in Arabic or English';
@@ -218,16 +219,16 @@ class L10n {
       isAr ? 'أكمل الحقول أعلاه' : 'Complete the fields above';
   // Used by the standalone weight-log entry field (weight_log.dart) — the
   // profile wizard's own age/weight/height steps no longer show this.
-  String rangeHint(int min, int max) =>
-      isAr ? 'بين ${fmtInt(min)} و ${fmtInt(max)}' : '${fmtInt(min)}–${fmtInt(max)}';
+  String rangeHint(int min, int max) => isAr
+      ? 'بين ${fmtInt(min)} و ${fmtInt(max)}'
+      : '${fmtInt(min)}–${fmtInt(max)}';
   String get recalculateGoal =>
       isAr ? 'إعادة حساب الهدف' : 'Recalculate my goal';
   // Empty/unset profile prompt — shown when the wizard was skipped, so
   // the profile area invites setup instead of looking blank.
   String get setUpProfile => isAr ? 'أنشئ ملفك الشخصي' : 'Set up your profile';
-  String get setUpProfileHint => isAr
-      ? 'للحصول على هدف يومي مخصص لك'
-      : 'for a personalized daily goal';
+  String get setUpProfileHint =>
+      isAr ? 'للحصول على هدف يومي مخصص لك' : 'for a personalized daily goal';
 
   // Wizard step questions — one clear heading per screen.
   String get nameQuestion =>
@@ -242,12 +243,14 @@ class L10n {
       isAr ? 'ما مستوى نشاطك؟' : 'What is your training intensity?';
   String get goalQuestion => isAr ? 'ما هدفك؟' : 'What is your goal?';
   String goalRateQuestion(GoalDirection d) => switch (d) {
-    GoalDirection.lose => isAr
-        ? 'كم بسرعة تريد إنقاص وزنك؟'
-        : 'How fast do you want to lose weight?',
-    GoalDirection.gain => isAr
-        ? 'كم بسرعة تريد زيادة وزنك؟'
-        : 'How fast do you want to gain weight?',
+    GoalDirection.lose =>
+      isAr
+          ? 'كم بسرعة تريد إنقاص وزنك؟'
+          : 'How fast do you want to lose weight?',
+    GoalDirection.gain =>
+      isAr
+          ? 'كم بسرعة تريد زيادة وزنك؟'
+          : 'How fast do you want to gain weight?',
     GoalDirection.maintain => '', // unreachable — maintain skips this step
   };
   // Note shown under the daily target when the floor guard clamps it —
@@ -261,21 +264,22 @@ class L10n {
       : 'Exercise means 15 to 30+ minutes of elevated heart rate activity';
 
   String activityDesc(ActivityLevel a) => switch (a) {
-    ActivityLevel.sedentary => isAr
-        ? 'حياة مكتبية، تمرين قليل أو معدوم'
-        : 'Desk life, little or no exercise',
-    ActivityLevel.light => isAr
-        ? 'تمرين 1 إلى 3 مرات في الأسبوع'
-        : 'Exercise 1 to 3 times a week',
-    ActivityLevel.moderate => isAr
-        ? 'تمرين 4 إلى 5 مرات في الأسبوع'
-        : 'Exercise 4 to 5 times a week',
-    ActivityLevel.high => isAr
-        ? 'تمرين يومي، أو تمرين شاق 3 إلى 6 مرات في الأسبوع'
-        : 'Daily exercise, or intense exercise 3 to 6 times a week',
-    ActivityLevel.athlete => isAr
-        ? 'تدريب يومي شاق جدًا أو عمل بدني'
-        : 'Very intense daily training or a physical job',
+    ActivityLevel.sedentary =>
+      isAr
+          ? 'حياة مكتبية، تمرين قليل أو معدوم'
+          : 'Desk life, little or no exercise',
+    ActivityLevel.light =>
+      isAr ? 'تمرين 1 إلى 3 مرات في الأسبوع' : 'Exercise 1 to 3 times a week',
+    ActivityLevel.moderate =>
+      isAr ? 'تمرين 4 إلى 5 مرات في الأسبوع' : 'Exercise 4 to 5 times a week',
+    ActivityLevel.high =>
+      isAr
+          ? 'تمرين يومي، أو تمرين شاق 3 إلى 6 مرات في الأسبوع'
+          : 'Daily exercise, or intense exercise 3 to 6 times a week',
+    ActivityLevel.athlete =>
+      isAr
+          ? 'تدريب يومي شاق جدًا أو عمل بدني'
+          : 'Very intense daily training or a physical job',
   };
 
   // Direction step: verb-first phrasing (Lose/Maintain/Gain weight).
@@ -288,18 +292,18 @@ class L10n {
   /// Rate-step card title, mirrored per direction: "Mild/—/Extreme weight
   /// loss" vs "Mild/—/Fast weight gain".
   String goalRateName(GoalDirection d, GoalRate r) => switch ((d, r)) {
-    (GoalDirection.lose, GoalRate.mild) => isAr ? 'إنقاص خفيف' : 'Mild weight loss',
-    (GoalDirection.lose, GoalRate.normal) => isAr ? 'إنقاص الوزن' : 'Weight loss',
-    (GoalDirection.lose, GoalRate.extreme) => isAr
-        ? 'إنقاص شديد للوزن'
-        : 'Extreme weight loss',
-    (GoalDirection.gain, GoalRate.mild) => isAr
-        ? 'زيادة خفيفة للوزن'
-        : 'Mild weight gain',
-    (GoalDirection.gain, GoalRate.normal) => isAr ? 'زيادة الوزن' : 'Weight gain',
-    (GoalDirection.gain, GoalRate.extreme) => isAr
-        ? 'زيادة سريعة للوزن'
-        : 'Fast weight gain',
+    (GoalDirection.lose, GoalRate.mild) =>
+      isAr ? 'إنقاص خفيف' : 'Mild weight loss',
+    (GoalDirection.lose, GoalRate.normal) =>
+      isAr ? 'إنقاص الوزن' : 'Weight loss',
+    (GoalDirection.lose, GoalRate.extreme) =>
+      isAr ? 'إنقاص شديد للوزن' : 'Extreme weight loss',
+    (GoalDirection.gain, GoalRate.mild) =>
+      isAr ? 'زيادة خفيفة للوزن' : 'Mild weight gain',
+    (GoalDirection.gain, GoalRate.normal) =>
+      isAr ? 'زيادة الوزن' : 'Weight gain',
+    (GoalDirection.gain, GoalRate.extreme) =>
+      isAr ? 'زيادة سريعة للوزن' : 'Fast weight gain',
     (GoalDirection.maintain, _) => '', // unreachable — no rate step to maintain
   };
 
@@ -406,6 +410,67 @@ class L10n {
   ];
 
   String dayShort(DateTime d) => (isAr ? _daysAr : _daysEn)[d.weekday % 7];
+
+  // Food selection tabs (search_screen.dart): History = every food ever
+  // logged, aggregated; My Meals = user-saved food combos. Distinct from
+  // the unrelated `history`/`historyEmpty` strings above, which belong to
+  // the day-by-day totals history in progress_screen.dart.
+  String get logHistoryTab => isAr ? 'السجل' : 'History';
+  String get myMeals => isAr ? 'وجباتي' : 'My Meals';
+  String get recentlyLogged => isAr ? 'سُجّل مؤخرًا' : 'Recently logged';
+  String get createMealAction => isAr ? 'أنشئ وجبة' : 'Create a meal';
+  String get copyPreviousMealAction =>
+      isAr ? 'نسخ وجبة سابقة' : 'Copy previous meal';
+
+  // Filter/sort controls, shared by both tabs — the button label always
+  // shows the active selection (e.g. "Most recent"), never a generic
+  // "Sort"/"Filter" placeholder; these two are only the bottom-sheet titles.
+  String get filterSheetTitle => isAr ? 'تصفية' : 'Filter';
+  String get sortSheetTitle => isAr ? 'ترتيب' : 'Sort';
+  String get filterAllMeals => isAr ? 'كل الوجبات' : 'All meals';
+  String sortOptionName(SortOption s) => switch (s) {
+    SortOption.mostRecent => isAr ? 'الأحدث' : 'Most recent',
+    SortOption.mostFrequent => isAr ? 'الأكثر تكرارًا' : 'Most frequent',
+    SortOption.aToZ => isAr ? 'أ إلى ي' : 'A to Z',
+    SortOption.zToA => isAr ? 'ي إلى أ' : 'Z to A',
+  };
+
+  // Empty states for the two tabs (distinct from the generic search empty
+  // state above, per the feature spec: "no logs anywhere" reads differently
+  // from "logs exist, none match the filter").
+  String get historyTabEmptyLine => isAr
+      ? 'ستظهر هنا الأطعمة التي تسجّلها'
+      : 'Your logged foods will appear here';
+  String get noFilterMatchLine => isAr
+      ? 'لا يوجد ما يطابق الفلتر الحالي'
+      : 'Nothing matches the current filter';
+  String get clearFilterAction => isAr ? 'مسح الفلتر' : 'Clear filter';
+  String get myMealsEmptyLine => isAr
+      ? 'أنشئ وجبتك الأولى لتظهر هنا'
+      : 'Create your first meal to see it here';
+
+  String foodsCount(int n) =>
+      isAr ? '${fmtInt(n)} أطعمة' : '${fmtInt(n)} foods';
+  String get addAllAction => isAr ? 'أضف الكل' : 'Add all';
+  String get editAction => isAr ? 'تعديل' : 'Edit';
+
+  // Create-a-meal screen.
+  String get createMealTitle => isAr ? 'إنشاء وجبة' : 'Create a meal';
+  String get mealNameLabel => isAr ? 'اسم الوجبة' : 'Meal name';
+  String get mealNameRequired => isAr ? 'أدخل اسم الوجبة' : 'Enter a meal name';
+  String get mealTypeOptional =>
+      isAr ? 'نوع الوجبة (اختياري)' : 'Meal type (optional)';
+  String get noneOption => isAr ? 'بدون' : 'None';
+  String get noFoodsAddedYet =>
+      isAr ? 'لم تُضف أطعمة بعد' : 'No foods added yet';
+  String get mealSaved => isAr ? 'تم حفظ الوجبة' : 'Meal saved';
+
+  // Copy-previous-meal sheet.
+  String get copyMealSheetTitle =>
+      isAr ? 'نسخ وجبة سابقة' : 'Copy a previous meal';
+  String get noPreviousMeals =>
+      isAr ? 'لا توجد وجبات في آخر 14 يومًا' : 'No meals in the last 14 days';
+  String get mealCopied => isAr ? 'تم نسخ الوجبة' : 'Meal copied';
 
   String foodName(FoodItem f) => isAr ? f.nameAr : f.nameEn;
   String servingLabel(FoodItem f) => isAr ? f.servingAr : f.servingEn;

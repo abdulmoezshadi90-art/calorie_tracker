@@ -88,11 +88,20 @@ void main() {
       'the first food beyond the initial page is absent until scrolled to',
       (tester) async {
         await _openSearch(tester);
+        // Search now defaults to the History tab (tab selector feature) —
+        // the unfiltered food list is only reachable via a query, so this
+        // pagination test exercises it through a broad-matching one, same
+        // as the sibling tests below.
+        await _enterQuery(tester, 'milk');
 
-        // 21st food in database order — the first one outside a 20-item
-        // window — must not exist yet (it isn't even in itemCount, let
-        // alone built), then must appear once scrolled to.
-        final beyondFirstPage = foodDatabase[20].nameEn;
+        final milkFoods = foodDatabase
+            .where((f) => f.nameEn.toLowerCase().contains('milk'))
+            .toList();
+        expect(milkFoods.length, greaterThan(20));
+        // 21st match — the first one outside a 20-item window — must not
+        // exist yet (it isn't even in itemCount, let alone built), then
+        // must appear once scrolled to.
+        final beyondFirstPage = milkFoods[20].nameEn;
         expect(find.text(beyondFirstPage), findsNothing);
 
         await _scrollDownUntil(tester, find.text(beyondFirstPage));
@@ -104,8 +113,12 @@ void main() {
       tester,
     ) async {
       await _openSearch(tester);
+      await _enterQuery(tester, 'milk');
 
-      final lastFood = foodDatabase.last.nameEn;
+      final lastFood = foodDatabase
+          .where((f) => f.nameEn.toLowerCase().contains('milk'))
+          .last
+          .nameEn;
       await _scrollDownUntil(tester, find.text(lastFood));
       expect(find.text(lastFood), findsOneWidget);
     });
@@ -187,6 +200,13 @@ void main() {
     for (final size in [(375.0, 812.0), (320.0, 640.0)]) {
       testWidgets('at ${size.$1.toInt()}x${size.$2.toInt()}', (tester) async {
         await _openSearch(tester, width: size.$1, height: size.$2);
+        expect(tester.takeException(), isNull);
+        // The tab view's default (History, empty in a fresh AppState) has
+        // no scrollable to drag — enter a query to reach the results list,
+        // same list/drag behavior this test always exercised. Tab-content
+        // overflow itself is covered separately (see
+        // food_selection_tabs_test.dart).
+        await _enterQuery(tester, 'milk');
         expect(tester.takeException(), isNull);
         await _dragDown(tester, times: 4);
         expect(tester.takeException(), isNull);

@@ -12,17 +12,25 @@ class EmptyState extends StatelessWidget {
     this.graphic,
     required this.line,
     this.hint,
-    required this.actionLabel,
-    required this.onAction,
-  }) : assert(icon != null || graphic != null);
+    this.actionLabel,
+    this.onAction,
+  }) : assert(icon != null || graphic != null),
+       assert(
+         (actionLabel == null) == (onAction == null),
+         'actionLabel and onAction must be supplied together, or not at all',
+       );
 
   final IconData? icon;
+
   /// Custom glyph (e.g. [MealIcon]) shown instead of [icon].
   final Widget? graphic;
   final String line;
   final String? hint;
-  final String actionLabel;
-  final VoidCallback onAction;
+
+  /// Both null hides the action button entirely — a state with nothing
+  /// useful to do about it (e.g. no history logged anywhere yet).
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +45,10 @@ class EmptyState extends StatelessWidget {
               width: 64,
               height: 64,
               alignment: Alignment.center,
-              decoration: BoxDecoration(color: c.chipBg, shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: c.chipBg,
+                shape: BoxShape.circle,
+              ),
               child: graphic ?? Icon(icon, size: 30, color: c.accent),
             ),
             const SizedBox(height: 16),
@@ -58,28 +69,30 @@ class EmptyState extends StatelessWidget {
                 style: TextStyle(fontSize: 13, height: 1.4, color: c.muted),
               ),
             ],
-            const SizedBox(height: 18),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: c.accent,
-                foregroundColor: c.onAccent,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 22,
-                  vertical: 12,
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 18),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: c.accent,
+                  foregroundColor: c.onAccent,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                onPressed: onAction,
+                child: Text(
+                  actionLabel!,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-              onPressed: onAction,
-              child: Text(
-                actionLabel,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
+            ],
           ],
         ),
       ),

@@ -7,7 +7,9 @@ import 'app_state.dart';
 import 'empty_state.dart';
 import 'food_db.dart';
 import 'food_detail_screen.dart';
+import 'food_history_tab.dart';
 import 'models.dart';
+import 'saved_meals_tab.dart';
 import 'theme.dart';
 
 /// One food's search text, folded to lowercase (EN only — Arabic has no
@@ -51,6 +53,12 @@ class _SearchScreenState extends State<SearchScreen> {
   List<FoodItem> _filtered = foodDatabase;
   int _visibleCount = _pageSize;
 
+  // True once the field holds non-empty trimmed text — gates the tab
+  // selector/content vs. the search results list (point 4 of the tab
+  // selector spec: search text hides the tabs entirely, clearing restores
+  // whichever tab was selected before).
+  bool _isSearching = false;
+
   @override
   void initState() {
     super.initState();
@@ -82,6 +90,7 @@ class _SearchScreenState extends State<SearchScreen> {
     setState(() {
       _filtered = filtered;
       _visibleCount = _pageSize;
+      _isSearching = q.isNotEmpty;
     });
     // A changed query always starts the list from the top — the old
     // scroll offset has no meaning against a different result set. This
@@ -100,10 +109,7 @@ class _SearchScreenState extends State<SearchScreen> {
     if (position.maxScrollExtent <= 0) return;
     if (position.pixels >= position.maxScrollExtent * _loadMoreAt) {
       setState(() {
-        _visibleCount = (_visibleCount + _pageSize).clamp(
-          0,
-          _filtered.length,
-        );
+        _visibleCount = (_visibleCount + _pageSize).clamp(0, _filtered.length);
       });
     }
   }
@@ -151,8 +157,13 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
             ),
           ),
+          if (!_isSearching) _FoodTabSelector(),
           Expanded(
-            child: _filtered.isEmpty
+            child: !_isSearching
+                ? (state.foodTabIndex == 0
+                      ? HistoryTab(meal: widget.meal)
+                      : MyMealsTab(meal: widget.meal))
+                : _filtered.isEmpty
                 ? EmptyState(
                     icon: Icons.search_off_outlined,
                     line: l.noResults,
@@ -294,7 +305,9 @@ class _QuickAddButton extends StatelessWidget {
     final kcal = food.kcal;
     messenger.showSnackBar(
       SnackBar(
-        content: Text('${l.added}: ${l.foodName(food)} · ${fmtInt(kcal)} ${l.kcal}'),
+        content: Text(
+          '${l.added}: ${l.foodName(food)} · ${fmtInt(kcal)} ${l.kcal}',
+        ),
         duration: const Duration(seconds: 4),
         action: SnackBarAction(
           label: l.undo,
@@ -304,11 +317,93 @@ class _QuickAddButton extends StatelessWidget {
             // safe because it was just added and ids are unique per tap.
             final match = state
                 .entriesFor(date, meal: meal)
-                .lastWhere(
-                  (e) => e.foodId == food.id && e.quantity == 1.0,
-                );
+                .lastWhere((e) => e.foodId == food.id && e.quantity == 1.0);
             await state.removeEntry(date, match.id);
           },
+        ),
+      ),
+    );
+  }
+}
+
+/// Two equal-width segments below the search bar — History / My Meals.
+/// Selected segment fills with the accent color; unselected stays flat on
+/// the surrounding chip background, matching the rounded/soft-shadow card
+/// language used throughout home_screen.dart. Selection persists via
+/// AppState.foodTabIndex.
+class _FoodTabSelector extends StatelessWidget {
+  const _FoodTabSelector();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final state = AppScope.of(context);
+    final l = state.l;
+    final selected = state.foodTabIndex;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: c.chipBg,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: c.cardShadow,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _FoodTabSegment(
+              label: l.logHistoryTab,
+              selected: selected == 0,
+              onTap: () => state.setFoodTabIndex(0),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: _FoodTabSegment(
+              label: l.myMeals,
+              selected: selected == 1,
+              onTap: () => state.setFoodTabIndex(1),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FoodTabSegment extends StatelessWidget {
+  const _FoodTabSegment({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return Material(
+      color: selected ? c.accent : Colors.transparent,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: selected ? c.onAccent : c.muted,
+            ),
+          ),
         ),
       ),
     );

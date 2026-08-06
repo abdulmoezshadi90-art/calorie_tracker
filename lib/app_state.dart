@@ -24,6 +24,12 @@ class AppState extends ChangeNotifier {
   static const _weightsKey = 'weights_v1';
   static const _quantityModeKey = 'quantity_mode';
   static const _themeModeKey = 'theme_mode';
+  static const _savedMealsKey = 'saved_meals';
+  static const _foodTabKey = 'food_tab_index';
+  static const _historyFilterKey = 'history_filter';
+  static const _historySortKey = 'history_sort';
+  static const _mealsFilterKey = 'saved_meals_filter';
+  static const _mealsSortKey = 'saved_meals_sort';
 
   Goals _goals = Goals.defaults;
   Goals get goals => _goals;
@@ -46,6 +52,25 @@ class AppState extends ChangeNotifier {
   // Monotonic suffix so entries logged in the same microsecond still get
   // unique ids (delete and undo target by id).
   int _idSeq = 0;
+
+  List<SavedMeal> _savedMeals = [];
+  List<SavedMeal> get savedMeals => List.unmodifiable(_savedMeals);
+
+  /// Which food-selection tab was last open (0 = History, 1 = My Meals) —
+  /// search_screen.dart's tab selector, persisted like any other pref.
+  int foodTabIndex = 0;
+
+  /// Single-select meal filter for each tab; null means "All meals". Kept
+  /// independent per tab per the feature spec.
+  MealType? historyFilter;
+  SortOption historySort = SortOption.mostRecent;
+  MealType? mealsFilter;
+  SortOption mealsSort = SortOption.mostRecent;
+
+  /// Aggregated per-food logging history, built from [_logsByDate] and
+  /// cached here — see [historyEntries]. Cleared (never lazily patched) by
+  /// every log mutation, so a stale cache can never leak past one rebuild.
+  List<HistoryEntry>? _historyCache;
 
   /// 'fraction' or 'decimal' — the food detail page's quantity input mode,
   /// remembered across sessions like any other preference.
@@ -82,6 +107,58 @@ class AppState extends ChangeNotifier {
   /// How many of the four meals have at least one entry.
   int loggedMealCount(DateTime date) =>
       MealType.values.where((m) => entriesFor(date, meal: m).isNotEmpty).length;
+
+  /// Every food ever logged, aggregated across all days — never a separate
+  /// store, always derived from [_logsByDate] and cached until the next log
+  /// mutation invalidates it (search_screen.dart's History tab; do not call
+  /// this inside build() on every frame, it's cheap but still O(entries)).
+  /// Days are walked newest-first; within a food, the most recent DAY it
+  /// appears wins for [HistoryEntry.lastLoggedAt]/[HistoryEntry.lastServings]
+  /// (last entry that day, by list order), while count and meal types
+  /// accumulate across every occurrence regardless of day.
+  List<HistoryEntry> get historyEntries {
+    final cached = _historyCache;
+    if (cached != null) return cached;
+
+    final dateKeys = _logsByDate.keys.toList()..sort((a, b) => b.compareTo(a));
+    final agg = <String, _HistoryAgg>{};
+    for (final key in dateKeys) {
+      final date = DateTime.parse(key);
+      for (final entry in _logsByDate[key]!) {
+        final meal = MealType.values.byName(entry.meal);
+        final existing = agg[entry.foodId];
+        if (existing == null) {
+          agg[entry.foodId] = _HistoryAgg(
+            lastLoggedAt: date,
+            lastServings: entry.servings,
+            logCount: 1,
+            mealTypes: {meal},
+          );
+        } else {
+          existing.logCount++;
+          existing.mealTypes.add(meal);
+          if (existing.lastLoggedAt == date) {
+            // Same (most recent) day, a later entry in list order — wins.
+            existing.lastServings = entry.servings;
+          }
+        }
+      }
+    }
+
+    final result = [
+      for (final e in agg.entries)
+        if (foodById[e.key] != null)
+          HistoryEntry(
+            food: foodById[e.key]!,
+            lastLoggedAt: e.value.lastLoggedAt,
+            logCount: e.value.logCount,
+            mealTypes: e.value.mealTypes,
+            lastServings: e.value.lastServings,
+          ),
+    ];
+    _historyCache = result;
+    return result;
+  }
 
   DayTotals totalsFor(DateTime date) {
     final totals = DayTotals();
@@ -121,8 +198,7 @@ class AppState extends ChangeNotifier {
 
   // ─────────────────────────── Weight log ───────────────────────────
 
-  bool hasWeightOn(DateTime date) =>
-      _weightByDate.containsKey(dateKey(date));
+  bool hasWeightOn(DateTime date) => _weightByDate.containsKey(dateKey(date));
 
   /// All weight entries as (date, kg), oldest first — chart reading order.
   List<({DateTime date, double kg})> weightEntries() {
@@ -192,9 +268,11 @@ class AppState extends ChangeNotifier {
       quantity: quantity ?? servings,
     );
     _logsByDate.putIfAbsent(dateKey(date), () => []).add(entry);
+    _historyCache = null;
     notifyListeners();
     if (await _save()) return true;
     _logsByDate[dateKey(date)]?.removeWhere((e) => e.id == entry.id);
+    _historyCache = null;
     notifyListeners();
     return false;
   }
@@ -209,9 +287,11 @@ class AppState extends ChangeNotifier {
     final index = list?.indexWhere((e) => e.id == entryId) ?? -1;
     if (list == null || index < 0) return null;
     final removed = list.removeAt(index);
+    _historyCache = null;
     notifyListeners();
     if (await _save()) return (entry: removed, index: index);
     list.insert(index, removed);
+    _historyCache = null;
     notifyListeners();
     return null;
   }
@@ -220,9 +300,184 @@ class AppState extends ChangeNotifier {
   Future<bool> restoreEntry(DateTime date, LogEntry entry, int index) async {
     final list = _logsByDate.putIfAbsent(dateKey(date), () => []);
     list.insert(index.clamp(0, list.length), entry);
+    _historyCache = null;
     notifyListeners();
     if (await _save()) return true;
     list.removeWhere((e) => e.id == entry.id);
+    _historyCache = null;
+    notifyListeners();
+    return false;
+  }
+
+  /// Logs every item in [meal] into [date]/[targetMeal] at once (My Meals
+  /// tab quick-add / detail-sheet add-all), then bumps the saved meal's
+  /// usage stats for "Most recent"/"Most frequent" sorting. Returns the
+  /// newly created entries' ids on success (so the caller can offer undo,
+  /// same as every other mutation in this app — local storage has no
+  /// backup for a mis-tap), or null if the write failed and everything was
+  /// rolled back, log entries and usage-stat bump together.
+  Future<List<String>?> logSavedMeal(
+    DateTime date,
+    MealType targetMeal,
+    SavedMeal meal,
+  ) async {
+    final addedIds = <String>[];
+    for (final item in meal.items) {
+      final entry = LogEntry(
+        id: '${DateTime.now().microsecondsSinceEpoch}_${_idSeq++}',
+        foodId: item.foodId,
+        servings: item.servings,
+        meal: targetMeal.name,
+      );
+      _logsByDate.putIfAbsent(dateKey(date), () => []).add(entry);
+      addedIds.add(entry.id);
+    }
+    _historyCache = null;
+    final index = _savedMeals.indexWhere((m) => m.id == meal.id);
+    final previousMeal = index >= 0 ? _savedMeals[index] : null;
+    if (index >= 0) {
+      _savedMeals[index] = meal.copyWith(
+        lastUsedAt: now(),
+        useCount: meal.useCount + 1,
+      );
+    }
+    notifyListeners();
+    if (await _save()) return addedIds;
+    _logsByDate[dateKey(date)]?.removeWhere((e) => addedIds.contains(e.id));
+    _historyCache = null;
+    if (index >= 0 && previousMeal != null) _savedMeals[index] = previousMeal;
+    notifyListeners();
+    return null;
+  }
+
+  /// Removes several entries at once (undo for a multi-food add-all) — one
+  /// [removeEntry] call per id, same rollback behavior as a single delete.
+  Future<void> removeEntries(DateTime date, List<String> entryIds) async {
+    for (final id in entryIds) {
+      await removeEntry(date, id);
+    }
+  }
+
+  /// Copies every entry from [fromDate]'s [fromMeal] into [toDate]'s
+  /// [toMeal], preserving serving amounts — the Copy Previous Meal sheet.
+  /// The source day is read only; it is never mutated, on success or
+  /// rollback. Returns the new entries' ids (for undo) on success, null if
+  /// the source meal was empty or the write failed.
+  Future<List<String>?> copyMealEntries(
+    DateTime fromDate,
+    MealType fromMeal,
+    DateTime toDate,
+    MealType toMeal,
+  ) async {
+    final source = entriesFor(fromDate, meal: fromMeal);
+    if (source.isEmpty) return null;
+    final addedIds = <String>[];
+    for (final e in source) {
+      final entry = LogEntry(
+        id: '${DateTime.now().microsecondsSinceEpoch}_${_idSeq++}',
+        foodId: e.foodId,
+        servings: e.servings,
+        meal: toMeal.name,
+        unitId: e.unitId,
+        quantity: e.quantity,
+      );
+      _logsByDate.putIfAbsent(dateKey(toDate), () => []).add(entry);
+      addedIds.add(entry.id);
+    }
+    _historyCache = null;
+    notifyListeners();
+    if (await _save()) return addedIds;
+    _logsByDate[dateKey(toDate)]?.removeWhere((e) => addedIds.contains(e.id));
+    _historyCache = null;
+    notifyListeners();
+    return null;
+  }
+
+  // ─────────────────────────── Saved meals ───────────────────────────
+
+  Future<bool> addSavedMeal(SavedMeal meal) async {
+    _savedMeals.add(meal);
+    notifyListeners();
+    if (await _save()) return true;
+    _savedMeals.removeWhere((m) => m.id == meal.id);
+    notifyListeners();
+    return false;
+  }
+
+  Future<bool> updateSavedMeal(SavedMeal meal) async {
+    final index = _savedMeals.indexWhere((m) => m.id == meal.id);
+    if (index < 0) return false;
+    final previous = _savedMeals[index];
+    _savedMeals[index] = meal;
+    notifyListeners();
+    if (await _save()) return true;
+    _savedMeals[index] = previous;
+    notifyListeners();
+    return false;
+  }
+
+  Future<bool> deleteSavedMeal(String id) async {
+    final index = _savedMeals.indexWhere((m) => m.id == id);
+    if (index < 0) return false;
+    final removed = _savedMeals.removeAt(index);
+    notifyListeners();
+    if (await _save()) return true;
+    _savedMeals.insert(index, removed);
+    notifyListeners();
+    return false;
+  }
+
+  /// Fresh, unused id for a new [SavedMeal] — same monotonic-suffix trick
+  /// as log entry ids.
+  String newSavedMealId() =>
+      'meal_${DateTime.now().microsecondsSinceEpoch}_${_idSeq++}';
+
+  Future<bool> setFoodTabIndex(int index) async {
+    final previous = foodTabIndex;
+    foodTabIndex = index;
+    notifyListeners();
+    if (await _save()) return true;
+    foodTabIndex = previous;
+    notifyListeners();
+    return false;
+  }
+
+  Future<bool> setHistoryFilter(MealType? meal) async {
+    final previous = historyFilter;
+    historyFilter = meal;
+    notifyListeners();
+    if (await _save()) return true;
+    historyFilter = previous;
+    notifyListeners();
+    return false;
+  }
+
+  Future<bool> setHistorySort(SortOption sort) async {
+    final previous = historySort;
+    historySort = sort;
+    notifyListeners();
+    if (await _save()) return true;
+    historySort = previous;
+    notifyListeners();
+    return false;
+  }
+
+  Future<bool> setMealsFilter(MealType? meal) async {
+    final previous = mealsFilter;
+    mealsFilter = meal;
+    notifyListeners();
+    if (await _save()) return true;
+    mealsFilter = previous;
+    notifyListeners();
+    return false;
+  }
+
+  Future<bool> setMealsSort(SortOption sort) async {
+    final previous = mealsSort;
+    mealsSort = sort;
+    notifyListeners();
+    if (await _save()) return true;
+    mealsSort = previous;
     notifyListeners();
     return false;
   }
@@ -304,6 +559,12 @@ class AppState extends ChangeNotifier {
     onboardingDone = prefs.getBool(_onboardingKey) ?? false;
     quantityMode = prefs.getString(_quantityModeKey) ?? 'decimal';
     themeModeCode = prefs.getString(_themeModeKey) ?? 'system';
+    final rawTab = prefs.getInt(_foodTabKey) ?? 0;
+    foodTabIndex = (rawTab < 0 || rawTab > 1) ? 0 : rawTab;
+    historyFilter = _mealTypeFromName(prefs.getString(_historyFilterKey));
+    historySort = _sortOptionFromName(prefs.getString(_historySortKey));
+    mealsFilter = _mealTypeFromName(prefs.getString(_mealsFilterKey));
+    mealsSort = _sortOptionFromName(prefs.getString(_mealsSortKey));
     // Corrupted storage (interrupted write, flaky flash on cheap phones)
     // must never brick startup: with no backend, an unlaunchable app means
     // reinstall and total data loss. Fall back per key instead of throwing.
@@ -340,6 +601,25 @@ class AppState extends ChangeNotifier {
         _weightByDate.clear();
       }
     }
+    final rawSavedMeals = prefs.getString(_savedMealsKey);
+    if (rawSavedMeals != null) {
+      // Same salvage spirit as the day-log decode below: one malformed
+      // saved meal must not discard the rest.
+      try {
+        final decoded = jsonDecode(rawSavedMeals) as List;
+        final meals = <SavedMeal>[];
+        for (final m in decoded) {
+          try {
+            meals.add(SavedMeal.fromJson(m as Map<String, dynamic>));
+          } catch (_) {
+            // Skip the bad entry, keep the rest.
+          }
+        }
+        _savedMeals = meals;
+      } catch (_) {
+        _savedMeals = [];
+      }
+    }
     final raw = prefs.getString(_logsKey);
     if (raw != null) {
       // Salvage per day and per entry: one malformed record must not
@@ -364,6 +644,21 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  static MealType? _mealTypeFromName(String? name) {
+    if (name == null) return null;
+    for (final m in MealType.values) {
+      if (m.name == name) return m;
+    }
+    return null;
+  }
+
+  static SortOption _sortOptionFromName(String? name) {
+    for (final s in SortOption.values) {
+      if (s.name == name) return s;
+    }
+    return SortOption.mostRecent;
+  }
+
   /// Simulates a storage write failure (disk full etc.) in tests.
   @visibleForTesting
   bool debugFailWrites = false;
@@ -379,6 +674,23 @@ class AppState extends ChangeNotifier {
       await prefs.setBool(_onboardingKey, onboardingDone);
       await prefs.setString(_quantityModeKey, quantityMode);
       await prefs.setString(_themeModeKey, themeModeCode);
+      await prefs.setInt(_foodTabKey, foodTabIndex);
+      if (historyFilter != null) {
+        await prefs.setString(_historyFilterKey, historyFilter!.name);
+      } else {
+        await prefs.remove(_historyFilterKey);
+      }
+      await prefs.setString(_historySortKey, historySort.name);
+      if (mealsFilter != null) {
+        await prefs.setString(_mealsFilterKey, mealsFilter!.name);
+      } else {
+        await prefs.remove(_mealsFilterKey);
+      }
+      await prefs.setString(_mealsSortKey, mealsSort.name);
+      await prefs.setString(
+        _savedMealsKey,
+        jsonEncode(_savedMeals.map((m) => m.toJson()).toList()),
+      );
       if (_profile != null) {
         await prefs.setString(_profileKey, jsonEncode(_profile!.toJson()));
       }
@@ -397,6 +709,21 @@ class AppState extends ChangeNotifier {
       return false;
     }
   }
+}
+
+/// Mutable accumulator used only while building [AppState.historyEntries] —
+/// never exposed outside that getter.
+class _HistoryAgg {
+  _HistoryAgg({
+    required this.lastLoggedAt,
+    required this.lastServings,
+    required this.logCount,
+    required this.mealTypes,
+  });
+  DateTime lastLoggedAt;
+  double lastServings;
+  int logCount;
+  Set<MealType> mealTypes;
 }
 
 /// Exposes [AppState] to the widget tree and rebuilds dependents on change.

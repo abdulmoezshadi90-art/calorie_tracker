@@ -53,15 +53,15 @@ void main() {
     await tester.enterText(find.byType(TextField), 'zzzzz');
     await tester.pumpAndSettle();
     expect(find.text('No foods found'), findsOneWidget);
-    expect(
-      find.text('Try another name, in Arabic or English'),
-      findsOneWidget,
-    );
+    expect(find.text('Try another name, in Arabic or English'), findsOneWidget);
 
     await tester.tap(find.text('Clear search'));
     await tester.pumpAndSettle();
     expect(find.text('No foods found'), findsNothing);
-    expect(find.byType(ListTile), findsWidgets); // full list is back
+    // Clearing restores the tab view (History, the default tab) rather
+    // than a bare food list — nothing logged yet, so History's own empty
+    // state shows instead of any rows.
+    expect(find.text('Recently logged'), findsOneWidget);
   });
 
   testWidgets('empty history offers back-to-today which pops', (tester) async {

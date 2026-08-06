@@ -81,7 +81,12 @@ class FoodItem {
       grams: servingGrams,
     ),
     for (final p in presets)
-      ServingUnit(id: p.nameEn, labelEn: p.nameEn, labelAr: p.nameAr, grams: p.grams),
+      ServingUnit(
+        id: p.nameEn,
+        labelEn: p.nameEn,
+        labelAr: p.nameAr,
+        grams: p.grams,
+      ),
   ];
 
   /// Standard weight or volume units alongside this food's named servings —
@@ -140,6 +145,13 @@ class FoodItem {
 }
 
 enum FoodCategory { snack, main, breakfast, sweet, drink }
+
+/// Sort options shared by the History and My Meals tabs (search_screen.dart).
+/// "Most recent"/"Most frequent" read different underlying fields per tab
+/// (lastLoggedAt/logCount for history, lastUsedAt-or-createdAt/useCount for
+/// saved meals) — sorting itself happens in each tab's State, memoized
+/// against AppState.historyEntries/savedMeals + the active filter/sort.
+enum SortOption { mostRecent, mostFrequent, aToZ, zToA }
 
 /// One way to log a food's quantity — the food's OWN serving scale (its
 /// named serving, or one of its household presets), or a generic
@@ -277,6 +289,113 @@ class LogEntry {
       meal: json['meal'] as String,
       unitId: json['unitId'] as String? ?? 'serving',
       quantity: (json['quantity'] as num?)?.toDouble() ?? servings,
+    );
+  }
+}
+
+/// One food's aggregated logging history across every day. Never stored on
+/// its own — always derived from day logs by AppState.historyEntries, which
+/// caches the result and invalidates it on any log mutation. [lastLoggedAt]
+/// is day-resolution only (LogEntry itself carries no wall-clock timestamp,
+/// only the day-key it lives under), which is the finest recency this data
+/// can honestly support.
+class HistoryEntry {
+  const HistoryEntry({
+    required this.food,
+    required this.lastLoggedAt,
+    required this.logCount,
+    required this.mealTypes,
+    required this.lastServings,
+  });
+  final FoodItem food;
+  final DateTime lastLoggedAt;
+  final int logCount;
+  final Set<MealType> mealTypes;
+  final double lastServings;
+}
+
+/// One food line inside a [SavedMeal] — a plain (foodId, servings) pair,
+/// the same shape LogEntry uses for its own servings multiplier.
+class SavedMealItem {
+  const SavedMealItem({required this.foodId, required this.servings});
+  final String foodId;
+  final double servings;
+
+  Map<String, dynamic> toJson() => {'foodId': foodId, 'servings': servings};
+
+  factory SavedMealItem.fromJson(Map<String, dynamic> json) => SavedMealItem(
+    foodId: json['foodId'] as String,
+    servings: (json['servings'] as num).toDouble(),
+  );
+}
+
+/// A user-built combo of foods, saved once and logged again with one tap.
+/// [name] is a single string the user typed themselves — unlike [FoodItem],
+/// there is no EN/AR pair here and it is never translated.
+class SavedMeal {
+  const SavedMeal({
+    required this.id,
+    required this.name,
+    required this.mealType,
+    required this.items,
+    required this.createdAt,
+    this.lastUsedAt,
+    this.useCount = 0,
+  });
+  final String id;
+  final String name;
+
+  /// Null means no meal-type tag; such a meal only shows up under the "All
+  /// meals" filter, never under a specific meal filter.
+  final MealType? mealType;
+  final List<SavedMealItem> items;
+  final DateTime createdAt;
+  final DateTime? lastUsedAt;
+  final int useCount;
+
+  SavedMeal copyWith({
+    String? name,
+    MealType? mealType,
+    bool clearMealType = false,
+    List<SavedMealItem>? items,
+    DateTime? lastUsedAt,
+    int? useCount,
+  }) => SavedMeal(
+    id: id,
+    name: name ?? this.name,
+    mealType: clearMealType ? null : (mealType ?? this.mealType),
+    items: items ?? this.items,
+    createdAt: createdAt,
+    lastUsedAt: lastUsedAt ?? this.lastUsedAt,
+    useCount: useCount ?? this.useCount,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'mealType': mealType?.name,
+    'items': items.map((i) => i.toJson()).toList(),
+    'createdAt': createdAt.toIso8601String(),
+    'lastUsedAt': lastUsedAt?.toIso8601String(),
+    'useCount': useCount,
+  };
+
+  factory SavedMeal.fromJson(Map<String, dynamic> json) {
+    final mealTypeName = json['mealType'] as String?;
+    final lastUsed = json['lastUsedAt'] as String?;
+    return SavedMeal(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      mealType: mealTypeName == null
+          ? null
+          : MealType.values.byName(mealTypeName),
+      items: [
+        for (final i in json['items'] as List)
+          SavedMealItem.fromJson(i as Map<String, dynamic>),
+      ],
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      lastUsedAt: lastUsed == null ? null : DateTime.parse(lastUsed),
+      useCount: (json['useCount'] as num?)?.toInt() ?? 0,
     );
   }
 }

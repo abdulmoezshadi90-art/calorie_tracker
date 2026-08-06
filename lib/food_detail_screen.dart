@@ -13,9 +13,22 @@ import 'theme.dart';
 /// carries no search-specific state so it can be opened from anywhere
 /// (search results today; meal detail later).
 class FoodDetailScreen extends StatefulWidget {
-  const FoodDetailScreen({super.key, required this.food, required this.meal});
+  const FoodDetailScreen({
+    super.key,
+    required this.food,
+    required this.meal,
+    this.initialServings,
+  });
   final FoodItem food;
   final MealType meal;
+
+  /// Prefills the quantity input with this many base servings (History tab
+  /// row tap, "prefilled with the serving amount last used for that food").
+  /// Null keeps the normal default of 1. Always against the food's own
+  /// base serving unit — [_unit] still defaults to servingUnits.first, and
+  /// that unit's multiplier is 1:1 with the base serving, so this value
+  /// maps straight onto [_quantity] with no conversion needed.
+  final double? initialServings;
 
   @override
   State<FoodDetailScreen> createState() => _FoodDetailScreenState();
@@ -38,6 +51,15 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
     final state = AppScope.read(context);
     _unit = widget.food.servingUnits.first;
     _mode = state.quantityMode == 'fraction' ? 'fraction' : 'decimal';
+    final initial = widget.initialServings;
+    if (initial != null && initial > 0) {
+      if (_mode == 'decimal') {
+        _decimalController.text = fmtServings(initial);
+      } else {
+        _whole = initial.floor().clamp(0, 98);
+        _fractionPreset = _nearestFractionPreset(initial - _whole);
+      }
+    }
   }
 
   @override
@@ -119,52 +141,58 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-          _ServingRow(
-            label: l.unitLabel(_unit),
-            onTap: () => _showUnitPicker(context),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(child: _sectionLabel(c, l.quantity)),
-              _ModeToggle(
-                mode: _mode,
-                fractionLabel: l.fractionMode,
-                decimalLabel: l.decimalMode,
-                onChanged: (mode) => _switchMode(mode, state),
+            _ServingRow(
+              label: l.unitLabel(_unit),
+              onTap: () => _showUnitPicker(context),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(child: _sectionLabel(c, l.quantity)),
+                _ModeToggle(
+                  mode: _mode,
+                  fractionLabel: l.fractionMode,
+                  decimalLabel: l.decimalMode,
+                  onChanged: (mode) => _switchMode(mode, state),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            if (_mode == 'fraction')
+              _FractionPicker(
+                whole: _whole,
+                fractionPreset: _fractionPreset,
+                wholeLabel: l.whole,
+                onWholeChanged: (w) => setState(() => _whole = w),
+                onFractionChanged: (f) => setState(() => _fractionPreset = f),
+              )
+            else
+              _DecimalPicker(
+                controller: _decimalController,
+                onChanged: () {
+                  setState(() {});
+                },
+              ),
+            if (_error != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                _error!,
+                style: TextStyle(fontSize: 13, color: c.fieldError),
               ),
             ],
-          ),
-          const SizedBox(height: 10),
-          if (_mode == 'fraction')
-            _FractionPicker(
-              whole: _whole,
-              fractionPreset: _fractionPreset,
-              wholeLabel: l.whole,
-              onWholeChanged: (w) => setState(() => _whole = w),
-              onFractionChanged: (f) => setState(() => _fractionPreset = f),
-            )
-          else
-            _DecimalPicker(controller: _decimalController, onChanged: () {
-              setState(() {});
-            }),
-          if (_error != null) ...[
-            const SizedBox(height: 10),
-            Text(_error!, style: TextStyle(fontSize: 13, color: c.fieldError)),
+            const SizedBox(height: 20),
+            _MacroChipsRow(
+              carbs: carbs,
+              fat: fat,
+              protein: protein,
+              pct: pct,
+              zeroCal: kcal <= 0,
+            ),
+            const SizedBox(height: 20),
+            _DonutCard(kcal: kcal, pct: pct),
+            const SizedBox(height: 90),
           ],
-          const SizedBox(height: 20),
-          _MacroChipsRow(
-            carbs: carbs,
-            fat: fat,
-            protein: protein,
-            pct: pct,
-            zeroCal: kcal <= 0,
-          ),
-          const SizedBox(height: 20),
-          _DonutCard(kcal: kcal, pct: pct),
-          const SizedBox(height: 90),
-        ],
         ),
       ),
       bottomNavigationBar: Container(
@@ -296,7 +324,9 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                       _unitSection(
                         c,
                         l,
-                        food.isLiquid ? l.volumeUnitsSection : l.weightUnitsSection,
+                        food.isLiquid
+                            ? l.volumeUnitsSection
+                            : l.weightUnitsSection,
                         generic,
                         sheetContext,
                       ),
@@ -587,7 +617,10 @@ class _AnimatedDonut extends ImplicitlyAnimatedWidget {
     required this.pct,
     required this.colors,
     required this.child,
-  }) : super(duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
+  }) : super(
+         duration: const Duration(milliseconds: 200),
+         curve: Curves.easeOut,
+       );
 
   final ({int carb, int fat, int protein}) pct;
   final (Color, Color, Color) colors;
@@ -598,26 +631,33 @@ class _AnimatedDonut extends ImplicitlyAnimatedWidget {
       _AnimatedDonutState();
 }
 
-class _AnimatedDonutState extends ImplicitlyAnimatedWidgetState<_AnimatedDonut> {
+class _AnimatedDonutState
+    extends ImplicitlyAnimatedWidgetState<_AnimatedDonut> {
   Tween<double>? _carb, _fat, _protein;
 
   @override
   void forEachTween(TweenVisitor<dynamic> visitor) {
-    _carb = visitor(
-      _carb,
-      widget.pct.carb.toDouble(),
-      (v) => Tween<double>(begin: v as double),
-    ) as Tween<double>;
-    _fat = visitor(
-      _fat,
-      widget.pct.fat.toDouble(),
-      (v) => Tween<double>(begin: v as double),
-    ) as Tween<double>;
-    _protein = visitor(
-      _protein,
-      widget.pct.protein.toDouble(),
-      (v) => Tween<double>(begin: v as double),
-    ) as Tween<double>;
+    _carb =
+        visitor(
+              _carb,
+              widget.pct.carb.toDouble(),
+              (v) => Tween<double>(begin: v as double),
+            )
+            as Tween<double>;
+    _fat =
+        visitor(
+              _fat,
+              widget.pct.fat.toDouble(),
+              (v) => Tween<double>(begin: v as double),
+            )
+            as Tween<double>;
+    _protein =
+        visitor(
+              _protein,
+              widget.pct.protein.toDouble(),
+              (v) => Tween<double>(begin: v as double),
+            )
+            as Tween<double>;
   }
 
   @override
@@ -749,7 +789,10 @@ class _ModeToggle extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [seg('fraction', fractionLabel), seg('decimal', decimalLabel)],
+        children: [
+          seg('fraction', fractionLabel),
+          seg('decimal', decimalLabel),
+        ],
       ),
     );
   }
@@ -779,10 +822,7 @@ class _FractionPicker extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(
-              wholeLabel,
-              style: TextStyle(fontSize: 13, color: c.muted),
-            ),
+            Text(wholeLabel, style: TextStyle(fontSize: 13, color: c.muted)),
             const Spacer(),
             IconButton(
               onPressed: whole > 0 ? () => onWholeChanged(whole - 1) : null,
@@ -854,9 +894,7 @@ class _DecimalPicker extends StatelessWidget {
     void step(double delta) {
       final v = double.tryParse(controller.text) ?? 1.0;
       final next = (v + delta).clamp(0.1, 99.0);
-      controller.text = fmtServings(
-        (next * 10).round() / 10,
-      );
+      controller.text = fmtServings((next * 10).round() / 10);
       onChanged();
     }
 
