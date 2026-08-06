@@ -2757,6 +2757,188 @@ const List<FoodItem> foodDatabase = [
         'USDA FoodData Central FDC ID 173647 (Beverages, water, tap, drinking), per 100g. https://tools.myfooddata.com/nutrition-facts/173647/100g. Generic reference food, not a branded/labeled product. Included mainly for completeness/hydration-tracking; bottled water runs essentially identical.',
     servingGrams: 100,
   ),
+
+  // ── Grains, Legumes & Bread (generic, unbranded reference foods; USDA
+  // FoodData Central via myfooddata.com) ── Same convention as the
+  // batches above: 100g base serving matching USDA's own basis exactly
+  // (no scaling math). category: FoodCategory.main for both — the source
+  // doc split these into 'grain' and 'legume', neither of which exists in
+  // this enum; staple carb foods eaten as part of a meal, same reasoning
+  // as Vegetables/Fish/Oils.
+  // verified: false on all entries, matching the source doc's own DRAFT
+  // status — no "all verified" override came with this batch, same as
+  // the last four (Eggs/Oils & Fats/Fish & Seafood/Beverages).
+  // All grain/legume/pasta entries are COOKED, not raw/dry, except the
+  // flour entry (dry by nature — nobody eats raw flour). Legumes are all
+  // USDA's "without salt" versions; real home cooking with salt or broth
+  // pushes sodium meaningfully higher than shown here. Fava Beans is
+  // plain boiled beans, not a finished "ful medames" dish (oil, lemon,
+  // cumin, garlic) — a ful medames entry would need a separate
+  // recipe-style calculation on top of this base, not fabricated here.
+  // Barley is pearled/cooked-grain form; bazin traditionally uses barley
+  // flour instead, which is not the same ingredient (flagged as a
+  // possible follow-up, not guessed at). Pita bread's sodium (536mg/100g)
+  // is notably high relative to the rest of this file.
+  FoodItem(
+    id: 'rice_white_cooked',
+    nameEn: 'White Rice (Cooked)',
+    nameAr: 'أرز أبيض مطبوخ',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 130,
+    protein: 2.7,
+    carbs: 28.2,
+    fat: 0.28,
+    category: FoodCategory.main,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 168878 (Rice, white, long-grain, regular, enriched, cooked), per 100g. https://tools.myfooddata.com/nutrition-facts/168878/100g. Generic reference food, not a branded/labeled product.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'couscous_cooked',
+    nameEn: 'Couscous (Cooked)',
+    nameAr: 'كسكسي مطبوخ',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 112,
+    protein: 3.8,
+    carbs: 23.2,
+    fat: 0.16,
+    category: FoodCategory.main,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 169700 (Couscous, cooked), per 100g. https://tools.myfooddata.com/nutrition-facts/169700/100g. Generic reference food, not a branded/labeled product. This is plain couscous for logging on its own, separate from this app\'s existing Libyan couscous-dish entries.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'bulgur_cooked',
+    nameEn: 'Bulgur (Cooked)',
+    nameAr: 'برغل مطبوخ',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 83,
+    protein: 3.1,
+    carbs: 18.6,
+    fat: 0.24,
+    category: FoodCategory.main,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 170287 (Bulgur, cooked), per 100g. https://tools.myfooddata.com/nutrition-facts/170287/100g. Generic reference food, not a branded/labeled product.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'pasta_cooked',
+    nameEn: 'Pasta (Cooked, Plain)',
+    nameAr: 'مكرونة مطبوخة',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 158,
+    protein: 5.8,
+    carbs: 30.9,
+    fat: 0.93,
+    category: FoodCategory.main,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 169737 (Pasta, cooked, enriched, without added salt), per 100g. https://tools.myfooddata.com/nutrition-facts/169737/100g. Generic reference food, not a branded/labeled product. Generic plain wheat pasta — any shape (spaghetti, macaroni, penne, etc.) runs close to this per 100g cooked. A base ingredient for mbakbka and other Libyan pasta-based dishes if needed.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'bread_pita_white',
+    nameEn: 'Pita Bread (White)',
+    nameAr: 'خبز بيتا (أبيض)',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 275,
+    protein: 9.1,
+    carbs: 55.7,
+    fat: 1.2,
+    category: FoodCategory.main,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 172816 (Bread, pita, white, unenriched), per 100g. https://tools.myfooddata.com/nutrition-facts/172816/100g. Generic reference food, not a branded/labeled product. Sodium (536mg/100g) is notably high — a typical large pita (~60g) would carry roughly 320mg at this rate. Sugar content not listed on this USDA entry, shown as omitted rather than assumed zero.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'chickpeas_cooked',
+    nameEn: 'Chickpeas (Cooked)',
+    nameAr: 'حمص مطبوخ',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 164,
+    protein: 8.9,
+    carbs: 27.4,
+    fat: 2.6,
+    category: FoodCategory.main,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 173757 (Chickpeas, mature seeds, cooked, boiled, without salt), per 100g. https://tools.myfooddata.com/nutrition-facts/173757/100g. Generic reference food, not a branded/labeled product. Without-salt USDA version; real cooking with salt or broth pushes sodium meaningfully higher than shown here.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'lentils_cooked',
+    nameEn: 'Lentils (Cooked)',
+    nameAr: 'عدس مطبوخ',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 116,
+    protein: 9,
+    carbs: 20.1,
+    fat: 0.38,
+    category: FoodCategory.main,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 172421 (Lentils, mature seeds, cooked, boiled, without salt), per 100g. https://tools.myfooddata.com/nutrition-facts/172421/100g. Generic reference food, not a branded/labeled product. Without-salt USDA version; real cooking with salt or broth pushes sodium meaningfully higher than shown here.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'fava_beans_cooked',
+    nameEn: 'Fava Beans (Cooked)',
+    nameAr: 'فول مطبوخ',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 110,
+    protein: 7.6,
+    carbs: 19.7,
+    fat: 0.4,
+    category: FoodCategory.main,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 173753 (Broadbeans/fava beans, mature seeds, cooked, boiled, without salt), per 100g. https://tools.myfooddata.com/nutrition-facts/173753/100g. Generic reference food, not a branded/labeled product. Plain boiled fava beans (ful), without the oil, lemon, cumin, or other additions typical of a real ful medames preparation — a dedicated ful medames dish entry would need a separate recipe-style calculation on top of this base, not fabricated here.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'barley_cooked',
+    nameEn: 'Barley (Cooked, Pearled)',
+    nameAr: 'شعير مطبوخ',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 123,
+    protein: 2.3,
+    carbs: 28.2,
+    fat: 0.44,
+    category: FoodCategory.main,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 170285 (Barley, pearled, cooked), per 100g. https://tools.myfooddata.com/nutrition-facts/170285/100g. Generic reference food, not a branded/labeled product. This is pearled (hulled/polished) cooked-grain barley, the common cooking type — bazin traditionally uses barley FLOUR instead, a different ingredient this entry does not cover; a barley-flour entry would need a separate lookup.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'flour_all_purpose',
+    nameEn: 'All-Purpose Flour (White)',
+    nameAr: 'دقيق أبيض',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 364,
+    protein: 10.3,
+    carbs: 76.3,
+    fat: 0.98,
+    category: FoodCategory.main,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 168894 (Wheat flour, white, all-purpose, enriched, bleached), per 100g. https://tools.myfooddata.com/nutrition-facts/168894/100g. Generic reference food, not a branded/labeled product. Dry flour, not a prepared food — a base ingredient for bread, bazin, and other baked/dough dishes rather than something logged directly very often. High calorie density (364 kcal/100g) reflects it being essentially all dry starch.',
+    servingGrams: 100,
+  ),
 ];
 
 final Map<String, FoodItem> foodById = {for (final f in foodDatabase) f.id: f};
