@@ -2321,6 +2321,142 @@ const List<FoodItem> foodDatabase = [
         'USDA FoodData Central FDC ID 171018 (Margarine, regular, hard, soybean, hydrogenated), per 100g. https://tools.myfooddata.com/nutrition-facts/171018/100g. Generic reference food, not a branded/labeled product. This is a generic hydrogenated stick margarine, higher in sodium than soft tub margarines or "light" spreads, which vary quite a bit from this figure.',
     servingGrams: 100,
   ),
+
+  // ── Fish & Seafood (generic, unbranded reference foods; USDA FoodData
+  // Central via myfooddata.com) ── Same convention as the batches above:
+  // no packaging/barcode/brand, base serving 100g matching USDA's own
+  // basis exactly (no scaling math). category: FoodCategory.main — no
+  // dedicated fish/seafood bucket in the enum; same reasoning as Meat.
+  // Ids given the project's fish_ prefix for consistency with the other
+  // category prefixes (meat_/dairy_/fruit_/vegetable_/nut_/egg_); the
+  // source doc itself used inconsistent ids (fish_salmon vs bare
+  // 'shrimp'/'clams'/'oysters').
+  // verified: false on all entries, matching the source doc's own DRAFT
+  // status — no "all verified" override came with this batch, same as
+  // Eggs and Oils & Fats.
+  // Raw vs. cooked is MIXED and non-obvious: Cod, Grouper, Halibut, and
+  // Oysters are raw; Salmon, Shrimp, and Clams are cooked (the only clean
+  // verified matches the source doc found) — each name/sourceNote says
+  // which. Shrimp's sourceNote also flags unusually high sodium (947mg/
+  // 100g), likely from a moisture-retention additive per USDA's own note
+  // on that entry, not necessarily representative of untreated raw
+  // shrimp. Squid/calamari, fresh sardines/mackerel/tuna, and canned tuna
+  // were all searched for but NOT included — no clean unambiguous FDC
+  // match found for the fresh items, and canned tuna was judged out of
+  // scope for a fresh/frozen-only batch (flagged as a good candidate for
+  // its own reference file later).
+  FoodItem(
+    id: 'fish_salmon',
+    nameEn: 'Salmon (Atlantic, Wild, Cooked)',
+    nameAr: 'سلمون',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 182,
+    protein: 25.4,
+    carbs: 0,
+    fat: 8.1,
+    category: FoodCategory.main,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 171998 (Fish, salmon, Atlantic, wild, cooked, dry heat), per 100g. https://tools.myfooddata.com/nutrition-facts/171998/100g. Generic reference food, not a branded/labeled product. Cooked (dry heat/baked), not raw — raw salmon runs somewhat lower in calories and protein per 100g since cooking concentrates the fish by driving off water.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'fish_cod',
+    nameEn: 'Cod (Atlantic, Raw)',
+    nameAr: 'سمك القد',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 82,
+    protein: 17.8,
+    carbs: 0,
+    fat: 0.67,
+    category: FoodCategory.main,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 171955 (Fish, cod, Atlantic, raw), per 100g. https://tools.myfooddata.com/nutrition-facts/171955/100g. Generic reference food, not a branded/labeled product.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'fish_grouper',
+    nameEn: 'Grouper (Raw)',
+    nameAr: 'هامور',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 92,
+    protein: 19.4,
+    carbs: 0,
+    fat: 1,
+    category: FoodCategory.main,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 171962 (Fish, grouper, mixed species, raw), per 100g. https://tools.myfooddata.com/nutrition-facts/171962/100g. Generic reference food, not a branded/labeled product. USDA\'s "mixed species" generic grouper entry, not a specific species — close enough for general logging purposes. Included as a common Mediterranean/coastal catch.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'fish_halibut',
+    nameEn: 'Halibut (Raw)',
+    nameAr: 'هلبوت',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 186,
+    protein: 14.4,
+    carbs: 0,
+    fat: 13.8,
+    category: FoodCategory.main,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 171965 (Fish, halibut, Greenland, raw), per 100g. https://tools.myfooddata.com/nutrition-facts/171965/100g. Generic reference food, not a branded/labeled product. This is the Greenland halibut variety specifically, which runs fattier than Atlantic or Pacific halibut — a leaner halibut variety would need a separate lookup.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'fish_shrimp',
+    nameEn: 'Shrimp (Cooked)',
+    nameAr: 'جمبري',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 119,
+    protein: 22.8,
+    carbs: 1.5,
+    fat: 1.7,
+    category: FoodCategory.main,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 171971 (Crustaceans, shrimp, mixed species, cooked, moist heat), per 100g. https://tools.myfooddata.com/nutrition-facts/171971/100g. Generic reference food, not a branded/labeled product. Cooked, not raw. USDA notes this entry may contain additives to retain moisture, which likely explains the fairly high sodium (947mg/100g) — untreated frozen raw shrimp would run lower.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'fish_clams',
+    nameEn: 'Clams (Cooked)',
+    nameAr: 'محار (بلح البحر)',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 148,
+    protein: 25.6,
+    carbs: 5.1,
+    fat: 2,
+    category: FoodCategory.main,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 171975 (Mollusks, clam, mixed species, cooked, moist heat), per 100g. https://tools.myfooddata.com/nutrition-facts/171975/100g. Generic reference food, not a branded/labeled product. Cooked, not raw. Sodium here (1202mg/100g) is very high, one of the saltiest items across all the reference batches — worth double-checking against real labels.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'fish_oysters',
+    nameEn: 'Oysters (Raw)',
+    nameAr: 'محار',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 51,
+    protein: 5.7,
+    carbs: 2.7,
+    fat: 1.7,
+    category: FoodCategory.main,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 171978 (Mollusks, oyster, eastern, wild, raw), per 100g. https://tools.myfooddata.com/nutrition-facts/171978/100g. Generic reference food, not a branded/labeled product.',
+    servingGrams: 100,
+  ),
 ];
 
 final Map<String, FoodItem> foodById = {for (final f in foodDatabase) f.id: f};
