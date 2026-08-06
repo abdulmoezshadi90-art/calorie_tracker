@@ -2457,6 +2457,306 @@ const List<FoodItem> foodDatabase = [
         'USDA FoodData Central FDC ID 171978 (Mollusks, oyster, eastern, wild, raw), per 100g. https://tools.myfooddata.com/nutrition-facts/171978/100g. Generic reference food, not a branded/labeled product.',
     servingGrams: 100,
   ),
+
+  // ── Beverages (generic, unbranded reference foods; USDA FoodData
+  // Central via myfooddata.com) ── Same convention as the batches above:
+  // base serving 100ml matching USDA's own basis exactly (no scaling
+  // math), isLiquid: true throughout. category: FoodCategory.drink — the
+  // first reference batch, after Eggs→breakfast, that maps cleanly onto
+  // an existing enum value with no fallback needed.
+  // verified: false on all entries, matching the source doc's own DRAFT
+  // status — no "all verified" override came with this batch, same as
+  // Eggs/Oils & Fats/Fish & Seafood.
+  // Coffee: item 5 (Instant Coffee, Dry Powder) is 353 kcal/100g of
+  // UNDILUTED POWDER — a typical serving is 1-2g. Item 6 (Instant Coffee,
+  // Prepared) is the actual drink at 2 kcal/100g. Mixing these two up
+  // when wiring UI defaults would produce wildly wrong calorie counts.
+  // Diet Cola here is USDA's "reduced sugar" formulation (20 kcal/100g),
+  // NOT a true zero-calorie diet cola (Diet Coke/Coke Zero/Pepsi Max
+  // style) — would overstate calories if used for one of those.
+  // Fanta and Green Cola come from USDA's Branded Food database (built
+  // from real product labels, thinner nutrient panels than Standard
+  // Release); saturated fat/cholesterol are genuinely absent from those
+  // labels, not zero — the FoodItem model has no field for either so
+  // this just means those two figures were never captured, not lost.
+  // Sweetened tea and Shani are deliberately NOT included: sweetened tea
+  // has no reliable single USDA number since added-sugar amounts vary
+  // per household (better modeled in-app as this plain tea entry plus a
+  // configurable sugar amount); Shani has no USDA FoodData Central entry
+  // at all — the only figures found were unverified third-party
+  // estimates, which this project's never-fabricate rule excludes. If
+  // Shani is wanted, the reliable path is a real can/bottle label photo.
+  FoodItem(
+    id: 'juice_apple',
+    nameEn: 'Apple Juice',
+    nameAr: 'عصير تفاح',
+    servingEn: '100 ml',
+    servingAr: '100 مل',
+    kcal: 46,
+    protein: 0.1,
+    carbs: 11.3,
+    fat: 0.13,
+    category: FoodCategory.drink,
+    isLiquid: true,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 173933 (Apple juice, canned or bottled, unsweetened, without added ascorbic acid), per 100g. https://tools.myfooddata.com/nutrition-facts/173933/100g. Generic reference food, not a branded/labeled product.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'coffee_black',
+    nameEn: 'Coffee (Black, Brewed)',
+    nameAr: 'قهوة سادة',
+    servingEn: '100 ml',
+    servingAr: '100 مل',
+    kcal: 1,
+    protein: 0.12,
+    carbs: 0,
+    fat: 0.02,
+    category: FoodCategory.drink,
+    isLiquid: true,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 171890 (Beverages, coffee, brewed, prepared with tap water), per 100g. https://tools.myfooddata.com/nutrition-facts/171890/100g. Generic reference food, not a branded/labeled product. Plain black coffee, no milk or sugar added. Contains 40mg caffeine per 100g.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'coffee_decaf',
+    nameEn: 'Coffee (Decaf, Brewed)',
+    nameAr: 'قهوة منزوعة الكافيين',
+    servingEn: '100 ml',
+    servingAr: '100 مل',
+    kcal: 0,
+    protein: 0.1,
+    carbs: 0,
+    fat: 0,
+    category: FoodCategory.drink,
+    isLiquid: true,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 171889 (Beverages, coffee, brewed, prepared with tap water, decaffeinated), per 100g. https://tools.myfooddata.com/nutrition-facts/171889/100g. Generic reference food, not a branded/labeled product. Nutritionally near-identical to regular brewed coffee; the only meaningful difference is caffeine (1mg/100g here vs. 40mg/100g).',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'coffee_espresso',
+    nameEn: 'Espresso',
+    nameAr: 'إسبريسو',
+    servingEn: '100 ml',
+    servingAr: '100 مل',
+    kcal: 9,
+    protein: 0.12,
+    carbs: 1.7,
+    fat: 0.18,
+    category: FoodCategory.drink,
+    isLiquid: true,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 171891 (Beverages, coffee, brewed, espresso, restaurant-prepared), per 100g. https://tools.myfooddata.com/nutrition-facts/171891/100g. Generic reference food, not a branded/labeled product. Much more concentrated than drip coffee (212mg caffeine/100g), but a single shot is only about 30g, so an actual serving still has less caffeine than a full cup of brewed coffee.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'coffee_instant_powder',
+    nameEn: 'Instant Coffee (Dry Powder)',
+    nameAr: 'قهوة سريعة الذوبان (بودرة)',
+    servingEn: '100 g',
+    servingAr: '100 جم',
+    kcal: 353,
+    protein: 12.2,
+    carbs: 75.4,
+    fat: 0.5,
+    category: FoodCategory.drink,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 171893 (Beverages, coffee, instant, regular, powder), per 100g. https://tools.myfooddata.com/nutrition-facts/171893/100g. Generic reference food, not a branded/labeled product. IMPORTANT: this is the dry, undiluted powder/granules straight from the jar, not a prepared cup — a typical serving is about 1-2g per cup. Do not confuse with coffee_instant_prepared; if logging "a cup of instant coffee," that entry should be used instead, not this one.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'coffee_instant_prepared',
+    nameEn: 'Instant Coffee (Prepared)',
+    nameAr: 'قهوة سريعة الذوبان (محضرة)',
+    servingEn: '100 ml',
+    servingAr: '100 مل',
+    kcal: 2,
+    protein: 0.1,
+    carbs: 0.34,
+    fat: 0,
+    category: FoodCategory.drink,
+    isLiquid: true,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 174130 (Beverages, coffee, instant, regular, prepared with water), per 100g. https://tools.myfooddata.com/nutrition-facts/174130/100g. Generic reference food, not a branded/labeled product. This is the actual prepared drink (powder dissolved in water) — use this for a typical cup of instant coffee, not coffee_instant_powder. Contains 26mg caffeine per 100g.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'coffee_instant_decaf_prepared',
+    nameEn: 'Instant Coffee, Decaf (Prepared)',
+    nameAr: 'قهوة سريعة الذوبان منزوعة الكافيين (محضرة)',
+    servingEn: '100 ml',
+    servingAr: '100 مل',
+    kcal: 2,
+    protein: 0.12,
+    carbs: 0.43,
+    fat: 0,
+    category: FoodCategory.drink,
+    isLiquid: true,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 171894 (Beverages, coffee, instant, decaffeinated, prepared with water), per 100g. https://tools.myfooddata.com/nutrition-facts/171894/100g. Generic reference food, not a branded/labeled product.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'tea_black',
+    nameEn: 'Black Tea (Brewed, Unsweetened)',
+    nameAr: 'شاي أسود',
+    servingEn: '100 ml',
+    servingAr: '100 مل',
+    kcal: 1,
+    protein: 0,
+    carbs: 0.3,
+    fat: 0,
+    category: FoodCategory.drink,
+    isLiquid: true,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 173227 (Beverages, tea, black, brewed, prepared with tap water), per 100g. https://tools.myfooddata.com/nutrition-facts/173227/100g. Generic reference food, not a branded/labeled product. Plain black tea, no sugar or milk — the closest USDA match to Libyan-style tea (شاي) before sugar is added. Libyan tea is typically taken quite sweet with amounts that vary a lot by household; deliberately left plain rather than guessing a sugar amount. A sweetened-tea preset is better modeled as this entry plus a separate configurable sugar amount.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'juice_orange',
+    nameEn: 'Orange Juice',
+    nameAr: 'عصير برتقال',
+    servingEn: '100 ml',
+    servingAr: '100 مل',
+    kcal: 45,
+    protein: 0.7,
+    carbs: 10.4,
+    fat: 0.2,
+    category: FoodCategory.drink,
+    isLiquid: true,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 169098 (Orange juice, raw), per 100g. https://tools.myfooddata.com/nutrition-facts/169098/100g. Generic reference food, not a branded/labeled product. Fresh-squeezed/raw juice — bottled, canned, or from-concentrate versions run a bit higher in calories (roughly 117-122 kcal/100g on USDA\'s entries for those), often being slightly sweetened or more concentrated.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'cola_regular',
+    nameEn: 'Cola (Regular)',
+    nameAr: 'مشروب غازي (كولا عادي)',
+    servingEn: '100 ml',
+    servingAr: '100 مل',
+    kcal: 42,
+    protein: 0,
+    carbs: 10.4,
+    fat: 0.25,
+    category: FoodCategory.drink,
+    isLiquid: true,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 174852 (Beverages, carbonated, cola, regular), per 100g. https://tools.myfooddata.com/nutrition-facts/174852/100g. Generic reference food, not a branded/labeled product. Generic regular (non-diet, contains caffeine) cola — specific brands vary slightly. Contains 9mg caffeine per 100g.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'cola_diet',
+    nameEn: 'Cola (Diet)',
+    nameAr: 'مشروب غازي (كولا دايت)',
+    servingEn: '100 ml',
+    servingAr: '100 مل',
+    kcal: 20,
+    protein: 0,
+    carbs: 5.2,
+    fat: 0,
+    category: FoodCategory.drink,
+    isLiquid: true,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 174853 (Beverages, carbonated, reduced sugar, cola, contains caffeine and sweeteners), per 100g. https://tools.myfooddata.com/nutrition-facts/174853/100g. Generic reference food, not a branded/labeled product. USDA\'s entry is labeled "reduced sugar," not zero-sugar — notably higher than most diet colas on the shelf (typically closer to 0-1 kcal, sweetened entirely with non-nutritive sweeteners). Would overstate calories if used to represent a true zero-calorie diet cola (Diet Coke/Coke Zero/Pepsi Max style). Contains 9mg caffeine per 100g.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'cola_caffeine_free',
+    nameEn: 'Cola (Caffeine-Free)',
+    nameAr: 'مشروب غازي (كولا خالي من الكافيين)',
+    servingEn: '100 ml',
+    servingAr: '100 مل',
+    kcal: 41,
+    protein: 0,
+    carbs: 10.6,
+    fat: 0,
+    category: FoodCategory.drink,
+    isLiquid: true,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 174851 (Beverages, carbonated, cola, without caffeine), per 100g. https://tools.myfooddata.com/nutrition-facts/174851/100g. Generic reference food, not a branded/labeled product. Regular (full-sugar) cola with caffeine removed, not diet — calorie/sugar content is essentially the same as cola_regular. A "diet + caffeine-free" combined entry was not found as a distinct clean USDA match.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'soda_fanta_orange',
+    nameEn: 'Fanta (Orange)',
+    nameAr: 'فانتا برتقال',
+    servingEn: '100 ml',
+    servingAr: '100 مل',
+    kcal: 47,
+    protein: 0,
+    carbs: 12.5,
+    fat: 0,
+    category: FoodCategory.drink,
+    isLiquid: true,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 1627860 (Fanta, soda, orange, orange — USDA Branded Food, built from the actual product label), per 100g. https://tools.myfooddata.com/nutrition-facts/1627860/100g. Branded-food labels often omit fields not required on US nutrition labels — saturated fat and cholesterol are genuinely not listed on this label, not assumed zero. No caffeine (Fanta doesn\'t contain caffeine).',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'soda_sprite',
+    nameEn: 'Sprite',
+    nameAr: 'سبرايت',
+    servingEn: '100 ml',
+    servingAr: '100 مل',
+    kcal: 40,
+    protein: 0.05,
+    carbs: 10.1,
+    fat: 0.02,
+    category: FoodCategory.drink,
+    isLiquid: true,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 173206 (Beverages, carbonated, SPRITE, lemon-lime, without caffeine — USDA Standard Release), per 100g. https://tools.myfooddata.com/nutrition-facts/173206/100g. Fuller nutrient panel than the Branded Food entries (like Fanta above). No caffeine.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'soda_green_cola',
+    nameEn: 'Green Cola',
+    nameAr: 'جرين كولا',
+    servingEn: '100 ml',
+    servingAr: '100 مل',
+    kcal: 0,
+    protein: 0,
+    carbs: 0.28,
+    fat: 0,
+    category: FoodCategory.drink,
+    isLiquid: true,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 2510210 (Green Cola, Green — USDA Branded Food), per 100g. https://tools.myfooddata.com/nutrition-facts/2510210/100g. Stevia-sweetened, reduced-calorie cola brand (carbonated water, caramel color, tartaric/malic acid, stevia leaf extract, natural flavorings, caffeine, per the product label) — genuinely near-zero calories on the label, not a data gap like the diet cola entry above. Saturated fat, cholesterol, and sugar breakdown are not listed on the label, shown here as omitted rather than assumed zero.',
+    servingGrams: 100,
+  ),
+  FoodItem(
+    id: 'water',
+    nameEn: 'Water',
+    nameAr: 'ماء',
+    servingEn: '100 ml',
+    servingAr: '100 مل',
+    kcal: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    category: FoodCategory.drink,
+    isLiquid: true,
+    verified: false,
+    sourceNote:
+        'USDA FoodData Central FDC ID 173647 (Beverages, water, tap, drinking), per 100g. https://tools.myfooddata.com/nutrition-facts/173647/100g. Generic reference food, not a branded/labeled product. Included mainly for completeness/hydration-tracking; bottled water runs essentially identical.',
+    servingGrams: 100,
+  ),
 ];
 
 final Map<String, FoodItem> foodById = {for (final f in foodDatabase) f.id: f};
