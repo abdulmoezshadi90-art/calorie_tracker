@@ -119,11 +119,7 @@ class _StripedBarPainter extends CustomPainter {
       x < overRect.right + size.height;
       x += gap
     ) {
-      canvas.drawLine(
-        Offset(x, size.height),
-        Offset(x + slope, 0),
-        stripe,
-      );
+      canvas.drawLine(Offset(x, size.height), Offset(x + slope, 0), stripe);
     }
     canvas.restore();
   }
@@ -152,7 +148,10 @@ class AnimatedStripedBar extends ImplicitlyAnimatedWidget {
     this.color,
     this.gradient,
   }) : assert(color != null || gradient != null),
-       super(duration: const Duration(milliseconds: 450), curve: Curves.easeOutCubic);
+       super(
+         duration: const Duration(milliseconds: 450),
+         curve: Curves.easeOutCubic,
+       );
 
   final double value;
   final double goal;
@@ -172,22 +171,29 @@ class _AnimatedStripedBarState
 
   @override
   void forEachTween(TweenVisitor<dynamic> visitor) {
-    _value = visitor(
-      _value,
-      widget.value,
-      (v) => Tween<double>(begin: v as double),
-    ) as Tween<double>;
+    _value =
+        visitor(_value, widget.value, (v) => Tween<double>(begin: v as double))
+            as Tween<double>;
   }
 
   @override
   Widget build(BuildContext context) {
-    return StripedBar(
-      value: _value!.evaluate(animation),
-      goal: widget.goal,
-      height: widget.height,
-      track: widget.track,
-      color: widget.color,
-      gradient: widget.gradient,
+    // AnimatedBuilder is required, not decorative: nothing else here
+    // listens to `animation`, so without it build() only evaluates the
+    // tween once per external rebuild (e.g. once at the start of a day
+    // switch) and then sits frozen at that single frame for the rest of
+    // the 450ms — looking like a stale jump-cut instead of a glide, and
+    // only "catching up" whenever some unrelated rebuild happens to fire.
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, child) => StripedBar(
+        value: _value!.evaluate(animation),
+        goal: widget.goal,
+        height: widget.height,
+        track: widget.track,
+        color: widget.color,
+        gradient: widget.gradient,
+      ),
     );
   }
 }
