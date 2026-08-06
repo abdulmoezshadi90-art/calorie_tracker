@@ -662,17 +662,25 @@ class _AnimatedDonutState
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: DonutChartPainter(
-        carbPct: _carb!.evaluate(animation),
-        fatPct: _fat!.evaluate(animation),
-        proteinPct: _protein!.evaluate(animation),
-        carbColor: widget.colors.$1,
-        fatColor: widget.colors.$2,
-        proteinColor: widget.colors.$3,
-        trackColor: const Color(0x00000000),
-      ),
+    // AnimatedBuilder is required, not decorative: nothing else here
+    // listens to `animation`, so without it build() only evaluates the
+    // tweens once per external rebuild and then sits frozen at that single
+    // frame instead of gliding — same root cause as AnimatedStripedBar.
+    return AnimatedBuilder(
+      animation: animation,
       child: widget.child,
+      builder: (context, child) => CustomPaint(
+        painter: DonutChartPainter(
+          carbPct: _carb!.evaluate(animation),
+          fatPct: _fat!.evaluate(animation),
+          proteinPct: _protein!.evaluate(animation),
+          carbColor: widget.colors.$1,
+          fatColor: widget.colors.$2,
+          proteinColor: widget.colors.$3,
+          trackColor: const Color(0x00000000),
+        ),
+        child: child,
+      ),
     );
   }
 }
