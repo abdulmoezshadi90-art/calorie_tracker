@@ -268,8 +268,11 @@ class _StreakChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.local_fire_department_outlined,
-                  size: 15, color: c.gold),
+              Icon(
+                Icons.local_fire_department_outlined,
+                size: 15,
+                color: c.gold,
+              ),
               const SizedBox(width: 3),
               Text(
                 fmtInt(streak),
@@ -303,19 +306,19 @@ class _TodayPill extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
           child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              state.l.today,
-              style: TextStyle(
-                color: c.onHeader,
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                state.l.today,
+                style: TextStyle(
+                  color: c.onHeader,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-            const SizedBox(width: 4),
-            Icon(Icons.keyboard_arrow_down, color: c.onHeader, size: 18),
-          ],
+              const SizedBox(width: 4),
+              Icon(Icons.keyboard_arrow_down, color: c.onHeader, size: 18),
+            ],
           ),
         ),
       ),
@@ -373,55 +376,57 @@ class _DayChip extends StatelessWidget {
         selected: isSelected,
         label: state.l.dateLine(day),
         child: Container(
-        margin: EdgeInsets.symmetric(
-          horizontal: 3,
-          vertical: isSelected ? 0 : 6,
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? c.daySelectedBg : c.dayIdleBg,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: c.daySelectedBg.withValues(alpha: 0.5),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
+          margin: EdgeInsets.symmetric(
+            horizontal: 3,
+            vertical: isSelected ? 0 : 6,
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? c.daySelectedBg : c.dayIdleBg,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: c.daySelectedBg.withValues(alpha: 0.5),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Column(
+            children: [
+              // Scale down instead of wrapping ("Mo n") at large system
+              // font sizes — the chips are too narrow to wrap gracefully.
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  state.l.dayShort(day),
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: isSelected
+                        ? c.daySelectedText
+                        : c.dayIdleText.withValues(
+                            alpha: isFuture ? 0.5 : 0.85,
+                          ),
                   ),
-                ]
-              : null,
-        ),
-        child: Column(
-          children: [
-            // Scale down instead of wrapping ("Mo n") at large system
-            // font sizes — the chips are too narrow to wrap gracefully.
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                state.l.dayShort(day),
-                maxLines: 1,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: isSelected
-                      ? c.daySelectedText
-                      : c.dayIdleText.withValues(alpha: isFuture ? 0.5 : 0.85),
                 ),
               ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '${day.day}',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: isSelected
-                    ? c.daySelectedText
-                    : c.onHeader.withValues(alpha: isFuture ? 0.5 : 1),
+              const SizedBox(height: 6),
+              Text(
+                '${day.day}',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: isSelected
+                      ? c.daySelectedText
+                      : c.onHeader.withValues(alpha: isFuture ? 0.5 : 1),
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
         ),
       ),
     );
@@ -597,7 +602,14 @@ class _MacroCard extends StatelessWidget {
           ),
           const SizedBox(width: 14),
           Expanded(
-            child: _macroCol(c, l, l.fat, totals.fat, goals.fat.toDouble(), c.fat),
+            child: _macroCol(
+              c,
+              l,
+              l.fat,
+              totals.fat,
+              goals.fat.toDouble(),
+              c.fat,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -827,6 +839,7 @@ class _MealRow extends StatelessWidget {
               _RoundBtn(bg: c.accent, icon: Icons.check, iconColor: c.onAccent)
             else
               GestureDetector(
+                key: ValueKey('meal-add-${meal.name}'),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => SearchScreen(meal: meal)),
                 ),
@@ -843,23 +856,31 @@ class _MealRow extends StatelessWidget {
   }
 }
 
+/// Every "add to today" affordance on this screen shares this shape — a
+/// filled circle with a solid glyph — so the eye learns it once. Size and
+/// color vary with emphasis (44dp muted-idle per meal row vs. 30dp accent
+/// for the two single-CTA spots), the shape never does.
 class _RoundBtn extends StatelessWidget {
   const _RoundBtn({
     required this.bg,
     required this.icon,
     required this.iconColor,
+    this.size = 44,
+    this.iconSize = 22,
   });
   final Color bg;
   final IconData icon;
   final Color iconColor;
+  final double size;
+  final double iconSize;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 44,
-      height: 44,
+      width: size,
+      height: size,
       decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-      child: Icon(icon, color: iconColor, size: 22),
+      child: Icon(icon, color: iconColor, size: iconSize),
     );
   }
 }
@@ -912,7 +933,13 @@ class _EmptyTodayBanner extends StatelessWidget {
                     ],
                   ),
                 ),
-                Icon(Icons.add_circle_outline, size: 20, color: c.accent),
+                _RoundBtn(
+                  bg: c.accent,
+                  icon: Icons.add,
+                  iconColor: c.onAccent,
+                  size: 30,
+                  iconSize: 18,
+                ),
               ],
             ),
           ),
@@ -941,14 +968,12 @@ class _AddMealButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  color: c.accent,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.add, color: c.onAccent, size: 18),
+              _RoundBtn(
+                bg: c.accent,
+                icon: Icons.add,
+                iconColor: c.onAccent,
+                size: 30,
+                iconSize: 18,
               ),
               const SizedBox(width: 10),
               Text(
@@ -970,61 +995,61 @@ class _AddMealButton extends StatelessWidget {
 /// Bottom sheet asking which meal to add to; shared by the add-meal button
 /// and the empty-today banner.
 void showMealChooser(BuildContext context, AppState state) {
-    final c = AppColors.of(context);
-    final l = state.l;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: c.card,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-              child: Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: Text(
-                  l.chooseMeal,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: c.ink,
-                  ),
+  final c = AppColors.of(context);
+  final l = state.l;
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: c.card,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
+    builder: (sheetContext) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(
+                l.chooseMeal,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: c.ink,
                 ),
               ),
             ),
-            for (final m in MealType.values)
-              ListTile(
-                leading: Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: c.mealTint[m],
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: MealIcon(m, color: c.mealIconColor, size: 20),
-                  ),
+          ),
+          for (final m in MealType.values)
+            ListTile(
+              leading: Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: c.mealTint[m],
+                  shape: BoxShape.circle,
                 ),
-                title: Text(
-                  l.mealName(m),
-                  style: TextStyle(fontWeight: FontWeight.w600, color: c.ink),
+                child: Center(
+                  child: MealIcon(m, color: c.mealIconColor, size: 20),
                 ),
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => SearchScreen(meal: m)),
-                  );
-                },
               ),
-            const SizedBox(height: 8),
-          ],
-        ),
+              title: Text(
+                l.mealName(m),
+                style: TextStyle(fontWeight: FontWeight.w600, color: c.ink),
+              ),
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => SearchScreen(meal: m)),
+                );
+              },
+            ),
+          const SizedBox(height: 8),
+        ],
       ),
-    );
+    ),
+  );
 }
 
 // ───────────────────────── Shared building blocks ─────────────────────────

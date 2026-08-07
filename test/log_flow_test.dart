@@ -31,12 +31,14 @@ void main() {
       },
     );
 
-    // Open search for Snack via its + button (4th/last meal row; index 3 —
-    // the very last Icons.add belongs to the "Add meal" button). The row sits
-    // below the fold, so scroll it into view first.
-    await tester.ensureVisible(find.byIcon(Icons.add).at(3));
+    // Open search for Snack via its + button. Keyed rather than found by
+    // icon+index: several "add" affordances on this screen intentionally
+    // share the same Icons.add glyph now (layout consistency pass), so
+    // position alone no longer identifies the Snack row's button.
+    final snackAddButton = find.byKey(const ValueKey('meal-add-snack'));
+    await tester.ensureVisible(snackAddButton);
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.add).at(3));
+    await tester.tap(snackAddButton);
     await tester.pumpAndSettle();
 
     // Search for the sample snacks.
@@ -96,17 +98,20 @@ void main() {
     expect(reloaded.totalsFor(state.selectedDate).kcal, 540);
   });
 
-  test('corrupted storage falls back to defaults instead of crashing', () async {
-    SharedPreferences.setMockInitialValues({
-      'onboarding_done': true,
-      'goals': '{definitely not json',
-      'logs_v1': '###garbage###',
-    });
-    final state = AppState();
-    await state.load(); // must not throw
-    expect(state.goals.kcal, Goals.defaults.kcal);
-    expect(state.loggedDates(), isEmpty);
-  });
+  test(
+    'corrupted storage falls back to defaults instead of crashing',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'onboarding_done': true,
+        'goals': '{definitely not json',
+        'logs_v1': '###garbage###',
+      });
+      final state = AppState();
+      await state.load(); // must not throw
+      expect(state.goals.kcal, Goals.defaults.kcal);
+      expect(state.loggedDates(), isEmpty);
+    },
+  );
 
   test('goals reload from storage across app restarts', () async {
     SharedPreferences.setMockInitialValues({'onboarding_done': true});
