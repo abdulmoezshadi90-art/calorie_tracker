@@ -182,15 +182,19 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
               ),
             ],
             const SizedBox(height: 20),
-            _MacroChipsRow(
+            _NutritionDetailsRow(
               carbs: carbs,
               fat: fat,
               protein: protein,
-              pct: pct,
-              zeroCal: kcal <= 0,
+              onTap: () => _showNutritionDetails(
+                context,
+                kcal: kcal,
+                carbs: carbs,
+                fat: fat,
+                protein: protein,
+                pct: pct,
+              ),
             ),
-            const SizedBox(height: 20),
-            _DonutCard(kcal: kcal, pct: pct),
             const SizedBox(height: 90),
           ],
         ),
@@ -383,6 +387,65 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
       ],
     );
   }
+
+  /// Macro grams and the donut chart are supporting detail, not needed to
+  /// complete the primary task (pick a quantity, log it) — hidden behind
+  /// this sheet instead of always-visible, so a plain "log one of these"
+  /// isn't competing with five simultaneous decisions on-screen (distill
+  /// pass). Reuses the app's established disclosure pattern (bottom sheet,
+  /// same as the unit picker) rather than introducing a new one.
+  void _showNutritionDetails(
+    BuildContext context, {
+    required double kcal,
+    required double carbs,
+    required double fat,
+    required double protein,
+    required ({int carb, int fat, int protein}) pct,
+  }) {
+    final c = AppColors.of(context);
+    final state = AppScope.of(context);
+    final l = state.l;
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: c.card,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(
+                  l.nutritionDetails,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: c.ink,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              _MacroChipsRow(
+                carbs: carbs,
+                fat: fat,
+                protein: protein,
+                pct: pct,
+                zeroCal: kcal <= 0,
+              ),
+              const SizedBox(height: 20),
+              _DonutCard(kcal: kcal, pct: pct),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Serving row: shows the selected unit and opens the picker sheet on tap.
@@ -426,6 +489,79 @@ class _ServingRow extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         label,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: c.ink,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.keyboard_arrow_down, color: c.muted),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Collapsed entry point for the macro/donut sheet — a one-line P/F/C
+/// preview instead of the full breakdown, so the primary screen only
+/// carries what's needed to pick a quantity and log it (distill pass).
+class _NutritionDetailsRow extends StatelessWidget {
+  const _NutritionDetailsRow({
+    required this.carbs,
+    required this.fat,
+    required this.protein,
+    required this.onTap,
+  });
+  final double carbs;
+  final double fat;
+  final double protein;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final l = AppScope.of(context).l;
+    return Container(
+      decoration: BoxDecoration(
+        color: c.card,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: c.cardShadow,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l.nutritionDetails,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: c.muted,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${fmtGrams(protein)}${l.grams} ${l.protein} · '
+                        '${fmtGrams(fat)}${l.grams} ${l.fat} · '
+                        '${fmtGrams(carbs)}${l.grams} ${l.carb}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
@@ -579,28 +715,43 @@ class _DonutCard extends StatelessWidget {
         boxShadow: c.cardShadow,
       ),
       child: Center(
-        child: SizedBox(
-          width: 160,
-          height: 160,
-          child: _AnimatedDonut(
-            pct: pct,
-            colors: (c.carb, c.fat, c.protein),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  FittedBox(
-                    child: Text(
-                      fmtInt(kcal),
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w800,
-                        color: c.inkStrong,
+        // ExcludeSemantics: the label below already restates the center
+        // kcal text, so a screen reader gets one clean announcement
+        // instead of the number twice.
+        child: Semantics(
+          label:
+              '${fmtInt(kcal)} ${l.kcal} — '
+              '${l.carb} ${fmtPercent(pct.carb)}, '
+              '${l.fat} ${fmtPercent(pct.fat)}, '
+              '${l.protein} ${fmtPercent(pct.protein)}',
+          child: ExcludeSemantics(
+            child: SizedBox(
+              width: 160,
+              height: 160,
+              child: _AnimatedDonut(
+                pct: pct,
+                colors: (c.carb, c.fat, c.protein),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      FittedBox(
+                        child: Text(
+                          fmtInt(kcal),
+                          style: TextStyle(
+                            fontSize: 30,
+                            fontWeight: FontWeight.w800,
+                            color: c.inkStrong,
+                          ),
+                        ),
                       ),
-                    ),
+                      Text(
+                        l.kcal,
+                        style: TextStyle(fontSize: 12, color: c.muted),
+                      ),
+                    ],
                   ),
-                  Text(l.kcal, style: TextStyle(fontSize: 12, color: c.muted)),
-                ],
+                ),
               ),
             ),
           ),

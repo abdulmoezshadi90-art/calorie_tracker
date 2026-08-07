@@ -114,6 +114,8 @@ class L10n {
   String get whole => isAr ? 'عدد كامل' : 'Whole';
   String get invalidQuantity =>
       isAr ? 'أدخل كمية بين 0.1 و 99' : 'Enter a quantity between 0.1 and 99';
+  String get nutritionDetails =>
+      isAr ? 'التفاصيل الغذائية' : 'Nutrition details';
 
   /// A [ServingUnit]'s display label — generic weight/volume units (never
   /// per-food data) are recognized by id and localized here; food-specific

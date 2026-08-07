@@ -44,7 +44,8 @@ void main() {
     });
 
     test('liquid density converts ml to grams for the macro math', () {
-      final food = foodById['milk_hawaa_full_cream']!; // 250 ml -> 250 g, density 1.0
+      final food =
+          foodById['milk_hawaa_full_cream']!; // 250 ml -> 250 g, density 1.0
       final literUnit = food.genericUnits.firstWhere(
         (u) => u.id == 'generic_liter',
       );
@@ -103,6 +104,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Sample Main Dish A'));
       await tester.pumpAndSettle();
+      // Macro grams live behind the nutrition-details sheet now (distill
+      // pass) instead of always on-screen.
+      await tester.tap(find.text('Nutrition details'));
+      await tester.pumpAndSettle();
     }
 
     testWidgets('each macro renders with its named-constant color', (
@@ -142,7 +147,8 @@ void main() {
     test('a legacy day log decodes through AppState.load', () async {
       SharedPreferences.setMockInitialValues({
         'onboarding_done': true,
-        'logs_v1': '{"2026-07-15":[{"id":"old_1","foodId":"sample_main_1",'
+        'logs_v1':
+            '{"2026-07-15":[{"id":"old_1","foodId":"sample_main_1",'
             '"servings":1.0,"meal":"lunch"}]}',
       });
       final state = AppState(clock: () => DateTime(2026, 7, 15, 9, 30));

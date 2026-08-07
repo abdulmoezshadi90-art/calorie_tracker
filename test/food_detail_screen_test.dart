@@ -43,15 +43,12 @@ Future<AppState> _openSampleMainDetail(
 
 void main() {
   for (final size in [const Size(375, 812), const Size(320, 640)]) {
-    testWidgets(
-      'food detail page renders without overflow at '
-      '${size.width.toInt()}x${size.height.toInt()}',
-      (tester) async {
-        await _openSampleMainDetail(tester, size: size);
-        expect(tester.takeException(), isNull);
-        expect(find.textContaining('Add ·'), findsOneWidget);
-      },
-    );
+    testWidgets('food detail page renders without overflow at '
+        '${size.width.toInt()}x${size.height.toInt()}', (tester) async {
+      await _openSampleMainDetail(tester, size: size);
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('Add ·'), findsOneWidget);
+    });
   }
 
   testWidgets('food detail page is RTL with Western digits', (tester) async {
@@ -62,6 +59,14 @@ void main() {
     expect(Directionality.of(context), TextDirection.rtl);
 
     // No Eastern-Arabic-Indic digit ever appears; numbers render Western.
+    for (final digit in '٠١٢٣٤٥٦٧٨٩'.split('')) {
+      expect(find.textContaining(digit), findsNothing, reason: digit);
+    }
+    expect(find.textContaining('540'), findsWidgets); // Add button total
+
+    // Nutrition-details sheet (donut, macro chips) also stays Western-digit.
+    await tester.tap(find.text('التفاصيل الغذائية'));
+    await tester.pumpAndSettle();
     for (final digit in '٠١٢٣٤٥٦٧٨٩'.split('')) {
       expect(find.textContaining(digit), findsNothing, reason: digit);
     }
@@ -133,6 +138,9 @@ void main() {
 
       // 100/350 of the base serving.
       expect(find.textContaining('Add · 154 kcal'), findsOneWidget);
+
+      await tester.tap(find.text('Nutrition details'));
+      await tester.pumpAndSettle();
       expect(find.text('21g'), findsOneWidget); // carbs: 75 × 100/350 ≈ 21
     },
   );
@@ -168,18 +176,17 @@ void main() {
   group('no overflow with the unit picker sheet open', () {
     for (final locale in ['en', 'ar']) {
       for (final size in [const Size(375, 812), const Size(320, 640)]) {
-        testWidgets(
-          '$locale at ${size.width.toInt()}x${size.height.toInt()}',
-          (tester) async {
-            await _openSampleMainDetail(tester, locale: locale, size: size);
-            final servingLabel = locale == 'ar'
-                ? 'حصة (350 جم)'
-                : '1 serving (350 g)';
-            await tester.tap(find.text(servingLabel));
-            await tester.pumpAndSettle();
-            expect(tester.takeException(), isNull);
-          },
-        );
+        testWidgets('$locale at ${size.width.toInt()}x${size.height.toInt()}', (
+          tester,
+        ) async {
+          await _openSampleMainDetail(tester, locale: locale, size: size);
+          final servingLabel = locale == 'ar'
+              ? 'حصة (350 جم)'
+              : '1 serving (350 g)';
+          await tester.tap(find.text(servingLabel));
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+        });
       }
     }
   });
