@@ -19,6 +19,28 @@ class FoodsScreen extends StatelessWidget {
     final c = AppColors.of(context);
     final l = state.l;
 
+    // Category headers/spacers are pre-built (cheap, ~9 of them); food rows
+    // stay as data and are built lazily in itemBuilder via ListView.builder,
+    // matching the pattern every other list screen in the app already uses.
+    final rows = <Object>[
+      for (final category in FoodCategory.values) ...[
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
+          child: Text(
+            l.category(category),
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: c.inkStrong,
+            ),
+          ),
+        ),
+        for (final food in foodDatabase)
+          if (food.category == category) food,
+        const SizedBox(height: 8),
+      ],
+    ];
+
     return Scaffold(
       backgroundColor: c.pageBg,
       appBar: AppBar(
@@ -26,26 +48,13 @@ class FoodsScreen extends StatelessWidget {
         foregroundColor: c.onHeader,
         title: Text(l.foods),
       ),
-      body: ListView(
+      body: ListView.builder(
         padding: const EdgeInsets.all(16),
-        children: [
-          for (final category in FoodCategory.values) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
-              child: Text(
-                l.category(category),
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: c.inkStrong,
-                ),
-              ),
-            ),
-            for (final food in foodDatabase)
-              if (food.category == category) _FoodRow(food: food),
-            const SizedBox(height: 8),
-          ],
-        ],
+        itemCount: rows.length,
+        itemBuilder: (context, index) {
+          final row = rows[index];
+          return row is FoodItem ? _FoodRow(food: row) : row as Widget;
+        },
       ),
     );
   }
