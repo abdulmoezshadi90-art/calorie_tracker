@@ -102,6 +102,9 @@ class L10n {
 
   String get foods => isAr ? 'الأطعمة' : 'Foods';
   String get approxMarker => isAr ? 'تقريبي' : 'approx.';
+  String get approxMarkerExplanation => isAr
+      ? 'لم يتم التحقق من هذه القيمة من ملصق منتج بعد — اعتبرها تقديرية'
+      : 'This value hasn\'t been checked against a product label yet — treat it as an estimate';
 
   // Food detail page.
   String get unit => isAr ? 'الوحدة' : 'Unit';

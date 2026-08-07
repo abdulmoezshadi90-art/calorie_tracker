@@ -92,23 +92,35 @@ class _FoodRow extends StatelessWidget {
                 ),
               ),
               // Approximate marker until values are verified (decision 8).
+              // Tappable: the marker alone doesn't explain itself, so a tap
+              // surfaces what "approx." actually means (see clarify pass).
               if (!food.verified) ...[
                 const SizedBox(width: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
+                Semantics(
+                  button: true,
+                  label: l.approxMarkerExplanation,
+                  child: Material(
                     color: c.chipBg,
                     borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    l.approxMarker,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: c.chipText,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(6),
+                      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(l.approxMarkerExplanation)),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        child: Text(
+                          l.approxMarker,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: c.chipText,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -193,9 +205,7 @@ class _FoodRow extends StatelessWidget {
               onPressed: () async {
                 final match = state
                     .entriesFor(date, meal: meal)
-                    .lastWhere(
-                      (e) => e.foodId == food.id && e.quantity == 1.0,
-                    );
+                    .lastWhere((e) => e.foodId == food.id && e.quantity == 1.0);
                 await state.removeEntry(date, match.id);
               },
             ),

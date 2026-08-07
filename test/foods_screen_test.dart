@@ -62,10 +62,27 @@ void main() {
     // Sanity: the placeholder foods are indeed unverified (verified data,
     // e.g. the milk batch, is expected alongside them from Phase 2 on).
     expect(
-      foodDatabase.where((f) => f.id.startsWith('sample_')).every(
-        (f) => !f.verified,
-      ),
+      foodDatabase
+          .where((f) => f.id.startsWith('sample_'))
+          .every((f) => !f.verified),
       isTrue,
     );
+  });
+
+  testWidgets('tapping the approximate marker explains it, not the food row', (
+    tester,
+  ) async {
+    await _openFoods(tester);
+    final l = L10n('en');
+
+    // Arrange: the marker sits inside a tappable food row, so this also
+    // guards against the tap bubbling up and opening the food detail sheet.
+    // Act
+    await tester.tap(find.text('approx.').first);
+    await tester.pump();
+
+    // Assert
+    expect(find.text(l.approxMarkerExplanation), findsOneWidget);
+    expect(find.byType(BottomSheet), findsNothing);
   });
 }
