@@ -5,6 +5,7 @@ import 'app_state.dart';
 import 'food_db.dart';
 import 'food_detail_screen.dart';
 import 'models.dart';
+import 'round_icon_button.dart';
 import 'theme.dart';
 
 /// Read-only browser over the food database, grouped by category. Tapping
@@ -154,18 +155,16 @@ class _FoodRow extends StatelessWidget {
                   ),
                 ),
               ),
-              // Exact 44×44 footprint (IconButton's own padding would
-              // overflow a SizedBox wrapper) — build the circle directly.
               Material(
                 color: Colors.transparent,
                 shape: const CircleBorder(),
                 child: InkWell(
                   customBorder: const CircleBorder(),
                   onTap: () => _pickMealThenQuickAdd(context, state),
-                  child: SizedBox(
-                    width: 44,
-                    height: 44,
-                    child: Icon(Icons.add_circle_outline, color: c.accent),
+                  child: RoundIconButton(
+                    bg: c.plusIdleBg,
+                    icon: Icons.add,
+                    iconColor: c.plusIdleIcon,
                   ),
                 ),
               ),

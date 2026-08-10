@@ -63,14 +63,7 @@ void main() {
       expect(find.textContaining(digit), findsNothing, reason: digit);
     }
     expect(find.textContaining('540'), findsWidgets); // Add button total
-
-    // Nutrition-details sheet (donut, macro chips) also stays Western-digit.
-    await tester.tap(find.text('التفاصيل الغذائية'));
-    await tester.pumpAndSettle();
-    for (final digit in '٠١٢٣٤٥٦٧٨٩'.split('')) {
-      expect(find.textContaining(digit), findsNothing, reason: digit);
-    }
-    expect(find.text('540'), findsOneWidget); // donut-center kcal
+    expect(find.text('540'), findsOneWidget); // donut-center kcal, always on
   });
 
   testWidgets(
@@ -138,9 +131,6 @@ void main() {
 
       // 100/350 of the base serving.
       expect(find.textContaining('Add · 154 kcal'), findsOneWidget);
-
-      await tester.tap(find.text('Nutrition details'));
-      await tester.pumpAndSettle();
       expect(find.text('21g'), findsOneWidget); // carbs: 75 × 100/350 ≈ 21
     },
   );
@@ -205,4 +195,61 @@ void main() {
       }
     },
   );
+
+  testWidgets('no verified badge for an unverified food', (tester) async {
+    await _openSampleMainDetail(tester);
+    expect(find.byIcon(Icons.check), findsNothing);
+  });
+
+  testWidgets(
+    'verified badge shows for a verified food and explains itself on tap',
+    (tester) async {
+      tester.view.physicalSize = const Size(375, 812);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      SharedPreferences.setMockInitialValues({'onboarding_done': true});
+      final state = AppState(clock: () => DateTime(2026, 7, 15, 9, 30));
+      await state.load();
+      await tester.pumpWidget(CalorieApp(state: state));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('nav-add')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Lunch').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'hawaa full cream');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Hawaa Full Cream Milk (UHT)'));
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.check), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.check));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Verified against a real product label'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('Time row defaults to the injected clock and opens a picker', (
+    tester,
+  ) async {
+    await _openSampleMainDetail(tester);
+    expect(find.text('09:30'), findsOneWidget);
+    await tester.tap(find.text('09:30'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TimePickerDialog), findsOneWidget);
+  });
+
+  testWidgets('confirming a log attaches loggedAt from the Time row', (
+    tester,
+  ) async {
+    final state = await _openSampleMainDetail(tester);
+    await tester.tap(find.textContaining('Add ·'));
+    await tester.pumpAndSettle();
+    await tester.pump();
+
+    final entry = state.entriesFor(state.selectedDate).single;
+    expect(entry.loggedAt, DateTime(2026, 7, 15, 9, 30));
+  });
 }

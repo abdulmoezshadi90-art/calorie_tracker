@@ -45,7 +45,7 @@ void main() {
       );
 
       // Tap the row's own + button — logs without leaving the list.
-      await tester.tap(find.byIcon(Icons.add_circle_outline));
+      await tester.tap(find.byKey(const ValueKey('quick-add-sample_main_1')));
       await tester.pumpAndSettle();
 
       // Still on the search screen: no navigation happened.
@@ -68,7 +68,7 @@ void main() {
 
   testWidgets('undo removes the quick-added entry', (tester) async {
     final state = await _openSearchForLunch(tester);
-    await tester.tap(find.byIcon(Icons.add_circle_outline));
+    await tester.tap(find.byKey(const ValueKey('quick-add-sample_main_1')));
     await tester.pumpAndSettle();
 
     final date = state.selectedDate;

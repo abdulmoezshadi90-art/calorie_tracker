@@ -326,7 +326,7 @@ void main() {
       );
 
       await _pumpTab(tester, state, const HistoryTab(meal: MealType.lunch));
-      await tester.tap(find.byIcon(Icons.add_circle_outline));
+      await tester.tap(find.byIcon(Icons.add));
       await tester.pumpAndSettle();
 
       final entries = state.entriesFor(

@@ -104,10 +104,6 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Sample Main Dish A'));
       await tester.pumpAndSettle();
-      // Macro grams live behind the nutrition-details sheet now (distill
-      // pass) instead of always on-screen.
-      await tester.tap(find.text('Nutrition details'));
-      await tester.pumpAndSettle();
     }
 
     testWidgets('each macro renders with its named-constant color', (
@@ -142,6 +138,7 @@ void main() {
       final entry = LogEntry.fromJson(json);
       expect(entry.unitId, 'serving');
       expect(entry.quantity, 1.0);
+      expect(entry.loggedAt, isNull);
     });
 
     test('a legacy day log decodes through AppState.load', () async {
@@ -157,6 +154,20 @@ void main() {
       expect(entry.unitId, 'serving');
       expect(entry.quantity, 1.0);
       expect(state.totalsFor(DateTime(2026, 7, 15)).kcal, 540);
+    });
+  });
+
+  group('loggedAt', () {
+    test('round-trips through JSON', () {
+      final entry = LogEntry(
+        id: '1',
+        foodId: 'sample_main_1',
+        servings: 1,
+        meal: 'lunch',
+        loggedAt: DateTime(2026, 7, 15, 9, 30),
+      );
+      final decoded = LogEntry.fromJson(entry.toJson());
+      expect(decoded.loggedAt, DateTime(2026, 7, 15, 9, 30));
     });
   });
 }

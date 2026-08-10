@@ -9,6 +9,7 @@ import 'food_db.dart';
 import 'food_detail_screen.dart';
 import 'food_history_tab.dart';
 import 'models.dart';
+import 'round_icon_button.dart';
 import 'saved_meals_tab.dart';
 import 'theme.dart';
 
@@ -273,18 +274,17 @@ class _QuickAddButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final state = AppScope.of(context);
-    // Exact 44×44 footprint: IconButton's own min-tap-target padding would
-    // overflow a SizedBox wrapper, so build the circle directly.
     return Material(
+      key: ValueKey('quick-add-${food.id}'),
       color: Colors.transparent,
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),
         onTap: () => _quickAdd(context, state),
-        child: SizedBox(
-          width: 44,
-          height: 44,
-          child: Icon(Icons.add_circle_outline, color: c.accent),
+        child: RoundIconButton(
+          bg: c.plusIdleBg,
+          icon: Icons.add,
+          iconColor: c.plusIdleIcon,
         ),
       ),
     );

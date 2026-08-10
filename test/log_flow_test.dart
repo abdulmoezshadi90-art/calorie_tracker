@@ -98,6 +98,25 @@ void main() {
     expect(reloaded.totalsFor(state.selectedDate).kcal, 540);
   });
 
+  test('addEntry\'s loggedAt survives a reload', () async {
+    SharedPreferences.setMockInitialValues({'onboarding_done': true});
+    final state = AppState();
+    await state.load();
+    final loggedAt = DateTime(2026, 7, 15, 9, 30);
+    await state.addEntry(
+      state.selectedDate,
+      'sample_main_1',
+      1,
+      MealType.lunch,
+      loggedAt: loggedAt,
+    );
+
+    final reloaded = AppState();
+    await reloaded.load();
+    final entry = reloaded.entriesFor(state.selectedDate).single;
+    expect(entry.loggedAt, loggedAt);
+  });
+
   test(
     'corrupted storage falls back to defaults instead of crashing',
     () async {

@@ -262,6 +262,12 @@ class LogEntry {
   final String unitId;
   final double quantity;
 
+  /// Wall-clock time of day the food was eaten/logged, set from the food
+  /// detail screen's Time row. Null for every entry logged before that row
+  /// existed — decode never fails on a missing key, and display falls back
+  /// to showing nothing rather than a placeholder time.
+  final DateTime? loggedAt;
+
   const LogEntry({
     required this.id,
     required this.foodId,
@@ -269,6 +275,7 @@ class LogEntry {
     required this.meal,
     this.unitId = 'serving',
     double? quantity,
+    this.loggedAt,
   }) : quantity = quantity ?? servings;
 
   Map<String, dynamic> toJson() => {
@@ -278,6 +285,7 @@ class LogEntry {
     'meal': meal,
     'unitId': unitId,
     'quantity': quantity,
+    'loggedAt': loggedAt?.toIso8601String(),
   };
 
   factory LogEntry.fromJson(Map<String, dynamic> json) {
@@ -289,6 +297,10 @@ class LogEntry {
       meal: json['meal'] as String,
       unitId: json['unitId'] as String? ?? 'serving',
       quantity: (json['quantity'] as num?)?.toDouble() ?? servings,
+      loggedAt: switch (json['loggedAt']) {
+        final String s => DateTime.tryParse(s),
+        _ => null,
+      },
     );
   }
 }
@@ -478,6 +490,11 @@ String fmtServings(double value) {
 
 /// Western-digit percent, e.g. "42%".
 String fmtPercent(num value) => '${fmtInt(value)}%';
+
+/// 24-hour "HH:MM", always Western digits — never a locale-aware clock
+/// format (which can inject AM/PM or non-Western digits).
+String fmtTime(int hour, int minute) =>
+    '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
 
 /// Unicode vulgar fraction glyphs for the app's five quantity presets —
 /// not a general float-to-fraction converter, just these exact values

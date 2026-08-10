@@ -42,6 +42,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
   final _decimalController = TextEditingController(text: '1');
   String? _error;
   var _justSaved = false;
+  late TimeOfDay _time;
 
   static const _fractionValues = {1: 0.25, 2: 1 / 3, 3: 0.5, 4: 2 / 3, 5: 0.75};
 
@@ -50,6 +51,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
     super.initState();
     final state = AppScope.read(context);
     _unit = widget.food.servingUnits.first;
+    _time = TimeOfDay.fromDateTime(state.now());
     _mode = state.quantityMode == 'fraction' ? 'fraction' : 'decimal';
     final initial = widget.initialServings;
     if (initial != null && initial > 0) {
@@ -130,73 +132,101 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
       appBar: AppBar(
         backgroundColor: c.headerTop,
         foregroundColor: c.onHeader,
-        title: Text(l.foodName(food)),
+        // Row-based, not manually mirrored — order flips for free in RTL.
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(l.foodName(food), overflow: TextOverflow.ellipsis),
+            ),
+            if (food.verified) ...[
+              const SizedBox(width: 8),
+              _VerifiedBadge(color: c.accent, onColor: c.onAccent),
+            ],
+          ],
+        ),
       ),
       // SingleChildScrollView, not ListView: a Sliver-backed ListView only
       // mounts elements within its built extent, which can hide widgets
       // (like the error text) that appear after a scroll-position change —
       // this screen's content is short enough that eager building is fine.
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _ServingRow(
-              label: l.unitLabel(_unit),
-              onTap: () => _showUnitPicker(context),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      //
+      // LayoutBuilder + a min-height ConstrainedBox: centers content in the
+      // available viewport when it's shorter than the screen (small foods
+      // with few macros) so it reads as composed rather than top-anchored
+      // over empty space; content taller than the viewport (long names,
+      // larger system font sizes, an error line) still scrolls normally.
+      body: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight - 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Expanded(child: _sectionLabel(c, l.quantity)),
-                _ModeToggle(
-                  mode: _mode,
-                  fractionLabel: l.fractionMode,
-                  decimalLabel: l.decimalMode,
-                  onChanged: (mode) => _switchMode(mode, state),
+                _ServingRow(
+                  caption: l.unit,
+                  label: l.unitLabel(_unit),
+                  onTap: () => _showUnitPicker(context),
                 ),
+                const SizedBox(height: 20),
+                _ServingRow(
+                  caption: l.time,
+                  label: fmtTime(_time.hour, _time.minute),
+                  onTap: () => _pickTime(context),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(child: _sectionLabel(c, l.quantity)),
+                    _ModeToggle(
+                      mode: _mode,
+                      fractionLabel: l.fractionMode,
+                      decimalLabel: l.decimalMode,
+                      onChanged: (mode) => _switchMode(mode, state),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                if (_mode == 'fraction')
+                  _FractionPicker(
+                    whole: _whole,
+                    fractionPreset: _fractionPreset,
+                    wholeLabel: l.whole,
+                    onWholeChanged: (w) => setState(() => _whole = w),
+                    onFractionChanged: (f) =>
+                        setState(() => _fractionPreset = f),
+                  )
+                else
+                  _DecimalPicker(
+                    controller: _decimalController,
+                    onChanged: () {
+                      setState(() {});
+                    },
+                  ),
+                if (_error != null) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    _error!,
+                    style: TextStyle(fontSize: 13, color: c.fieldError),
+                  ),
+                ],
+                const SizedBox(height: 20),
+                _MacroChipsRow(
+                  carbs: carbs,
+                  fat: fat,
+                  protein: protein,
+                  pct: pct,
+                  zeroCal: kcal <= 0,
+                ),
+                const SizedBox(height: 20),
+                _DonutCard(kcal: kcal, pct: pct),
+                const SizedBox(height: 90),
               ],
             ),
-            const SizedBox(height: 10),
-            if (_mode == 'fraction')
-              _FractionPicker(
-                whole: _whole,
-                fractionPreset: _fractionPreset,
-                wholeLabel: l.whole,
-                onWholeChanged: (w) => setState(() => _whole = w),
-                onFractionChanged: (f) => setState(() => _fractionPreset = f),
-              )
-            else
-              _DecimalPicker(
-                controller: _decimalController,
-                onChanged: () {
-                  setState(() {});
-                },
-              ),
-            if (_error != null) ...[
-              const SizedBox(height: 10),
-              Text(
-                _error!,
-                style: TextStyle(fontSize: 13, color: c.fieldError),
-              ),
-            ],
-            const SizedBox(height: 20),
-            _NutritionDetailsRow(
-              carbs: carbs,
-              fat: fat,
-              protein: protein,
-              onTap: () => _showNutritionDetails(
-                context,
-                kcal: kcal,
-                carbs: carbs,
-                fat: fat,
-                protein: protein,
-                pct: pct,
-              ),
-            ),
-            const SizedBox(height: 90),
-          ],
+          ),
         ),
       ),
       bottomNavigationBar: Container(
@@ -241,13 +271,21 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
       return;
     }
     HapticFeedback.lightImpact();
+    final date = state.selectedDate;
     final ok = await state.addEntry(
-      state.selectedDate,
+      date,
       widget.food.id,
       _multiplier,
       widget.meal,
       unitId: _unit.id,
       quantity: _quantity,
+      loggedAt: DateTime(
+        date.year,
+        date.month,
+        date.day,
+        _time.hour,
+        _time.minute,
+      ),
     );
     if (!mounted) return;
     if (!ok) {
@@ -270,6 +308,11 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
         duration: const Duration(seconds: 2),
       ),
     );
+  }
+
+  Future<void> _pickTime(BuildContext context) async {
+    final picked = await showTimePicker(context: context, initialTime: _time);
+    if (picked != null) setState(() => _time = picked);
   }
 
   Widget _sectionLabel(AppColors c, String text) => Text(
@@ -387,77 +430,22 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
       ],
     );
   }
-
-  /// Macro grams and the donut chart are supporting detail, not needed to
-  /// complete the primary task (pick a quantity, log it) — hidden behind
-  /// this sheet instead of always-visible, so a plain "log one of these"
-  /// isn't competing with five simultaneous decisions on-screen (distill
-  /// pass). Reuses the app's established disclosure pattern (bottom sheet,
-  /// same as the unit picker) rather than introducing a new one.
-  void _showNutritionDetails(
-    BuildContext context, {
-    required double kcal,
-    required double carbs,
-    required double fat,
-    required double protein,
-    required ({int carb, int fat, int protein}) pct,
-  }) {
-    final c = AppColors.of(context);
-    final state = AppScope.of(context);
-    final l = state.l;
-
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: c.card,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetContext) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: Text(
-                  l.nutritionDetails,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: c.ink,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              _MacroChipsRow(
-                carbs: carbs,
-                fat: fat,
-                protein: protein,
-                pct: pct,
-                zeroCal: kcal <= 0,
-              ),
-              const SizedBox(height: 20),
-              _DonutCard(kcal: kcal, pct: pct),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 /// Serving row: shows the selected unit and opens the picker sheet on tap.
 class _ServingRow extends StatelessWidget {
-  const _ServingRow({required this.label, required this.onTap});
+  const _ServingRow({
+    required this.caption,
+    required this.label,
+    required this.onTap,
+  });
+  final String caption;
   final String label;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    final l = AppScope.of(context).l;
     return Container(
       decoration: BoxDecoration(
         color: c.card,
@@ -479,7 +467,7 @@ class _ServingRow extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        l.unit,
+                        caption,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -508,72 +496,34 @@ class _ServingRow extends StatelessWidget {
   }
 }
 
-/// Collapsed entry point for the macro/donut sheet — a one-line P/F/C
-/// preview instead of the full breakdown, so the primary screen only
-/// carries what's needed to pick a quantity and log it (distill pass).
-class _NutritionDetailsRow extends StatelessWidget {
-  const _NutritionDetailsRow({
-    required this.carbs,
-    required this.fat,
-    required this.protein,
-    required this.onTap,
-  });
-  final double carbs;
-  final double fat;
-  final double protein;
-  final VoidCallback onTap;
+/// Small filled checkmark next to the food name — shown only for foods the
+/// owner has verified against a real product label (never for the
+/// placeholder/unverified majority of food_db.dart). Tapping explains what
+/// the mark means instead of leaving it as an unexplained decoration,
+/// mirroring the tappable "approx." marker on the Foods list.
+class _VerifiedBadge extends StatelessWidget {
+  const _VerifiedBadge({required this.color, required this.onColor});
+  final Color color;
+  final Color onColor;
 
   @override
   Widget build(BuildContext context) {
-    final c = AppColors.of(context);
     final l = AppScope.of(context).l;
-    return Container(
-      decoration: BoxDecoration(
-        color: c.card,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: c.cardShadow,
-      ),
+    return Semantics(
+      button: true,
+      label: l.verifiedBadgeExplanation,
       child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
+        color: color,
+        shape: const CircleBorder(),
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l.nutritionDetails,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: c.muted,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${fmtGrams(protein)}${l.grams} ${l.protein} · '
-                        '${fmtGrams(fat)}${l.grams} ${l.fat} · '
-                        '${fmtGrams(carbs)}${l.grams} ${l.carb}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: c.ink,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(Icons.keyboard_arrow_down, color: c.muted),
-              ],
-            ),
+          customBorder: const CircleBorder(),
+          onTap: () => ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l.verifiedBadgeExplanation))),
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: Icon(Icons.check, size: 14, color: onColor),
           ),
         ),
       ),
@@ -889,7 +839,7 @@ class DonutChartPainter extends CustomPainter {
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = stroke
-          ..strokeCap = StrokeCap.round
+          ..strokeCap = StrokeCap.butt
           ..color = color,
       );
       start += sweep;

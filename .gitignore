@@ -60,3 +60,7 @@ key.properties
 /beta-notes/
 /data-private/
 /CLAUDE.md
+
+android/key.properties
+android/local.properties
+

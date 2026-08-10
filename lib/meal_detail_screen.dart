@@ -34,8 +34,7 @@ Future<void> _deleteWithUndo(
       duration: const Duration(seconds: 4),
       action: SnackBarAction(
         label: l.undo,
-        onPressed: () =>
-            state.restoreEntry(date, removed.entry, removed.index),
+        onPressed: () => state.restoreEntry(date, removed.entry, removed.index),
       ),
     ),
   );
@@ -119,7 +118,11 @@ class MealDetailScreen extends StatelessWidget {
                               ),
                             ),
                             subtitle: Text(
-                              '${fmtServings(entry.servings)} × ${l.servingLabel(food)}',
+                              entry.loggedAt == null
+                                  ? '${fmtServings(entry.servings)} × ${l.servingLabel(food)}'
+                                  : '${fmtServings(entry.servings)} × '
+                                        '${l.servingLabel(food)} · '
+                                        '${fmtTime(entry.loggedAt!.hour, entry.loggedAt!.minute)}',
                               style: TextStyle(fontSize: 12, color: c.muted),
                             ),
                             trailing: Row(

@@ -186,7 +186,7 @@ void main() {
           of: find.text(lastFood.nameEn),
           matching: find.byType(ListTile),
         ),
-        matching: find.byIcon(Icons.add_circle_outline),
+        matching: find.byIcon(Icons.add),
       ),
     );
     await tester.pumpAndSettle();

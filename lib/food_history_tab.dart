@@ -6,6 +6,7 @@ import 'empty_state.dart';
 import 'filter_sort_sheet.dart';
 import 'food_detail_screen.dart';
 import 'models.dart';
+import 'round_icon_button.dart';
 import 'theme.dart';
 
 /// History tab content (search_screen.dart's tab selector, tab 1): every
@@ -230,10 +231,10 @@ class _HistoryQuickAddButton extends StatelessWidget {
       child: InkWell(
         customBorder: const CircleBorder(),
         onTap: () => _quickAdd(context, state),
-        child: SizedBox(
-          width: 44,
-          height: 44,
-          child: Icon(Icons.add_circle_outline, color: c.accent),
+        child: RoundIconButton(
+          bg: c.plusIdleBg,
+          icon: Icons.add,
+          iconColor: c.plusIdleIcon,
         ),
       ),
     );

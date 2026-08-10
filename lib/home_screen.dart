@@ -6,6 +6,7 @@ import 'app_state.dart';
 import 'l10n.dart';
 import 'meal_detail_screen.dart';
 import 'models.dart';
+import 'round_icon_button.dart';
 import 'search_screen.dart';
 import 'striped_bar.dart';
 import 'theme.dart';
@@ -836,14 +837,18 @@ class _MealRow extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             if (logged)
-              _RoundBtn(bg: c.accent, icon: Icons.check, iconColor: c.onAccent)
+              RoundIconButton(
+                bg: c.accent,
+                icon: Icons.check,
+                iconColor: c.onAccent,
+              )
             else
               GestureDetector(
                 key: ValueKey('meal-add-${meal.name}'),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => SearchScreen(meal: meal)),
                 ),
-                child: _RoundBtn(
+                child: RoundIconButton(
                   bg: c.plusIdleBg,
                   icon: Icons.add,
                   iconColor: c.plusIdleIcon,
@@ -852,35 +857,6 @@ class _MealRow extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-/// Every "add to today" affordance on this screen shares this shape — a
-/// filled circle with a solid glyph — so the eye learns it once. Size and
-/// color vary with emphasis (44dp muted-idle per meal row vs. 30dp accent
-/// for the two single-CTA spots), the shape never does.
-class _RoundBtn extends StatelessWidget {
-  const _RoundBtn({
-    required this.bg,
-    required this.icon,
-    required this.iconColor,
-    this.size = 44,
-    this.iconSize = 22,
-  });
-  final Color bg;
-  final IconData icon;
-  final Color iconColor;
-  final double size;
-  final double iconSize;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-      child: Icon(icon, color: iconColor, size: iconSize),
     );
   }
 }
@@ -933,7 +909,7 @@ class _EmptyTodayBanner extends StatelessWidget {
                     ],
                   ),
                 ),
-                _RoundBtn(
+                RoundIconButton(
                   bg: c.accent,
                   icon: Icons.add,
                   iconColor: c.onAccent,
@@ -968,7 +944,7 @@ class _AddMealButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _RoundBtn(
+              RoundIconButton(
                 bg: c.accent,
                 icon: Icons.add,
                 iconColor: c.onAccent,

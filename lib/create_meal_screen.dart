@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'app_state.dart';
 import 'food_db.dart';
 import 'models.dart';
+import 'round_icon_button.dart';
 import 'settings_screen.dart' show WesternDigitsFormatter;
 import 'theme.dart';
 
@@ -233,9 +234,18 @@ class _CreateMealScreenState extends State<CreateMealScreen> {
                       l.servingLabel(food),
                       style: TextStyle(fontSize: 12, color: c.muted),
                     ),
-                    trailing: IconButton(
-                      icon: Icon(Icons.add_circle_outline, color: c.accent),
-                      onPressed: () => _addFood(food),
+                    trailing: Material(
+                      color: Colors.transparent,
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: () => _addFood(food),
+                        child: RoundIconButton(
+                          bg: c.plusIdleBg,
+                          icon: Icons.add,
+                          iconColor: c.plusIdleIcon,
+                        ),
+                      ),
                     ),
                   ),
                 const SizedBox(height: 20),

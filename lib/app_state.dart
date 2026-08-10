@@ -258,6 +258,7 @@ class AppState extends ChangeNotifier {
     MealType meal, {
     String unitId = 'serving',
     double? quantity,
+    DateTime? loggedAt,
   }) async {
     final entry = LogEntry(
       id: '${DateTime.now().microsecondsSinceEpoch}_${_idSeq++}',
@@ -266,6 +267,7 @@ class AppState extends ChangeNotifier {
       meal: meal.name,
       unitId: unitId,
       quantity: quantity ?? servings,
+      loggedAt: loggedAt,
     );
     _logsByDate.putIfAbsent(dateKey(date), () => []).add(entry);
     _historyCache = null;

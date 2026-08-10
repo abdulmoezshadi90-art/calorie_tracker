@@ -8,6 +8,7 @@ import 'empty_state.dart';
 import 'filter_sort_sheet.dart';
 import 'food_db.dart';
 import 'models.dart';
+import 'round_icon_button.dart';
 import 'theme.dart';
 
 double _totalKcal(SavedMeal meal) => meal.items.fold(
@@ -314,10 +315,10 @@ class _SavedMealRow extends StatelessWidget {
                       meal: meal,
                       targetMeal: targetMeal,
                     ),
-                    child: SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: Icon(Icons.add_circle_outline, color: c.accent),
+                    child: RoundIconButton(
+                      bg: c.plusIdleBg,
+                      icon: Icons.add,
+                      iconColor: c.plusIdleIcon,
                     ),
                   ),
                 ),
