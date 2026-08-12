@@ -6,52 +6,90 @@
 <title>Privacy Policy — Calorie Tracker / متتبع السعرات</title>
 <style>
   :root {
-    --green: #16a34a;
-    --bg: #f7f8fa;
-    --ink: #1a1a1a;
-    --muted: #8a8f98;
+    --page-bg: #F1EEE0;
+    --header-top: #35533B;
+    --header-bottom: #243D2A;
+    --accent: #2E8B57;
+    --gold: #E9B949;
+    --card: #FFFDF6;
+    --ink: #1E3325;
+    --ink-strong: #17301F;
+    --muted: #5F6E62;
+    --divider: #DAD6C6;
+    --on-header: #F3F7EE;
+    --on-header-muted: #AEBEA9;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    padding: 32px 20px 64px;
-    background: var(--bg);
+    background: var(--page-bg);
     color: var(--ink);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
     line-height: 1.65;
   }
-  .wrap { max-width: 720px; margin: 0 auto; }
+  header.masthead {
+    background: linear-gradient(135deg, var(--header-top), var(--header-bottom));
+    color: var(--on-header);
+    padding: 40px 20px 56px;
+    text-align: center;
+  }
+  header.masthead .title { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
+  header.masthead .tag { color: var(--on-header-muted); font-size: 14px; margin: 0; }
+  .wrap { max-width: 720px; margin: -32px auto 0; padding: 0 20px 64px; }
   .card {
-    background: #fff;
-    border-radius: 16px;
+    background: var(--card);
+    border-radius: 18px;
     padding: 32px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 10px 24px rgba(0,0,0,0.08);
     margin-bottom: 24px;
   }
-  h1 { font-size: 26px; margin: 0 0 4px; }
-  h2 { font-size: 18px; margin: 28px 0 8px; color: var(--green); }
-  .sub { color: var(--muted); font-size: 14px; margin: 0 0 8px; }
+  h1 { font-size: 26px; margin: 0 0 4px; color: var(--ink-strong); }
+  h2 {
+    font-size: 17px;
+    margin: 30px 0 8px;
+    color: var(--accent);
+    padding-top: 18px;
+    border-top: 1px solid var(--divider);
+  }
+  .card h2:first-of-type { border-top: none; padding-top: 0; margin-top: 24px; }
+  .sub { color: var(--muted); font-size: 14px; margin: 0 0 20px; }
+  .lede {
+    font-size: 17px;
+    border-inline-start: 3px solid var(--gold);
+    padding-inline-start: 14px;
+    margin: 0;
+  }
   p { margin: 0 0 12px; }
-  ul { margin: 0 0 12px; padding-inline-start: 22px; }
-  li { margin-bottom: 6px; }
-  a { color: var(--green); }
-  .lang-switch { text-align: center; margin-bottom: 24px; }
+  a { color: var(--accent); }
+  .lang-switch { text-align: center; margin: -32px 0 24px; position: relative; z-index: 2; }
   .lang-switch a {
     display: inline-block;
-    padding: 8px 18px;
-    background: #fff;
+    padding: 9px 20px;
+    background: var(--card);
+    color: var(--ink);
     border-radius: 999px;
     text-decoration: none;
     font-weight: 600;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    font-size: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 6px 16px rgba(0,0,0,0.08);
     margin: 0 4px;
   }
   .ar { direction: rtl; text-align: right; }
-  .ar ul { padding-inline-start: 0; padding-inline-end: 22px; }
-  footer { text-align: center; color: var(--muted); font-size: 13px; }
-</style>
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    padding-bottom: 8px;
+  }
+  </style>
 </head>
 <body>
+
+<header class="masthead">
+  <p class="title">Calorie Tracker &middot; متتبع السعرات</p>
+  <p class="tag">Works offline &middot; No signup &middot; Your data stays on your phone</p>
+</header>
+
 <div class="wrap">
 
   <div class="lang-switch">
@@ -63,7 +101,7 @@
     <h1>Privacy Policy</h1>
     <p class="sub">Calorie Tracker (متتبع السعرات) &middot; Last updated 10 August 2026</p>
 
-    <p>This app does not collect your data. Everything you log stays on your phone.</p>
+    <p class="lede">This app does not collect your data. Everything you log stays on your phone.</p>
 
     <h2>What we collect</h2>
     <p>Nothing. The app has no accounts, no sign-in, and no servers. We never see what you eat, your weight, your goals, or anything else you enter.</p>
@@ -95,7 +133,7 @@
     <h1>سياسة الخصوصية</h1>
     <p class="sub">متتبع السعرات &middot; آخر تحديث 10 أغسطس 2026</p>
 
-    <p>هذا التطبيق لا يجمع بياناتك. كل ما تسجله يبقى على هاتفك.</p>
+    <p class="lede">هذا التطبيق لا يجمع بياناتك. كل ما تسجله يبقى على هاتفك.</p>
 
     <h2>ما الذي نجمعه</h2>
     <p>لا شيء. التطبيق لا يحتوي على حسابات ولا تسجيل دخول ولا خوادم. نحن لا نرى ما تأكله ولا وزنك ولا أهدافك ولا أي شيء آخر تدخله.</p>
