@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'app_state.dart';
 import 'l10n.dart';
@@ -369,14 +370,25 @@ class _DayChip extends StatelessWidget {
     final c = AppColors.of(context);
     final isSelected = AppState.dateKey(day) == AppState.dateKey(selected);
     final isFuture = day.isAfter(today);
+    // Selection is a state change, not a load — a quick cross-fade reads as
+    // responsive without calling attention to itself. Skipped when the
+    // system asks for reduced motion.
+    final duration = MediaQuery.of(context).disableAnimations
+        ? Duration.zero
+        : const Duration(milliseconds: 150);
 
     return GestureDetector(
-      onTap: () => state.selectDate(day),
+      onTap: () {
+        if (!isSelected) HapticFeedback.selectionClick();
+        state.selectDate(day);
+      },
       child: Semantics(
         button: true,
         selected: isSelected,
         label: state.l.dateLine(day),
-        child: Container(
+        child: AnimatedContainer(
+          duration: duration,
+          curve: Curves.easeOut,
           margin: EdgeInsets.symmetric(
             horizontal: 3,
             vertical: isSelected ? 0 : 6,
@@ -401,9 +413,9 @@ class _DayChip extends StatelessWidget {
               // font sizes — the chips are too narrow to wrap gracefully.
               FittedBox(
                 fit: BoxFit.scaleDown,
-                child: Text(
-                  state.l.dayShort(day),
-                  maxLines: 1,
+                child: AnimatedDefaultTextStyle(
+                  duration: duration,
+                  curve: Curves.easeOut,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
@@ -413,11 +425,13 @@ class _DayChip extends StatelessWidget {
                             alpha: isFuture ? 0.5 : 0.85,
                           ),
                   ),
+                  child: Text(state.l.dayShort(day), maxLines: 1),
                 ),
               ),
               const SizedBox(height: 6),
-              Text(
-                '${day.day}',
+              AnimatedDefaultTextStyle(
+                duration: duration,
+                curve: Curves.easeOut,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -425,6 +439,7 @@ class _DayChip extends StatelessWidget {
                       ? c.daySelectedText
                       : c.onHeader.withValues(alpha: isFuture ? 0.5 : 1),
                 ),
+                child: Text('${day.day}'),
               ),
             ],
           ),
@@ -804,12 +819,16 @@ class _MealRow extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Text(
-                        l.mealName(meal),
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: c.ink,
+                      Flexible(
+                        child: Text(
+                          l.mealName(meal),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: c.ink,
+                          ),
                         ),
                       ),
                       if (logged) ...[

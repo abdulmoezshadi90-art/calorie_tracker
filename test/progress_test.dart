@@ -121,7 +121,12 @@ void main() {
     final state = await _pumpApp(tester);
     final day = DateTime(2026, 7, 9);
     for (var i = 0; i < 5; i++) {
-      state.addEntry(day, 'sample_main_1', 1, MealType.lunch); // 5 × 540 = 2,700
+      state.addEntry(
+        day,
+        'sample_main_1',
+        1,
+        MealType.lunch,
+      ); // 5 × 540 = 2,700
     }
     await tester.pumpAndSettle();
 
@@ -215,4 +220,62 @@ void main() {
       }
     }
   });
+
+  testWidgets('weight chart with identical values does not divide by zero', (
+    tester,
+  ) async {
+    // minKg == maxKg collapses the natural axis span to 0 — the painter
+    // must pad it rather than divide by that zero.
+    SharedPreferences.setMockInitialValues({'onboarding_done': true});
+    final state = AppState(clock: () => DateTime(2026, 7, 15));
+    await state.load();
+    await state.logWeight(DateTime(2026, 7, 10), 80.0);
+    await state.logWeight(DateTime(2026, 7, 11), 80.0);
+    await state.logWeight(DateTime(2026, 7, 12), 80.0);
+    await tester.pumpWidget(CalorieApp(state: state));
+    await tester.pumpAndSettle();
+    await _openProgress(tester);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('7-day chart with identical non-zero totals across days', (
+    tester,
+  ) async {
+    final state = await _pumpApp(tester);
+    for (var i = 1; i <= 3; i++) {
+      state.addEntry(
+        DateTime(2026, 7, 15).subtract(Duration(days: i)),
+        'sample_snack_1',
+        1,
+        MealType.snack,
+      );
+    }
+    await tester.pumpAndSettle();
+    await _openProgress(tester);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    '7-day chart with a zero goal and all-zero totals does not crash',
+    (tester) async {
+      // Reproduces the exact NaN crash: maxValue = max(goal*1.2, ...kcals)
+      // collapses to 0 when the goal is non-positive and nothing is logged,
+      // so goal/maxValue in the goal-line calculation divides by zero.
+      // A goal of 0 isn't blocked at the model layer (Goals has no floor;
+      // the editor's floor-confirmation is a UI nudge, not a data
+      // constraint), so a corrupted or hand-edited stored value reaches
+      // the painter unguarded — this seeds exactly that shape directly.
+      SharedPreferences.setMockInitialValues({
+        'onboarding_done': true,
+        'goals': '{"kcal":0,"carbs":0,"fat":0,"protein":0}',
+      });
+      final state = AppState(clock: () => DateTime(2026, 7, 15));
+      await state.load();
+      expect(state.goals.kcal, 0); // confirms the precondition actually holds
+      await tester.pumpWidget(CalorieApp(state: state));
+      await tester.pumpAndSettle();
+      await _openProgress(tester);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

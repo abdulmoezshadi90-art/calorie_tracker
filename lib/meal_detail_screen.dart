@@ -18,7 +18,9 @@ Future<void> _deleteWithUndo(
 ) async {
   final l = state.l;
   final date = state.selectedDate;
-  HapticFeedback.lightImpact();
+  // Delete is a more consequential tap than an add — a stronger cue than
+  // the lightImpact used for logging.
+  HapticFeedback.mediumImpact();
   final removed = await state.removeEntry(date, entry.id);
   if (!context.mounted) return;
   final messenger = ScaffoldMessenger.of(context);
@@ -39,6 +41,10 @@ Future<void> _deleteWithUndo(
     ),
   );
 }
+
+/// Row exit animation duration — collapse + fade before the entry actually
+/// leaves [AppState], so the list never just blinks an item away.
+const _rowAnimDuration = Duration(milliseconds: 200);
 
 class MealDetailScreen extends StatelessWidget {
   const MealDetailScreen({super.key, required this.meal});
@@ -95,61 +101,11 @@ class MealDetailScreen extends StatelessWidget {
                       final entry = entries[i];
                       final food = foodById[entry.foodId];
                       if (food == null) return const SizedBox.shrink();
-                      final kcal = (food.kcal * entry.servings).round();
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(14),
-                          boxShadow: c.cardShadow,
-                        ),
-                        child: Material(
-                          color: c.card,
-                          borderRadius: BorderRadius.circular(14),
-                          child: ListTile(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            title: Text(
-                              l.foodName(food),
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: c.ink,
-                              ),
-                            ),
-                            subtitle: Text(
-                              entry.loggedAt == null
-                                  ? '${fmtServings(entry.servings)} × ${l.servingLabel(food)}'
-                                  : '${fmtServings(entry.servings)} × '
-                                        '${l.servingLabel(food)} · '
-                                        '${fmtTime(entry.loggedAt!.hour, entry.loggedAt!.minute)}',
-                              style: TextStyle(fontSize: 12, color: c.muted),
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  '${fmtInt(kcal)} ${l.kcal}',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: c.kcalAccent,
-                                  ),
-                                ),
-                                IconButton(
-                                  tooltip: l.delete,
-                                  icon: Icon(
-                                    Icons.delete_outline,
-                                    size: 20,
-                                    color: c.muted,
-                                  ),
-                                  onPressed: () =>
-                                      _deleteWithUndo(context, state, entry),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                      return _EntryRow(
+                        key: ValueKey(entry.id),
+                        entry: entry,
+                        food: food,
+                        state: state,
                       );
                     },
                   ),
@@ -182,6 +138,145 @@ class MealDetailScreen extends StatelessWidget {
                 ),
               ],
             ),
+    );
+  }
+}
+
+/// A single meal-detail row: fades + slides in on first appearance and
+/// collapses before the entry actually leaves [AppState] on delete — a
+/// plain rebuild would otherwise just blink the row in and out.
+class _EntryRow extends StatefulWidget {
+  const _EntryRow({
+    super.key,
+    required this.entry,
+    required this.food,
+    required this.state,
+  });
+  final LogEntry entry;
+  final FoodItem food;
+  final AppState state;
+
+  @override
+  State<_EntryRow> createState() => _EntryRowState();
+}
+
+class _EntryRowState extends State<_EntryRow>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  bool _entered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: _rowAnimDuration,
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_entered) return;
+    _entered = true;
+    if (MediaQuery.of(context).disableAnimations) {
+      _controller.value = 1;
+    } else {
+      _controller.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleDelete() async {
+    if (!MediaQuery.of(context).disableAnimations) {
+      await _controller.reverse();
+    }
+    if (!mounted) return;
+    await _deleteWithUndo(context, widget.state, widget.entry);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final l = widget.state.l;
+    final entry = widget.entry;
+    final food = widget.food;
+    final kcal = (food.kcal * entry.servings).round();
+
+    return SizeTransition(
+      sizeFactor: _controller,
+      alignment: Alignment.topCenter,
+      child: FadeTransition(
+        opacity: _controller,
+        child: SlideTransition(
+          position:
+              Tween<Offset>(
+                begin: const Offset(0, 0.15),
+                end: Offset.zero,
+              ).animate(
+                CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+              ),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: c.cardShadow,
+            ),
+            child: Material(
+              color: c.card,
+              borderRadius: BorderRadius.circular(14),
+              child: ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                title: Text(
+                  l.foodName(food),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: c.ink,
+                  ),
+                ),
+                subtitle: Text(
+                  entry.loggedAt == null
+                      ? '${fmtServings(entry.servings)} × ${l.servingLabel(food)}'
+                      : '${fmtServings(entry.servings)} × '
+                            '${l.servingLabel(food)} · '
+                            '${fmtTime(entry.loggedAt!.hour, entry.loggedAt!.minute)}',
+                  style: TextStyle(fontSize: 12, color: c.muted),
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${fmtInt(kcal)} ${l.kcal}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: c.kcalAccent,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: l.delete,
+                      icon: Icon(
+                        Icons.delete_outline,
+                        size: 20,
+                        color: c.muted,
+                      ),
+                      onPressed: _handleDelete,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -35,8 +35,13 @@ class EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    // Scrollable, not just Center: callers place this inside an Expanded
+    // whose available height they don't fully control (e.g. a picker tab
+    // squeezed by sibling content on a short screen). A few pixels of
+    // scroll beats a hard RenderFlex overflow when this content's natural
+    // size (icon + line + optional hint/button) doesn't quite fit.
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,

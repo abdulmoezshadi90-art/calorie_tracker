@@ -92,20 +92,23 @@ class _FoodRow extends StatelessWidget {
               color: c.ink,
             ),
           ),
-          subtitle: Row(
+          subtitle: Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 6,
+            runSpacing: 2,
             children: [
-              Flexible(
-                child: Text(
-                  l.servingLabel(food),
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 12, color: c.muted),
-                ),
+              Text(
+                l.servingLabel(food),
+                style: TextStyle(fontSize: 12, color: c.muted),
               ),
               // Approximate marker until values are verified (decision 8).
               // Tappable: the marker alone doesn't explain itself, so a tap
               // surfaces what "approx." actually means (see clarify pass).
-              if (!food.verified) ...[
-                const SizedBox(width: 6),
+              // Wrap (not Row) so the marker drops to its own line rather
+              // than overflowing when the serving label is long on a
+              // narrow screen — the subtitle slot has very little width
+              // left once the trailing kcal/add controls claim theirs.
+              if (!food.verified)
                 Semantics(
                   button: true,
                   label: l.approxMarkerExplanation,
@@ -134,7 +137,6 @@ class _FoodRow extends StatelessWidget {
                     ),
                   ),
                 ),
-              ],
             ],
           ),
           // Row order only — never flipped by hand, so RTL mirrors it.

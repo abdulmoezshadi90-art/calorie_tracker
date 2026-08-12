@@ -201,13 +201,15 @@ class L10n {
   String get profileIntro => isAr
       ? 'نحسب لك هدفًا يوميًا يناسب جسمك. كل الإجابات تبقى على هاتفك.'
       : 'We calculate a daily goal that fits your body. All answers stay on your phone.';
-  String get nameOptional => isAr ? 'الاسم (اختياري)' : 'Name (optional)';
-  String get sexLabel => isAr ? 'الجنس' : 'Sex';
-  String get ageLabel => isAr ? 'العمر' : 'Age';
-  String get weightLabel => isAr ? 'الوزن (كجم)' : 'Weight (kg)';
-  String get heightLabel => isAr ? 'الطول (سم)' : 'Height (cm)';
-  String get activityLabel => isAr ? 'مستوى النشاط' : 'Training intensity';
-  String get goalLabel => isAr ? 'هدف الوزن' : 'Weight goal';
+  // Inline field labels (inside the TextField itself) — deliberately
+  // shorter than the step heading above them (nameQuestion/ageQuestion/
+  // weightQuestion/heightQuestion) now that those headings are plain nouns
+  // too: a unit-only or bare hint reads as a field cue, not a duplicate of
+  // the heading it sits under.
+  String get nameOptional => isAr ? 'الاسم' : 'Name';
+  String get ageLabel => isAr ? 'سنة' : 'Years';
+  String get weightLabel => isAr ? 'كجم' : 'kg';
+  String get heightLabel => isAr ? 'سم' : 'cm';
   String get calculateGoal => isAr ? 'احسب هدفي' : 'Calculate my goal';
   String get suggestedGoal =>
       isAr ? 'هدفك اليومي المقترح' : 'Your suggested daily goal';
@@ -237,27 +239,22 @@ class L10n {
   String get setUpProfileHint =>
       isAr ? 'للحصول على هدف يومي مخصص لك' : 'for a personalized daily goal';
 
-  // Wizard step questions — one clear heading per screen.
-  String get nameQuestion =>
-      isAr ? 'ما اسمك؟ (اختياري)' : "What's your name? (optional)";
-  String get sexQuestion => isAr ? 'ما هو جنسك؟' : 'What is your sex?';
-  String get ageQuestion => isAr ? 'كم عمرك؟' : 'How old are you?';
-  String get weightQuestion =>
-      isAr ? 'كم وزنك؟ (كجم)' : 'What is your weight? (kg)';
-  String get heightQuestion =>
-      isAr ? 'كم طولك؟ (سم)' : 'How tall are you? (cm)';
-  String get activityQuestion =>
-      isAr ? 'ما مستوى نشاطك؟' : 'What is your training intensity?';
-  String get goalQuestion => isAr ? 'ما هدفك؟' : 'What is your goal?';
+  // Wizard step headings — one clear heading per screen. Plain noun labels
+  // (no leading question word, no trailing "?", no colon), not questions —
+  // getter names below still say "Question" for now (renaming risks a
+  // collision with the already-distinct weightLabel/heightLabel getters
+  // used for the input fields themselves; left as a known naming staleness
+  // rather than a functional issue).
+  String get nameQuestion => isAr ? 'الاسم (اختياري)' : 'Name (optional)';
+  String get sexQuestion => isAr ? 'الجنس' : 'Sex';
+  String get ageQuestion => isAr ? 'العمر' : 'Age';
+  String get weightQuestion => isAr ? 'الوزن (كجم)' : 'Weight (kg)';
+  String get heightQuestion => isAr ? 'الطول (سم)' : 'Height (cm)';
+  String get activityQuestion => isAr ? 'مستوى النشاط' : 'Training intensity';
+  String get goalQuestion => isAr ? 'الهدف' : 'Goal';
   String goalRateQuestion(GoalDirection d) => switch (d) {
-    GoalDirection.lose =>
-      isAr
-          ? 'كم بسرعة تريد إنقاص وزنك؟'
-          : 'How fast do you want to lose weight?',
-    GoalDirection.gain =>
-      isAr
-          ? 'كم بسرعة تريد زيادة وزنك؟'
-          : 'How fast do you want to gain weight?',
+    GoalDirection.lose => isAr ? 'معدّل إنقاص الوزن' : 'Weight loss rate',
+    GoalDirection.gain => isAr ? 'معدّل زيادة الوزن' : 'Weight gain rate',
     GoalDirection.maintain => '', // unreachable — maintain skips this step
   };
   // Note shown under the daily target when the floor guard clamps it —
@@ -455,6 +452,13 @@ class L10n {
   String get myMealsEmptyLine => isAr
       ? 'أنشئ وجبتك الأولى لتظهر هنا'
       : 'Create your first meal to see it here';
+
+  // All Foods tab (food_picker.dart) — the always-present A-to-Z browse tab
+  // that fixes the first-time-user dead end (History/My Meals start empty).
+  String get allFoodsTab => isAr ? 'كل الأطعمة' : 'All Foods';
+  String get previouslyLoggedHeader => isAr ? 'سُجّل سابقًا' : 'Previously logged';
+  String get allFoodsSectionHeader => isAr ? 'كل الأطعمة' : 'All foods';
+  String get browseAllFoods => isAr ? 'تصفح كل الأطعمة' : 'Browse all foods';
 
   String foodsCount(int n) =>
       isAr ? '${fmtInt(n)} أطعمة' : '${fmtInt(n)} foods';

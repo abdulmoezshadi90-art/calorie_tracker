@@ -58,10 +58,11 @@ void main() {
     await tester.tap(find.text('Clear search'));
     await tester.pumpAndSettle();
     expect(find.text('No foods found'), findsNothing);
-    // Clearing restores the tab view (History, the default tab) rather
-    // than a bare food list — nothing logged yet, so History's own empty
-    // state shows instead of any rows.
-    expect(find.text('Recently logged'), findsOneWidget);
+    // Clearing stays on whichever tab is active — typing switched to All
+    // Foods, so clearing restores its full unfiltered list (some food row
+    // visible again) rather than jumping back to History (which is empty
+    // here, nothing logged yet, and wouldn't render any ListTile at all).
+    expect(find.byType(ListTile), findsWidgets);
   });
 
   testWidgets('empty history offers back-to-today which pops', (tester) async {

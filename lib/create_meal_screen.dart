@@ -1,18 +1,20 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import 'app_state.dart';
 import 'food_db.dart';
+import 'food_picker.dart';
 import 'models.dart';
-import 'round_icon_button.dart';
 import 'settings_screen.dart' show WesternDigitsFormatter;
 import 'theme.dart';
 
-/// Full-screen meal builder: name, optional meal-type tag, food search,
-/// running list with per-item serving edit, live totals, save. [existing]
-/// non-null puts the screen in edit mode (My Meals tab long-press → Edit):
-/// fields prefill from it and Save updates it in place instead of creating
+/// Full-screen meal builder: name, optional meal-type tag, the shared food
+/// picker (food_picker.dart — All Foods/History/My Meals, same as the log
+/// flow), running list with per-item serving edit, live totals, save.
+/// Picking a food or saved meal here adds a draft row instead of pushing a
+/// detail screen or logging to today, since there is no "today" in a
+/// draft meal. [existing] non-null puts the screen in edit mode (My Meals
+/// tab long-press → Edit): fields prefill from it and Save updates it in
+/// place instead of creating
 /// a new SavedMeal.
 class CreateMealScreen extends StatefulWidget {
   const CreateMealScreen({super.key, this.existing});
@@ -24,12 +26,9 @@ class CreateMealScreen extends StatefulWidget {
 
 class _CreateMealScreenState extends State<CreateMealScreen> {
   final _nameController = TextEditingController();
-  final _searchController = TextEditingController();
   MealType? _mealType;
   final List<SavedMealItem> _items = [];
   String? _nameError;
-  Timer? _debounce;
-  List<FoodItem> _searchResults = const [];
 
   @override
   void initState() {
@@ -44,40 +43,42 @@ class _CreateMealScreenState extends State<CreateMealScreen> {
 
   @override
   void dispose() {
-    _debounce?.cancel();
     _nameController.dispose();
-    _searchController.dispose();
     super.dispose();
   }
 
-  void _onSearchChanged(String value) {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 200), () {
-      final q = value.trim().toLowerCase();
-      if (!mounted) return;
-      setState(() {
-        _searchResults = q.isEmpty
-            ? const []
-            : [
-                for (final f in foodDatabase)
-                  if (f.nameEn.toLowerCase().contains(q) ||
-                      f.nameAr.contains(q))
-                    f,
-              ].take(20).toList();
-      });
-    });
-  }
-
-  void _addFood(FoodItem food) {
+  /// Picking a food from the shared picker (row tap or quick-add — there is
+  /// no separate detail-screen step here, so both mean the same thing:
+  /// add a draft row starting at [servings]). Merges into an existing row
+  /// for the same food rather than duplicating it.
+  void _addFood(FoodItem food, double servings) {
     setState(() {
       final index = _items.indexWhere((i) => i.foodId == food.id);
       if (index >= 0) {
         _items[index] = SavedMealItem(
           foodId: food.id,
-          servings: _items[index].servings + 1,
+          servings: _items[index].servings + servings,
         );
       } else {
-        _items.add(SavedMealItem(foodId: food.id, servings: 1));
+        _items.add(SavedMealItem(foodId: food.id, servings: servings));
+      }
+    });
+  }
+
+  /// Picking a saved meal from the shared picker's My Meals tab — merges
+  /// every one of its items into the draft the same way a single food does.
+  void _addSavedMealItems(SavedMeal meal) {
+    setState(() {
+      for (final item in meal.items) {
+        final index = _items.indexWhere((i) => i.foodId == item.foodId);
+        if (index >= 0) {
+          _items[index] = SavedMealItem(
+            foodId: item.foodId,
+            servings: _items[index].servings + item.servings,
+          );
+        } else {
+          _items.add(item);
+        }
       }
     });
   }
@@ -157,13 +158,14 @@ class _CreateMealScreenState extends State<CreateMealScreen> {
         foregroundColor: c.onHeader,
         title: Text(l.createMealTitle),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-              children: [
-                TextField(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final metadata = Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: TextField(
                   controller: _nameController,
                   onChanged: (_) => setState(() => _nameError = null),
                   style: TextStyle(color: c.ink),
@@ -178,179 +180,207 @@ class _CreateMealScreenState extends State<CreateMealScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  l.mealTypeOptional,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: c.muted,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _MealTypeChip(
-                      label: l.noneOption,
-                      selected: _mealType == null,
-                      onTap: () => setState(() => _mealType = null),
-                    ),
-                    for (final m in MealType.values)
-                      _MealTypeChip(
-                        label: l.mealName(m),
-                        selected: _mealType == m,
-                        onTap: () => setState(() => _mealType = m),
+                    Text(
+                      l.mealTypeOptional,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: c.muted,
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _MealTypeChip(
+                          label: l.noneOption,
+                          selected: _mealType == null,
+                          onTap: () => setState(() => _mealType = null),
+                        ),
+                        for (final m in MealType.values)
+                          _MealTypeChip(
+                            label: l.mealName(m),
+                            selected: _mealType == m,
+                            onTap: () => setState(() => _mealType = m),
+                          ),
+                      ],
+                    ),
                   ],
                 ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: _searchController,
-                  onChanged: _onSearchChanged,
-                  style: TextStyle(color: c.ink),
-                  decoration: InputDecoration(
-                    hintText: l.searchHint,
-                    hintStyle: TextStyle(color: c.muted),
-                    prefixIcon: Icon(Icons.search, color: c.muted),
-                    filled: true,
-                    fillColor: c.card,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-                for (final food in _searchResults)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      l.foodName(food),
-                      style: TextStyle(fontSize: 14, color: c.ink),
-                    ),
-                    subtitle: Text(
-                      l.servingLabel(food),
-                      style: TextStyle(fontSize: 12, color: c.muted),
-                    ),
-                    trailing: Material(
-                      color: Colors.transparent,
-                      shape: const CircleBorder(),
-                      child: InkWell(
-                        customBorder: const CircleBorder(),
-                        onTap: () => _addFood(food),
-                        child: RoundIconButton(
-                          bg: c.plusIdleBg,
-                          icon: Icons.add,
-                          iconColor: c.plusIdleIcon,
-                        ),
-                      ),
-                    ),
-                  ),
-                const SizedBox(height: 20),
-                Text(
-                  l.meals,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: c.ink,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                if (_items.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Text(
-                      l.noFoodsAddedYet,
-                      style: TextStyle(fontSize: 13, color: c.muted),
-                    ),
-                  )
-                else
-                  for (var i = 0; i < _items.length; i++)
-                    _MealItemRow(
-                      key: ValueKey(_items[i].foodId),
-                      item: _items[i],
-                      onServingsChanged: (v) => _updateServings(i, v),
-                      onRemove: () => _removeItem(i),
-                    ),
-              ],
-            ),
-          ),
-          SafeArea(
-            top: false,
-            child: Container(
-              decoration: BoxDecoration(color: c.card, boxShadow: c.cardShadow),
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        l.total,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: c.ink,
-                        ),
-                      ),
-                      Text(
-                        '${fmtInt(kcal)} ${l.kcal}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: c.kcalAccent,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${l.carb} ${fmtGrams(carbs)}${l.grams}',
-                        style: TextStyle(fontSize: 12, color: c.carb),
-                      ),
-                      Text(
-                        '${l.fat} ${fmtGrams(fat)}${l.grams}',
-                        style: TextStyle(fontSize: 12, color: c.fat),
-                      ),
-                      Text(
-                        '${l.protein} ${fmtGrams(protein)}${l.grams}',
-                        style: TextStyle(fontSize: 12, color: c.protein),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: c.accent,
-                        foregroundColor: c.onAccent,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: canSave ? _save : null,
-                      child: Text(
-                        l.save,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
               ),
-            ),
-          ),
-        ],
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                child: Row(
+                  children: [
+                    Text(
+                      l.meals,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: c.ink,
+                      ),
+                    ),
+                    if (_items.isEmpty) ...[
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          l.noFoodsAddedYet,
+                          textAlign: TextAlign.end,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 13, color: c.muted),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (_items.isNotEmpty)
+                // Bounded height, own scroll: this list can grow past
+                // what a short screen has room for, and it must never
+                // eat into the picker's space below as it does — a
+                // fixed-height Column here would just move the overflow
+                // instead of fixing it.
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 160),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: _items.length,
+                      itemBuilder: (context, i) => _MealItemRow(
+                        key: ValueKey(_items[i].foodId),
+                        item: _items[i],
+                        onServingsChanged: (v) => _updateServings(i, v),
+                        onRemove: () => _removeItem(i),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          );
+
+          // Below ~700px tall (an iPhone 5/SE-class screen, or the picker's
+          // own minimum tab content squeezed by a compact meal already in
+          // progress) there usually isn't room for the metadata section's
+          // natural height AND the picker's own minimum. Cap and scroll it
+          // there; on every normal screen it renders at its natural size
+          // with no scroll wrapper, so nothing gets silently clipped into
+          // an easy-to-miss scroll region the way a permanent flex split
+          // would (see the empty_state.dart scroll safety-net for the
+          // picker's own remaining-squeeze case).
+          final isShort = constraints.maxHeight < 700;
+
+          return Column(
+            children: [
+              if (isShort)
+                Flexible(child: SingleChildScrollView(child: metadata))
+              else
+                metadata,
+              Container(height: 1, color: c.divider),
+              Expanded(
+                child: FoodPicker(
+                  onFoodTap: _addFood,
+                  onFoodQuickAdd: _addFood,
+                  onMealTap: _addSavedMealItems,
+                  onMealQuickAdd: _addSavedMealItems,
+                ),
+              ),
+              SafeArea(
+                top: false,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: c.card,
+                    boxShadow: c.cardShadow,
+                  ),
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            l.total,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: c.ink,
+                            ),
+                          ),
+                          Text(
+                            '${fmtInt(kcal)} ${l.kcal}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: c.kcalAccent,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${l.carb} ${fmtGrams(carbs)}${l.grams}',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 12, color: c.carb),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              '${l.fat} ${fmtGrams(fat)}${l.grams}',
+                              textAlign: TextAlign.center,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 12, color: c.fat),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              '${l.protein} ${fmtGrams(protein)}${l.grams}',
+                              textAlign: TextAlign.end,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 12, color: c.protein),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: c.accent,
+                            foregroundColor: c.onAccent,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          onPressed: canSave ? _save : null,
+                          child: Text(
+                            l.save,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

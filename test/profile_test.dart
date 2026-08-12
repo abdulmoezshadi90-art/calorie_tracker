@@ -246,17 +246,17 @@ void main() {
     ) async {
       final state = await _pumpProfileScreen(tester);
 
-      expect(find.text("What's your name? (optional)"), findsOneWidget);
+      expect(find.text('Name (optional)'), findsOneWidget);
       expect(find.text('1/7'), findsOneWidget);
       await walkToAge(tester);
-      expect(find.text('How old are you?'), findsOneWidget);
+      expect(find.text('Age'), findsOneWidget);
       expect(find.text('3/7'), findsOneWidget);
       await enterAndContinue(tester, '30');
       await enterAndContinue(tester, '80');
       await enterAndContinue(tester, '180');
 
       // Activity step: descriptions and the exercise helper line.
-      expect(find.text('What is your training intensity?'), findsOneWidget);
+      expect(find.text('Training intensity'), findsOneWidget);
       expect(find.text('Exercise 4 to 5 times a week'), findsOneWidget);
       expect(
         find.textContaining('elevated heart rate activity'),
@@ -372,26 +372,25 @@ void main() {
       expect(state.profile!.goalRate, isNull);
     });
 
-    testWidgets(
-      'gain mirrors loss with the sign flipped, in the wizard UI',
-      (tester) async {
-        final state = await _pumpProfileScreen(tester);
-        await walkToDirection(tester);
-        await tester.tap(find.text('Gain weight'));
-        await tester.pumpAndSettle();
+    testWidgets('gain mirrors loss with the sign flipped, in the wizard UI', (
+      tester,
+    ) async {
+      final state = await _pumpProfileScreen(tester);
+      await walkToDirection(tester);
+      await tester.tap(find.text('Gain weight'));
+      await tester.pumpAndSettle();
 
-        expect(find.text('Mild weight gain'), findsOneWidget);
-        expect(find.text('Weight gain'), findsOneWidget);
-        expect(find.text('Fast weight gain'), findsOneWidget);
-        await tester.tap(find.text('Weight gain'));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Use this goal'));
-        await tester.pumpAndSettle();
+      expect(find.text('Mild weight gain'), findsOneWidget);
+      expect(find.text('Weight gain'), findsOneWidget);
+      expect(find.text('Fast weight gain'), findsOneWidget);
+      await tester.tap(find.text('Weight gain'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Use this goal'));
+      await tester.pumpAndSettle();
 
-        // 2759 + 550 (normal rate) = 3309 → 3300.
-        expect(state.goals.kcal, 3300);
-      },
-    );
+      // 2759 + 550 (normal rate) = 3309 → 3300.
+      expect(state.goals.kcal, 3300);
+    });
 
     testWidgets(
       'back from the rate step preserves direction; switching clears the rate',
@@ -451,13 +450,13 @@ void main() {
       }
 
       expect(tester.takeException(), isNull);
-      expect(find.text('ما مستوى نشاطك؟'), findsOneWidget);
+      expect(find.text('مستوى النشاط'), findsOneWidget);
       // All five cards with descriptions plus the helper line.
       expect(find.text('خامل'), findsOneWidget);
       expect(find.text('تمرين 4 إلى 5 مرات في الأسبوع'), findsOneWidget);
       expect(find.textContaining('يرفع نبض القلب'), findsOneWidget);
       expect(find.text('6/7'), findsOneWidget);
-      final context = tester.element(find.text('ما مستوى نشاطك؟'));
+      final context = tester.element(find.text('مستوى النشاط'));
       expect(Directionality.of(context), TextDirection.rtl);
       expect(tester.takeException(), isNull);
     });
@@ -486,28 +485,27 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Enter a valid number'), findsOneWidget);
-      expect(find.text('How old are you?'), findsOneWidget); // still here
+      expect(find.text('Age'), findsOneWidget); // still here
       expect(state.goals.kcal, 2000); // unchanged
     });
 
-    testWidgets(
-      'age, weight and height steps show no visible range hint',
-      (tester) async {
-        await _pumpProfileScreen(tester);
+    testWidgets('age, weight and height steps show no visible range hint', (
+      tester,
+    ) async {
+      await _pumpProfileScreen(tester);
+      expect(find.textContaining('–'), findsNothing);
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Male'));
+      await tester.pumpAndSettle();
+
+      for (final value in ['30', '80', '180']) {
         expect(find.textContaining('–'), findsNothing);
+        await tester.enterText(find.byType(TextField), value);
         await tester.tap(find.text('Continue'));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Male'));
-        await tester.pumpAndSettle();
-
-        for (final value in ['30', '80', '180']) {
-          expect(find.textContaining('–'), findsNothing);
-          await tester.enterText(find.byType(TextField), value);
-          await tester.tap(find.text('Continue'));
-          await tester.pumpAndSettle();
-        }
-      },
-    );
+      }
+    });
 
     testWidgets('back arrow steps backward, first step pops the screen', (
       tester,
@@ -517,7 +515,7 @@ void main() {
 
       await tester.tap(find.byIcon(Icons.arrow_back));
       await tester.pumpAndSettle();
-      expect(find.text('What is your sex?'), findsOneWidget);
+      expect(find.text('Sex'), findsOneWidget);
 
       await tester.tap(find.byIcon(Icons.arrow_back));
       await tester.pumpAndSettle();
@@ -565,65 +563,64 @@ void main() {
 
     for (final size in [const Size(375, 812), const Size(320, 640)]) {
       for (final locale in ['en', 'ar']) {
-        testWidgets(
-          'no overflow across every step at '
-          '${size.width.toInt()}x${size.height.toInt()} ($locale)',
-          (tester) async {
-            await _pumpProfileScreen(tester, locale: locale, size: size);
-            expect(tester.takeException(), isNull);
+        testWidgets('no overflow across every step at '
+            '${size.width.toInt()}x${size.height.toInt()} ($locale)', (
+          tester,
+        ) async {
+          await _pumpProfileScreen(tester, locale: locale, size: size);
+          expect(tester.takeException(), isNull);
 
-            final continueLabel = locale == 'ar' ? 'متابعة' : 'Continue';
-            final maleLabel = locale == 'ar' ? 'ذكر' : 'Male';
-            final moderateLabel = locale == 'ar' ? 'متوسط' : 'Moderate';
-            final loseLabel = locale == 'ar' ? 'إنقاص الوزن' : 'Lose weight';
-            final gainLabel = locale == 'ar' ? 'زيادة الوزن' : 'Gain weight';
-            final maintainLabel = locale == 'ar'
-                ? 'تثبيت الوزن'
-                : 'Maintain weight';
-            final mildLoss = locale == 'ar' ? 'إنقاص خفيف' : 'Mild weight loss';
+          final continueLabel = locale == 'ar' ? 'متابعة' : 'Continue';
+          final maleLabel = locale == 'ar' ? 'ذكر' : 'Male';
+          final moderateLabel = locale == 'ar' ? 'متوسط' : 'Moderate';
+          final loseLabel = locale == 'ar' ? 'إنقاص الوزن' : 'Lose weight';
+          final gainLabel = locale == 'ar' ? 'زيادة الوزن' : 'Gain weight';
+          final maintainLabel = locale == 'ar'
+              ? 'تثبيت الوزن'
+              : 'Maintain weight';
+          final mildLoss = locale == 'ar' ? 'إنقاص خفيف' : 'Mild weight loss';
 
-            await tester.tap(find.text(continueLabel)); // name
+          await tester.tap(find.text(continueLabel)); // name
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+          await tester.tap(find.text(maleLabel));
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+          for (final v in ['30', '80', '180']) {
+            await tester.enterText(find.byType(TextField), v);
+            await tester.tap(find.text(continueLabel));
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
-            await tester.tap(find.text(maleLabel));
-            await tester.pumpAndSettle();
-            expect(tester.takeException(), isNull);
-            for (final v in ['30', '80', '180']) {
-              await tester.enterText(find.byType(TextField), v);
-              await tester.tap(find.text(continueLabel));
-              await tester.pumpAndSettle();
-              expect(tester.takeException(), isNull);
-            }
-            await tester.tap(find.text(moderateLabel));
-            await tester.pumpAndSettle();
-            expect(tester.takeException(), isNull);
+          }
+          await tester.tap(find.text(moderateLabel));
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
 
-            // Lose path: direction + rate step.
-            await tester.tap(find.text(loseLabel));
-            await tester.pumpAndSettle();
-            expect(tester.takeException(), isNull);
-            await tester.tap(find.text(mildLoss));
-            await tester.pumpAndSettle();
-            expect(tester.takeException(), isNull);
+          // Lose path: direction + rate step.
+          await tester.tap(find.text(loseLabel));
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+          await tester.tap(find.text(mildLoss));
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
 
-            // Back to direction (result → rate → direction), try Gain,
-            // then Maintain (shortest path).
-            await tester.tap(find.byIcon(Icons.arrow_back));
-            await tester.pumpAndSettle();
-            await tester.tap(find.byIcon(Icons.arrow_back));
-            await tester.pumpAndSettle();
-            expect(find.text(gainLabel), findsOneWidget); // back on direction
-            await tester.tap(find.text(gainLabel));
-            await tester.pumpAndSettle();
-            expect(tester.takeException(), isNull);
+          // Back to direction (result → rate → direction), try Gain,
+          // then Maintain (shortest path).
+          await tester.tap(find.byIcon(Icons.arrow_back));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byIcon(Icons.arrow_back));
+          await tester.pumpAndSettle();
+          expect(find.text(gainLabel), findsOneWidget); // back on direction
+          await tester.tap(find.text(gainLabel));
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
 
-            await tester.tap(find.byIcon(Icons.arrow_back));
-            await tester.pumpAndSettle();
-            await tester.tap(find.text(maintainLabel));
-            await tester.pumpAndSettle();
-            expect(tester.takeException(), isNull);
-          },
-        );
+          await tester.tap(find.byIcon(Icons.arrow_back));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text(maintainLabel));
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+        });
       }
     }
   });

@@ -15,10 +15,41 @@ Future<AppState> _freshState({String locale = 'en'}) async {
   return state;
 }
 
+/// Builds a HistoryTab wired the same way food_picker.dart wires it for the
+/// log flow: quick-add logs [servings] straight to [state]'s selected date
+/// under [meal] (mirroring the old hardcoded _HistoryQuickAddButton), row
+/// tap left as a no-op since no test here exercises it.
+HistoryTab _historyTab(
+  AppState state,
+  MealType meal, {
+  String query = '',
+}) => HistoryTab(
+  query: query,
+  onFoodTap: (food, servings) {},
+  onQuickAdd: (food, servings) =>
+      state.addEntry(state.selectedDate, food.id, servings, meal),
+  onBrowseAllFoods: () {},
+  onClearFilters: () {
+    state.setHistoryFilter(null);
+  },
+);
+
+/// Builds a MyMealsTab the same way food_picker.dart wires it for the log
+/// flow; no test in this file exercises tap/quick-add on a saved meal row,
+/// so both callbacks are no-ops.
+MyMealsTab _myMealsTab(AppState state, MealType meal, {String query = ''}) =>
+    MyMealsTab(
+      query: query,
+      onMealTap: (_) {},
+      onMealQuickAdd: (_) {},
+      onCreateMeal: () {},
+      onCopyPreviousMeal: () {},
+    );
+
 /// Pumps [tab] (HistoryTab or MyMealsTab) alone, wrapped exactly like it
-/// would be inside search_screen.dart's Scaffold, without needing the full
-/// app shell — a focused widget test target, same spirit as the food
-/// detail / settings tests pumping one screen directly.
+/// would be inside food_picker.dart's Expanded tab content, without needing
+/// the full app shell — a focused widget test target, same spirit as the
+/// food detail / settings tests pumping one screen directly.
 Future<void> _pumpTab(
   WidgetTester tester,
   AppState state,
@@ -166,7 +197,7 @@ void main() {
 
     testWidgets('Most recent orders A, C, B', (tester) async {
       final state = await seedForSort();
-      await _pumpTab(tester, state, const HistoryTab(meal: MealType.lunch));
+      await _pumpTab(tester, state, _historyTab(state, MealType.lunch));
       await state.setHistorySort(SortOption.mostRecent);
       await tester.pumpAndSettle();
 
@@ -179,7 +210,7 @@ void main() {
 
     testWidgets('Most frequent orders B, C, A', (tester) async {
       final state = await seedForSort();
-      await _pumpTab(tester, state, const HistoryTab(meal: MealType.lunch));
+      await _pumpTab(tester, state, _historyTab(state, MealType.lunch));
       await state.setHistorySort(SortOption.mostFrequent);
       await tester.pumpAndSettle();
 
@@ -192,7 +223,7 @@ void main() {
 
     testWidgets('A to Z orders A, B, C', (tester) async {
       final state = await seedForSort();
-      await _pumpTab(tester, state, const HistoryTab(meal: MealType.lunch));
+      await _pumpTab(tester, state, _historyTab(state, MealType.lunch));
       await state.setHistorySort(SortOption.aToZ);
       await tester.pumpAndSettle();
 
@@ -205,7 +236,7 @@ void main() {
 
     testWidgets('Z to A orders C, B, A', (tester) async {
       final state = await seedForSort();
-      await _pumpTab(tester, state, const HistoryTab(meal: MealType.lunch));
+      await _pumpTab(tester, state, _historyTab(state, MealType.lunch));
       await state.setHistorySort(SortOption.zToA);
       await tester.pumpAndSettle();
 
@@ -235,7 +266,7 @@ void main() {
         MealType.dinner,
       );
 
-      await _pumpTab(tester, state, const HistoryTab(meal: MealType.lunch));
+      await _pumpTab(tester, state, _historyTab(state, MealType.lunch));
       await state.setHistoryFilter(MealType.breakfast);
       await tester.pumpAndSettle();
 
@@ -266,7 +297,7 @@ void main() {
         ),
       );
 
-      await _pumpTab(tester, state, const MyMealsTab(meal: MealType.lunch));
+      await _pumpTab(tester, state, _myMealsTab(state, MealType.lunch));
       await state.setMealsFilter(MealType.breakfast);
       await tester.pumpAndSettle();
 
@@ -325,7 +356,7 @@ void main() {
         MealType.breakfast,
       );
 
-      await _pumpTab(tester, state, const HistoryTab(meal: MealType.lunch));
+      await _pumpTab(tester, state, _historyTab(state, MealType.lunch));
       await tester.tap(find.byIcon(Icons.add));
       await tester.pumpAndSettle();
 
@@ -336,6 +367,55 @@ void main() {
       expect(entries, hasLength(1));
       expect(entries.single.foodId, 'sample_snack_1');
       expect(entries.single.servings, 2.5);
+    });
+  });
+
+  group('History tab search query', () {
+    testWidgets('filters by English or Arabic name, combined with meal filter', (
+      tester,
+    ) async {
+      final state = await _freshState();
+      await state.addEntry(
+        DateTime(2026, 7, 18),
+        'sample_snack_1',
+        1,
+        MealType.breakfast,
+      );
+      await state.addEntry(
+        DateTime(2026, 7, 18),
+        'sample_snack_2',
+        1,
+        MealType.breakfast,
+      );
+
+      await _pumpTab(
+        tester,
+        state,
+        _historyTab(state, MealType.lunch, query: 'Sample Snack A'),
+      );
+      expect(find.text('Sample Snack A'), findsOneWidget);
+      expect(find.text('Sample Snack B'), findsNothing);
+    });
+
+    testWidgets('no logs at all shows the Browse all foods action', (
+      tester,
+    ) async {
+      final state = await _freshState();
+      var browsed = false;
+      await _pumpTab(
+        tester,
+        state,
+        HistoryTab(
+          query: '',
+          onFoodTap: (food, servings) {},
+          onQuickAdd: (food, servings) {},
+          onBrowseAllFoods: () => browsed = true,
+          onClearFilters: () {},
+        ),
+      );
+      expect(find.text('Browse all foods'), findsOneWidget);
+      await tester.tap(find.text('Browse all foods'));
+      expect(browsed, isTrue);
     });
   });
 
@@ -361,8 +441,8 @@ void main() {
       );
 
       for (final tab in [
-        const HistoryTab(meal: MealType.lunch),
-        const MyMealsTab(meal: MealType.lunch),
+        _historyTab(state, MealType.lunch),
+        _myMealsTab(state, MealType.lunch),
       ]) {
         await _pumpTab(tester, state, tab, direction: TextDirection.rtl);
         for (final digit in const [
@@ -393,8 +473,8 @@ void main() {
           // Empty state first (no logs, no saved meals).
           final empty = await _freshState(locale: locale);
           for (final tab in [
-            const HistoryTab(meal: MealType.lunch),
-            const MyMealsTab(meal: MealType.lunch),
+            _historyTab(empty, MealType.lunch),
+            _myMealsTab(empty, MealType.lunch),
           ]) {
             await _pumpTab(tester, empty, tab, direction: direction);
             expect(tester.takeException(), isNull);
@@ -420,8 +500,8 @@ void main() {
             ),
           );
           for (final tab in [
-            const HistoryTab(meal: MealType.lunch),
-            const MyMealsTab(meal: MealType.lunch),
+            _historyTab(populated, MealType.lunch),
+            _myMealsTab(populated, MealType.lunch),
           ]) {
             await _pumpTab(tester, populated, tab, direction: direction);
             expect(tester.takeException(), isNull);

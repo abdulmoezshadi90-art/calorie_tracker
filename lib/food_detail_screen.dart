@@ -711,7 +711,7 @@ class _DonutCard extends StatelessWidget {
   }
 }
 
-/// Animates the three arcs to their new percentages (200ms, easeOut) any
+/// Animates the three arcs to their new percentages (300ms, easeOut) any
 /// time [pct] changes — quantity/unit edits update live, not instantly.
 class _AnimatedDonut extends ImplicitlyAnimatedWidget {
   const _AnimatedDonut({
@@ -719,7 +719,7 @@ class _AnimatedDonut extends ImplicitlyAnimatedWidget {
     required this.colors,
     required this.child,
   }) : super(
-         duration: const Duration(milliseconds: 200),
+         duration: const Duration(milliseconds: 300),
          curve: Curves.easeOut,
        );
 

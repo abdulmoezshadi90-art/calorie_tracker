@@ -25,7 +25,11 @@ class AppState extends ChangeNotifier {
   static const _quantityModeKey = 'quantity_mode';
   static const _themeModeKey = 'theme_mode';
   static const _savedMealsKey = 'saved_meals';
-  static const _foodTabKey = 'food_tab_index';
+  // _v2: the tab set grew from two (History/My Meals) to three (All Foods/
+  // History/My Meals) with a different index meaning — a fresh key avoids
+  // silently reinterpreting an existing beta tester's old index 1 (used to
+  // mean My Meals) as History under the new scheme.
+  static const _foodTabKey = 'food_tab_index_v2';
   static const _historyFilterKey = 'history_filter';
   static const _historySortKey = 'history_sort';
   static const _mealsFilterKey = 'saved_meals_filter';
@@ -56,8 +60,10 @@ class AppState extends ChangeNotifier {
   List<SavedMeal> _savedMeals = [];
   List<SavedMeal> get savedMeals => List.unmodifiable(_savedMeals);
 
-  /// Which food-selection tab was last open (0 = History, 1 = My Meals) —
-  /// search_screen.dart's tab selector, persisted like any other pref.
+  /// Which food-selection tab was last open (0 = All Foods, 1 = History,
+  /// 2 = My Meals) — food_picker.dart's tab selector, persisted like any
+  /// other pref. A first-time user (no history yet) always opens on All
+  /// Foods regardless of this value; see food_picker.dart.
   int foodTabIndex = 0;
 
   /// Single-select meal filter for each tab; null means "All meals". Kept
@@ -562,7 +568,7 @@ class AppState extends ChangeNotifier {
     quantityMode = prefs.getString(_quantityModeKey) ?? 'decimal';
     themeModeCode = prefs.getString(_themeModeKey) ?? 'system';
     final rawTab = prefs.getInt(_foodTabKey) ?? 0;
-    foodTabIndex = (rawTab < 0 || rawTab > 1) ? 0 : rawTab;
+    foodTabIndex = (rawTab < 0 || rawTab > 2) ? 0 : rawTab;
     historyFilter = _mealTypeFromName(prefs.getString(_historyFilterKey));
     historySort = _sortOptionFromName(prefs.getString(_historySortKey));
     mealsFilter = _mealTypeFromName(prefs.getString(_mealsFilterKey));

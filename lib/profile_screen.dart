@@ -345,35 +345,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required VoidCallback onContinue,
   }) {
     return _stepShell([
-        _question(c, question),
-        const SizedBox(height: 24),
-        child,
-        if (_error != null) ...[
-          const SizedBox(height: 10),
-          Text(
-            _error!,
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: c.fieldError),
-          ),
-        ],
-        const SizedBox(height: 24),
-        FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: c.accent,
-            foregroundColor: c.onAccent,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
-          onPressed: onContinue,
-          child: Text(
-            state.l.continueLabel,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-          ),
+      _question(c, question),
+      const SizedBox(height: 24),
+      child,
+      if (_error != null) ...[
+        const SizedBox(height: 10),
+        Text(
+          _error!,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 13, color: c.fieldError),
         ),
       ],
-    );
+      const SizedBox(height: 24),
+      FilledButton(
+        style: FilledButton.styleFrom(
+          backgroundColor: c.accent,
+          foregroundColor: c.onAccent,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        onPressed: onContinue,
+        child: Text(
+          state.l.continueLabel,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        ),
+      ),
+    ]);
   }
 
   /// Choice steps: question + one card per option, tap auto-advances.
@@ -390,27 +389,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required ValueChanged<T> onSelect,
   }) {
     return _stepShell([
-        _question(c, question),
-        const SizedBox(height: 20),
-        for (final v in values) ...[
-          _OptionCard(
-            label: label(v),
-            description: description?.call(v),
-            selected: v == selected,
-            onTap: () => onSelect(v),
-          ),
-          const SizedBox(height: 10),
-        ],
-        if (helper != null) ...[
-          const SizedBox(height: 6),
-          Text(
-            helper,
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 11, height: 1.4, color: c.muted),
-          ),
-        ],
+      _question(c, question),
+      const SizedBox(height: 20),
+      for (final v in values) ...[
+        _OptionCard(
+          label: label(v),
+          description: description?.call(v),
+          selected: v == selected,
+          onTap: () => onSelect(v),
+        ),
+        const SizedBox(height: 10),
       ],
-    );
+      if (helper != null) ...[
+        const SizedBox(height: 6),
+        Text(
+          helper,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 11, height: 1.4, color: c.muted),
+        ),
+      ],
+    ]);
   }
 
   /// Rate step (lose/gain only — maintain skips it). Each card previews the
@@ -423,14 +421,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return const SizedBox.shrink(); // unreachable — guarded by _hasRateStep
     }
     return _stepShell([
-        _question(c, l.goalRateQuestion(direction)),
-        const SizedBox(height: 20),
-        for (final rate in GoalRate.values) ...[
-          _rateOptionCard(l, direction, rate),
-          const SizedBox(height: 10),
-        ],
+      _question(c, l.goalRateQuestion(direction)),
+      const SizedBox(height: 20),
+      for (final rate in GoalRate.values) ...[
+        _rateOptionCard(l, direction, rate),
+        const SizedBox(height: 10),
       ],
-    );
+    ]);
   }
 
   Widget _rateOptionCard(L10n l, GoalDirection direction, GoalRate rate) {
@@ -466,112 +463,114 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final g = result.goals;
 
     return _stepShell([
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: c.card,
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: c.cardShadow,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l.suggestedGoal,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: c.muted,
-                ),
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: c.card,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: c.cardShadow,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l.suggestedGoal,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: c.muted,
               ),
-              const SizedBox(height: 6),
-              Text(
-                '${fmtInt(g.kcal)} ${l.kcal}',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  color: c.inkStrong,
-                ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '${fmtInt(g.kcal)} ${l.kcal}',
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.w800,
+                color: c.inkStrong,
               ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              l.maintenanceLine(result.maintenanceKcal),
+              style: TextStyle(fontSize: 12, color: c.muted),
+            ),
+            if (result.clamped) ...[
               const SizedBox(height: 4),
+              // Neutral wording by design: a note, never a block or alarm.
               Text(
-                l.maintenanceLine(result.maintenanceKcal),
-                style: TextStyle(fontSize: 12, color: c.muted),
-              ),
-              if (result.clamped) ...[
-                const SizedBox(height: 4),
-                // Neutral wording by design: a note, never a block or alarm.
-                Text(
-                  l.goalFloorNote,
-                  style: TextStyle(fontSize: 12, height: 1.4, color: c.muted),
-                ),
-              ],
-              const SizedBox(height: 8),
-              Text(
-                '${l.protein} ${fmtInt(g.protein)}${l.grams} · '
-                '${l.fat} ${fmtInt(g.fat)}${l.grams} · '
-                '${l.carb} ${fmtInt(g.carbs)}${l.grams}',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: c.ink,
-                ),
-              ),
-              if (result.maintenanceOnly) ...[
-                const SizedBox(height: 8),
-                // Neutral wording by design: a note, never a block or alarm.
-                Text(
-                  l.under18Note,
-                  style: TextStyle(fontSize: 12, height: 1.4, color: c.muted),
-                ),
-              ],
-              const SizedBox(height: 8),
-              Text(
-                l.estimateNote,
-                style: TextStyle(fontSize: 11, height: 1.4, color: c.muted),
-              ),
-              if (_error != null) ...[
-                const SizedBox(height: 8),
-                Text(_error!, style: TextStyle(fontSize: 13, color: c.fieldError)),
-              ],
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () {
-                        // Save the profile, then hand the calculated numbers
-                        // to the standard goals editor: floors and warnings
-                        // apply there.
-                        final profile = _buildProfile();
-                        if (profile != null) state.setProfile(profile);
-                        showGoalsEditor(context, state, initial: g);
-                      },
-                      style: TextButton.styleFrom(foregroundColor: c.muted),
-                      child: Text(l.adjust),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: c.accent,
-                        foregroundColor: c.onAccent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      onPressed: () => _useGoal(state),
-                      child: Text(l.useThisGoal),
-                    ),
-                  ),
-                ],
+                l.goalFloorNote,
+                style: TextStyle(fontSize: 12, height: 1.4, color: c.muted),
               ),
             ],
-          ),
+            const SizedBox(height: 8),
+            Text(
+              '${l.protein} ${fmtInt(g.protein)}${l.grams} · '
+              '${l.fat} ${fmtInt(g.fat)}${l.grams} · '
+              '${l.carb} ${fmtInt(g.carbs)}${l.grams}',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: c.ink,
+              ),
+            ),
+            if (result.maintenanceOnly) ...[
+              const SizedBox(height: 8),
+              // Neutral wording by design: a note, never a block or alarm.
+              Text(
+                l.under18Note,
+                style: TextStyle(fontSize: 12, height: 1.4, color: c.muted),
+              ),
+            ],
+            const SizedBox(height: 8),
+            Text(
+              l.estimateNote,
+              style: TextStyle(fontSize: 11, height: 1.4, color: c.muted),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _error!,
+                style: TextStyle(fontSize: 13, color: c.fieldError),
+              ),
+            ],
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () {
+                      // Save the profile, then hand the calculated numbers
+                      // to the standard goals editor: floors and warnings
+                      // apply there.
+                      final profile = _buildProfile();
+                      if (profile != null) state.setProfile(profile);
+                      showGoalsEditor(context, state, initial: g);
+                    },
+                    style: TextButton.styleFrom(foregroundColor: c.muted),
+                    child: Text(l.adjust),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: c.accent,
+                      foregroundColor: c.onAccent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () => _useGoal(state),
+                    child: Text(l.useThisGoal),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
-      ],
-    );
+      ),
+    ]);
   }
 
   Widget _textField(
@@ -633,63 +632,74 @@ class _OptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    return Material(
-      color: selected ? c.chipBg : c.card,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
+    // Selection is a state change, not a load — a quick cross-fade reads as
+    // responsive without calling attention to itself. Skipped when the
+    // system asks for reduced motion.
+    final duration = MediaQuery.of(context).disableAnimations
+        ? Duration.zero
+        : const Duration(milliseconds: 150);
+    return AnimatedContainer(
+      duration: duration,
+      curve: Curves.easeOut,
+      decoration: BoxDecoration(
+        color: selected ? c.chipBg : c.card,
         borderRadius: BorderRadius.circular(14),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: selected ? c.accent : c.divider,
-              width: 1.5,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: selected ? c.chipText : c.ink,
-                ),
-              ),
-              if (description != null) ...[
-                const SizedBox(height: 2),
+        border: Border.all(color: selected ? c.accent : c.divider, width: 1.5),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          onTap: () {
+            if (!selected) HapticFeedback.selectionClick();
+            onTap();
+          },
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
                 Text(
-                  description!,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12, height: 1.4, color: c.muted),
-                ),
-              ],
-              if (detail != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  detail!,
+                  label,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: selected ? c.chipText : c.accent,
+                    color: selected ? c.chipText : c.ink,
                   ),
                 ),
+                if (description != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    description!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, height: 1.4, color: c.muted),
+                  ),
+                ],
+                if (detail != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    detail!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: selected ? c.chipText : c.accent,
+                    ),
+                  ),
+                ],
+                if (note != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    note!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 11, height: 1.4, color: c.muted),
+                  ),
+                ],
               ],
-              if (note != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  note!,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 11, height: 1.4, color: c.muted),
-                ),
-              ],
-            ],
+            ),
           ),
         ),
       ),

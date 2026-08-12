@@ -273,7 +273,9 @@ class _WeekChartCard extends StatelessWidget {
                   '${[for (final d in days) '${d.day}: ${fmtInt(state.totalsFor(d).kcal.round())} ${l.kcal}'].join(', ')}',
               child: CustomPaint(
                 painter: WeekBarChartPainter(
-                  kcals: [for (final d in days) state.totalsFor(d).kcal.round()],
+                  kcals: [
+                    for (final d in days) state.totalsFor(d).kcal.round(),
+                  ],
                   labels: [for (final d in days) '${d.day}'],
                   goal: state.goals.kcal,
                   isRtl: l.isAr,
@@ -326,10 +328,14 @@ class WeekBarChartPainter extends CustomPainter {
     final chartHeight = size.height - _labelHeight;
     final slot = size.width / n;
     final barWidth = slot * 0.5;
-    final maxValue = [
+    final rawMax = [
       goal * 1.2,
       ...kcals.map((k) => k.toDouble()),
     ].reduce((a, b) => a > b ? a : b);
+    // A non-positive goal with nothing logged has no meaningful scale to
+    // draw against (rawMax collapses to exactly 0) — floor it so bars and
+    // the goal line still render instead of dividing by zero into NaN.
+    final maxValue = rawMax > 0 ? rawMax : 1.0;
 
     double xFor(int i) {
       final slotIndex = isRtl ? n - 1 - i : i;
@@ -371,6 +377,8 @@ class WeekBarChartPainter extends CustomPainter {
       tp.paint(canvas, Offset(x + (barWidth - tp.width) / 2, chartHeight + 4));
     }
 
+    // A non-positive goal isn't a real target — nothing meaningful to mark.
+    if (goal <= 0) return;
     final goalY = chartHeight - (goal / maxValue) * chartHeight;
     final dash = Paint()
       ..color = goalLineColor
@@ -411,7 +419,9 @@ class _DayTile extends StatelessWidget {
         color: c.card,
         borderRadius: BorderRadius.circular(14),
         child: ListTile(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
           title: Text(
             '${l.dateLine(date)} · ${date.year}',
             style: TextStyle(

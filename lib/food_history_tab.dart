@@ -1,23 +1,48 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'app_state.dart';
 import 'empty_state.dart';
 import 'filter_sort_sheet.dart';
-import 'food_detail_screen.dart';
 import 'models.dart';
 import 'round_icon_button.dart';
 import 'theme.dart';
 
-/// History tab content (search_screen.dart's tab selector, tab 1): every
-/// food ever logged, aggregated across all days, filterable by meal type
-/// and sortable. The list itself is computed by [_recompute] — never
-/// inside build() — and only redone when AppState actually notifies
-/// (a log mutation or a filter/sort change), same idiom as
-/// _SearchScreenState's own _filtered field.
+/// History tab content (food_picker.dart's tab selector, tab 1): every
+/// food ever logged, aggregated across all days, filterable by meal type,
+/// sortable, and matched against the shared picker's search query. The
+/// list itself is computed by [_recompute] — never inside build() — and
+/// only redone when AppState actually notifies (a log mutation or a
+/// filter/sort change) or the query changes, same idiom as
+/// _MyMealsTabState's own _recompute.
 class HistoryTab extends StatefulWidget {
-  const HistoryTab({super.key, required this.meal});
-  final MealType meal;
+  const HistoryTab({
+    super.key,
+    required this.query,
+    required this.onFoodTap,
+    required this.onQuickAdd,
+    required this.onBrowseAllFoods,
+    required this.onClearFilters,
+  });
+
+  /// Trimmed or raw search text from food_picker.dart — empty means
+  /// unfiltered by search (the existing meal-type filter still applies).
+  final String query;
+
+  /// Row tap — log flow pushes the food detail screen, the meal builder
+  /// adds a row to the draft meal. Second argument is the food's last-used
+  /// serving amount, so the log flow can prefill it.
+  final void Function(FoodItem food, double servings) onFoodTap;
+
+  /// Plus button — adds the food's last-used serving amount directly.
+  final void Function(FoodItem food, double servings) onQuickAdd;
+
+  /// "Browse all foods" action on the no-logs-at-all empty state — switches
+  /// the shared picker to the All Foods tab.
+  final VoidCallback onBrowseAllFoods;
+
+  /// "Clear filter" action when logs exist but the meal-type filter and/or
+  /// search query leave nothing to show — resets both.
+  final VoidCallback onClearFilters;
 
   @override
   State<HistoryTab> createState() => _HistoryTabState();
@@ -40,6 +65,12 @@ class _HistoryTabState extends State<HistoryTab> {
   }
 
   @override
+  void didUpdateWidget(covariant HistoryTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.query != widget.query) _recompute();
+  }
+
+  @override
   void dispose() {
     _state?.removeListener(_recompute);
     super.dispose();
@@ -49,9 +80,14 @@ class _HistoryTabState extends State<HistoryTab> {
     final state = _state;
     if (state == null) return;
     final filter = state.historyFilter;
+    final q = widget.query.trim().toLowerCase();
+    bool matchesQuery(FoodItem f) =>
+        q.isEmpty || f.nameEn.toLowerCase().contains(q) || f.nameAr.contains(q);
     var entries = [
       for (final e in state.historyEntries)
-        if (filter == null || e.mealTypes.contains(filter)) e,
+        if ((filter == null || e.mealTypes.contains(filter)) &&
+            matchesQuery(e.food))
+          e,
     ];
     final isAr = state.localeCode == 'ar';
     switch (state.historySort) {
@@ -114,19 +150,28 @@ class _HistoryTabState extends State<HistoryTab> {
         const SizedBox(height: 8),
         Expanded(
           child: !hasAnyHistory
-              ? EmptyState(icon: Icons.history, line: l.historyTabEmptyLine)
+              ? EmptyState(
+                  icon: Icons.history,
+                  line: l.historyTabEmptyLine,
+                  actionLabel: l.browseAllFoods,
+                  onAction: widget.onBrowseAllFoods,
+                )
               : _visible.isEmpty
               ? EmptyState(
                   icon: Icons.filter_list_off,
                   line: l.noFilterMatchLine,
                   actionLabel: l.clearFilterAction,
-                  onAction: () => state.setHistoryFilter(null),
+                  onAction: widget.onClearFilters,
                 )
               : ListView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   itemCount: _visible.length,
                   itemBuilder: (context, i) => RepaintBoundary(
-                    child: _HistoryRow(entry: _visible[i], meal: widget.meal),
+                    child: _HistoryRow(
+                      entry: _visible[i],
+                      onTap: widget.onFoodTap,
+                      onQuickAdd: widget.onQuickAdd,
+                    ),
                   ),
                 ),
         ),
@@ -136,9 +181,14 @@ class _HistoryTabState extends State<HistoryTab> {
 }
 
 class _HistoryRow extends StatelessWidget {
-  const _HistoryRow({required this.entry, required this.meal});
+  const _HistoryRow({
+    required this.entry,
+    required this.onTap,
+    required this.onQuickAdd,
+  });
   final HistoryEntry entry;
-  final MealType meal;
+  final void Function(FoodItem, double) onTap;
+  final void Function(FoodItem, double) onQuickAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -190,87 +240,22 @@ class _HistoryRow extends StatelessWidget {
                   ),
                 ),
               ),
-              _HistoryQuickAddButton(entry: entry, meal: meal),
-            ],
-          ),
-          onTap: () async {
-            final logged = await Navigator.of(context).push<bool>(
-              MaterialPageRoute<bool>(
-                builder: (_) => FoodDetailScreen(
-                  food: food,
-                  meal: meal,
-                  initialServings: entry.lastServings,
+              Material(
+                color: Colors.transparent,
+                shape: const CircleBorder(),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: () => onQuickAdd(food, entry.lastServings),
+                  child: RoundIconButton(
+                    bg: c.plusIdleBg,
+                    icon: Icons.add,
+                    iconColor: c.plusIdleIcon,
+                  ),
                 ),
               ),
-            );
-            if (logged == true && context.mounted) {
-              Navigator.of(context).pop();
-            }
-          },
-        ),
-      ),
-    );
-  }
-}
-
-/// Logs [entry]'s last-used serving amount straight into [meal], mirroring
-/// search_screen.dart's own _QuickAddButton (same haptic + undo-snackbar
-/// pattern), just against a remembered serving instead of a flat 1.0.
-class _HistoryQuickAddButton extends StatelessWidget {
-  const _HistoryQuickAddButton({required this.entry, required this.meal});
-  final HistoryEntry entry;
-  final MealType meal;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppColors.of(context);
-    final state = AppScope.of(context);
-    return Material(
-      color: Colors.transparent,
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: () => _quickAdd(context, state),
-        child: RoundIconButton(
-          bg: c.plusIdleBg,
-          icon: Icons.add,
-          iconColor: c.plusIdleIcon,
-        ),
-      ),
-    );
-  }
-
-  Future<void> _quickAdd(BuildContext context, AppState state) async {
-    final l = state.l;
-    HapticFeedback.lightImpact();
-    final date = state.selectedDate;
-    final food = entry.food;
-    final servings = entry.lastServings;
-    final ok = await state.addEntry(date, food.id, servings, meal);
-    if (!context.mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.clearSnackBars();
-    if (!ok) {
-      messenger.showSnackBar(SnackBar(content: Text(l.saveFailed)));
-      return;
-    }
-    final kcal = food.kcal * servings;
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          '${l.added}: ${l.foodName(food)} · ${fmtInt(kcal)} ${l.kcal}',
-        ),
-        duration: const Duration(seconds: 4),
-        action: SnackBarAction(
-          label: l.undo,
-          onPressed: () async {
-            final match = state
-                .entriesFor(date, meal: meal)
-                .lastWhere(
-                  (e) => e.foodId == food.id && e.servings == servings,
-                );
-            await state.removeEntry(date, match.id);
-          },
+            ],
+          ),
+          onTap: () => onTap(food, entry.lastServings),
         ),
       ),
     );
