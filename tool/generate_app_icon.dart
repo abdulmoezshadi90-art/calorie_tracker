@@ -2,8 +2,10 @@
 // Run: C:\dev\flutter\bin\flutter.bat test tool\generate_app_icon.dart
 // Then: flutter_launcher_icons + flutter_native_splash (see pubspec).
 //
-// Mark: a plate ring with a gold progress arc and a small leaf — the
-// calorie bar + Libyan-life motifs in the app palette.
+// Mark: a plate ring with a gold progress arc and an inner dot — the
+// calorie bar motif in the app palette. The leaf that used to sit off the
+// ring's top-right was removed (it strayed into the corner-crop zone on
+// Android's adaptive-icon mask and was ruled out as a plant-motif cliche).
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -15,7 +17,7 @@ const _greenDeep = Color(0xFF243D2A);
 const _cream = Color(0xFFF1EEE0);
 const _gold = Color(0xFFEFC65B);
 
-/// Draws the mark centered in a [size] box. [ink] is the ring/leaf color.
+/// Draws the mark centered in a [size] box. [ink] is the ring color.
 void _mark(Canvas c, double size, Color ink) {
   final center = Offset(size / 2, size / 2 + size * 0.02);
   final r = size * 0.30;
@@ -44,35 +46,6 @@ void _mark(Canvas c, double size, Color ink) {
   );
   // Inner plate dot.
   c.drawCircle(center, r * 0.32, Paint()..color = ink);
-  // Leaf: short stem off the ring's top-right with two splayed petals.
-  final leafBase = center + Offset(r * 0.82, -r * 0.95);
-  final leaf = Paint()..color = ink;
-  c.save();
-  c.translate(leafBase.dx, leafBase.dy);
-  c.rotate(0.45); // stem leans away from the ring
-  c.drawLine(
-    Offset.zero,
-    Offset(0, -size * 0.07),
-    Paint()
-      ..color = ink
-      ..strokeWidth = size * 0.018
-      ..strokeCap = StrokeCap.round,
-  );
-  for (final side in [-1, 1]) {
-    c.save();
-    c.translate(0, -size * 0.06);
-    c.rotate(side * 0.85);
-    c.drawOval(
-      Rect.fromCenter(
-        center: Offset(0, -size * 0.05),
-        width: size * 0.045,
-        height: size * 0.105,
-      ),
-      leaf,
-    );
-    c.restore();
-  }
-  c.restore();
 }
 
 Future<void> _save(
@@ -92,17 +65,24 @@ void main() {
   test('generate app icon + splash artwork into assets/branding', () async {
     const s = 1024.0;
 
-    // Full-bleed launcher icon: green gradient + cream mark.
-    await _save((c) {
+    // Background gradient, 135deg (top-left to bottom-right) — shared by
+    // the full icon and the standalone adaptive-background artboard so
+    // the two stay pixel-identical.
+    void paintGradient(Canvas c) {
       c.drawRect(
         const Rect.fromLTWH(0, 0, s, s),
         Paint()
           ..shader = const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
             colors: [_green, _greenDeep],
           ).createShader(const Rect.fromLTWH(0, 0, s, s)),
       );
+    }
+
+    // Full-bleed launcher icon: gradient + cream mark.
+    await _save((c) {
+      paintGradient(c);
       _mark(c, s, _cream);
     }, 'assets/branding/app_icon.png', 1024);
 
@@ -114,6 +94,14 @@ void main() {
       _mark(c, s, _cream);
       c.restore();
     }, 'assets/branding/app_icon_foreground.png', 1024);
+
+    // Adaptive background: the gradient alone, no mark — stacks with the
+    // foreground above to reproduce the full icon exactly.
+    await _save(
+      paintGradient,
+      'assets/branding/app_icon_background.png',
+      1024,
+    );
 
     // Splash marks: green-on-transparent (light bg) and cream (dark bg).
     await _save(
