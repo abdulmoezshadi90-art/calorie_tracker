@@ -1,11 +1,11 @@
-# Calorie Tracker · متتبع السعرات
+# Zibda · زبدة
 
 A calorie tracking app for the Libyan market. Global calorie apps don't
 cover Libyan products or home dishes — this one does.
 
 ## Why it's different
 
-- **Libyan foods and dishes**: Kalee snacks, Bifa, Al Naseem, bazin,
+- **Libyan foods and dishes**: Al Naseem, bazin,
   mbakbka, couscous, usban, sfinz, maqrud, and more — searchable in
   Arabic or English
 - **Full Arabic RTL** with a one-tap language toggle
@@ -17,12 +17,16 @@ cover Libyan products or home dishes — this one does.
 | :---: | :---: |
 | ![Home, English, light](test/goldens/home_light_en.png) | ![Home, Arabic, dark](test/goldens/home_dark_ar.png) |
 
-**[Try the web demo](https://abdulmoezshadi90-art.github.io/calorie_tracker/)** — the real app, running in your browser. Data stays in your browser's local storage.
 
 ## Tech
 
 Flutter. Local-only storage by design — there is no backend. Deliberately
 tiny dependency footprint to keep the APK small for older phones.
+
+## Design assets
+App icon and splash artwork are authored in Figma and exported to
+`assets/icons/` and `assets/branding/`. Figma is the single source of
+truth — do not regenerate these programmatically.
 
 ## Status
 
@@ -46,3 +50,5 @@ Consult a doctor or dietitian for medical conditions.
 
 Product and brand names appearing in the food database are the property
 of their respective owners and are used for identification only.
+
+[Privacy policy](https://abdulmoezshadi90-art.github.io/calorie_tracker/privacy.html)
