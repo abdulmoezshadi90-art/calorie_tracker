@@ -1,6 +1,6 @@
 {
-    "name": "calorie_tracker",
-    "short_name": "calorie_tracker",
+    "name": "Zibda",
+    "short_name": "Zibda",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#35533B",

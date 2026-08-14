@@ -8,7 +8,7 @@ class L10n {
   final bool isAr;
   const L10n(String code) : isAr = code == 'ar';
 
-  String get appTitle => isAr ? 'متتبع السعرات' : 'Calorie Tracker';
+  String get appTitle => isAr ? 'زبدة' : 'Zibda';
   String get today => isAr ? 'اليوم' : 'Today';
 
   /// Time-of-day greeting, e.g. "Good morning," / "صباح الخير،".
