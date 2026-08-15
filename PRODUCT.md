@@ -4,7 +4,7 @@
 
 ## Platform
 
-web
+Android, iOS, Web
 
 ## Users
 
@@ -40,7 +40,8 @@ Name: "Zibda · زبدة" (one brand, both languages; the earlier name متتب�
 ## Evidence on Hand
 
 - Live codebase with an established Flutter design-token system (`lib/theme.dart`), 206 passing tests, analyzer clean, and committed golden-image baselines (`test/goldens/`).
-- A prior interactive web demo (hand-built HTML twin of the app) and a screenshots artifact exist outside this repo; the web demo duplicates the food database and can drift out of sync when `food_db.dart` changes significantly.
+- A prior interactive web demo (hand-built HTML twin of the app) and a screenshots artifact exist outside this repo; that older demo duplicates the food database and can drift out of sync when `food_db.dart` changes significantly.
+- The actual app also ships as a Flutter web build, deployed live at https://abdulmoezshadi90-art.github.io/calorie_tracker/ from the orphan `gh-pages` branch (`flutter build web --release --base-href /calorie_tracker/`). This is the real app, not the hand-built demo above, so it stays in sync with `food_db.dart` automatically.
 - Public GitHub repository: https://github.com/abdulmoezshadi90-art/calorie_tracker (tagged releases mirror roadmap phases).
 - No customer testimonials, press, or case studies exist yet (private beta stage) — future work must not fabricate these.
 

@@ -1,148 +1,228 @@
-# Session Handoff — 2026-07-31
+# Zibda — Handoff Brief
+Paste this as the first message of a new chat.
 
-Scratch handoff for continuing in a new session (this conversation's context
-got large). Delete this file once you've read it into the new session (or
-leave it — it's untracked; check `git status` first).
+---
 
-## Current repo state
+## Who I am
+Solo dev in Tripoli, Libya. IT/cybersecurity student. Building **Zibda (زبدة)**, an
+offline calorie tracker for the Libyan market, as a portfolio piece and a real product.
+Windows 11. Email: abdulmoezshadi.90@gmail.com
 
-- Branch `ui-restructure`.
-- `flutter analyze`: clean. `flutter test`: 141/141 passing.
-- `git status --short` right now:
-  ```
-   M lib/app_state.dart
-   M lib/l10n.dart
-   M lib/main.dart
-   M lib/settings_screen.dart
-   M test/settings_test.dart
-  ?? .claude/
-  ?? HANDOFF.md
-  ```
-  The 5 modified files are the **light/dark toggle work below — done,
-  verified, but NOT YET COMMITTED.** The user asked for a handoff before
-  answering "commit this?" — that's the first thing to resolve.
-- Last 4 commits, newest first, all already pushed to `origin/ui-restructure`:
-  - `4340aaa` "feat: rework food detail page, new macro colors, generic unit picker"
-  - `0da4b8d` "feat: layered card shadows and eased progress bars"
-  - `d675495` "perf: fix per-keystroke lag in the add-food search screen"
-  - `3efdd15` "data: verified dairy, 31 brands"
+## How I want you to work with me
+- Ask questions until you actually understand the request. Don't guess and build.
+- Active voice, direct, concise. No filler, no marketing language, no hype words.
+- **No dashes of any kind.** No hyphens between words, no en dashes, no em dashes.
+- No emojis, no asterisks for emphasis, no semicolons, no colons mid-sentence.
+- Vary sentence length. Short sentences are fine. Conversational, not corporate.
+- Push back when I'm wrong. Tell me when something is a bad idea and why.
+- Flag your own mistakes plainly. Don't bury them.
+- Give exact file paths and complete code. I can't share my screen.
+- **Terminal rule:** git commands in Git Bash with forward slashes
+  (`/c/Users/abdul/dev/calorie_tracker`). Everything else (flutter, dart, keytool,
+  findstr, dir, xcopy) in Command Prompt with backslashes
+  (`C:\Users\abdul\dev\calorie_tracker`). Never mix them in one block.
+- Give me one command at a time when it matters. I paste blocks and the terminal
+  merges them into one line.
 
-## Work done this session, in order
+---
 
-### 1. Milk data batch (`3efdd15`, pushed)
-31 verified milk products (Hawaa, Almarai, Sterilgarda, Nadec, Granarolo,
-Al-Zahrat, Tebra, Acacos, Al-Jaied, Al-Naseem ×10, Safi, Tek Sut, Al-Mazraa,
-Judi, Juhayna, El Rayhan) added to `food_db.dart` from the owner's
-label-photo batch, `verified: true`, values scaled ×2.5 from label per-100ml
-to a 250ml serving. Added `FoodItem.barcode` (nullable, unused by the app
-yet — Phase 9 scanner). One product (Al-Sohoul Almond Milk) was dropped at
-the owner's instruction: its label is missing protein/fat entirely, doesn't
-fit the model's non-nullable macro fields.
+## The product
 
-### 2. Search screen perf fix (`d675495`, pushed)
-User reported "opening the foods menu is slow, every product loads at
-once." Diagnosed with real `--profile`-mode frame timings (not guessed):
-the Foods **tab** was already cheap (`IndexedStack` pre-builds it at app
-start, ~1ms). The actual cause was `search_screen.dart` re-filtering all 44
-foods and rebuilding the whole screen **on every keystroke** — 10-21ms
-spikes vs ~1ms idle. Fixed with a precomputed lowercase search index, a
-200ms debounce, cached filtering, and a 20-row incremental window that
-grows on scroll. New `test/search_screen_test.dart`.
+**Zibda (زبدة)** — butter, colloquially "the best part". Single brand in both
+languages: `Zibda` in Latin, `زبدة` in Arabic. The old name متتبع السعرات is retired
+as a brand (may survive as a store keyword).
 
-**Non-obvious test gotcha hit twice this session, worth remembering**:
-`find.byType(Scrollable).first` is ambiguous in this app — every
-`IndexedStack`-kept-alive tab has its own Scrollable, and a `TextField`'s
-`EditableText` contributes a second (horizontal) one. Scope to the specific
-screen + axis direction. Also: `pumpAndSettle()` does **not** reliably wait
-out a raw `Timer`-based debounce (it only keeps pumping while a frame is
-already scheduled) — use an explicit `tester.pump(debounceDuration)` first.
+**The gap:** global apps don't cover Libyan food. Bazin, mbakbka, couscous, usban,
+sfinz, maqrud, and local packaged brands.
 
-### 3. Design polish (`0da4b8d`, pushed)
-User ran `/impeccable` asking to "make it smoother and expensive." That
-skill is built for web stacks and didn't recognize this Flutter project
-(`hasVisualImplementation: false`); also the brief's example hex values
-didn't match this app's actual locked palette at all — flagged both rather
-than guessing. Scoped down to two safe, high-leverage changes: `theme.dart`
-`cardShadow` is now a layered (tight contact + soft ambient) shadow for
-both palettes, and a new `AnimatedStripedBar` (same
-`ImplicitlyAnimatedWidget` pattern as the existing donut chart, 450ms
-`easeOutCubic`) so the calorie/macro bars glide instead of snapping.
-Goldens regenerated and reviewed visually — same colors, more depth.
+**Differentiators, in order of importance:**
+1. Fully offline. No network permission at all. No accounts, no login.
+2. No ads, ever. Stated product principle.
+3. Arabic-first with full RTL and a language toggle.
+4. Verified nutrition data with visible provenance.
+5. Ramadan mode, household portion presets.
+6. No AI photo scanning. Every competitor does this. I deliberately don't.
 
-### 4. Food detail page rework + new macro colors (`4340aaa`, pushed)
-Big one. User wanted new macro colors (carb `#F59E0B`, fat `#8B5CF6`,
-protein `#EF4444`) and a rebuilt serving-unit picker. **Two important
-things caught before editing** (the user confirmed the fix, not guessed):
-- `c.protein`/`c.fat` were already reused app-wide for kcal-figure text and
-  error-message text (not just macros) — new `AppColors.kcalAccent` /
-  `.fieldError` tokens preserve those old looks; the new hex only applies
-  to genuine macro contexts (home macro row, food detail chips/donut).
-- The user's grep targets (`3b82f6`/`ef4444` as "old" colors) and their
-  stated "hard requirement" palette don't exist in this codebase at all —
-  reported, not silently reconciled.
+**Competitive reality (checked Aug 2026):** the "local food" angle is being filled
+fast. `eatsofra.com` (many cuisines), Loqma (Gulf), Loqma (South Asia), caloly.com
+(Europe, German dev). Nobody has Libya. Nobody else is offline or account-free.
+Speed matters more than I first thought.
 
-Added `FoodItem.isLiquid` + `.densityGPerMl` (default 1.0, override hook)
-and a `GenericUnitKind` enum (g/100g/kg/oz/lb for solid; ml/100ml/l/fl
-oz/cup/tbsp/tsp for liquid, fixed physical conversion constants — cup/tbsp/
-tsp/fl oz use nutrition-label rounded values 240/15/5/30ml, matching this
-app's own existing "1 cup (240 ml)" convention). `FoodItem.genericUnits`
-returns empty when `servingGrams` is null — **9 placeholder foods
-(sample_snack_1-4, sample_main_3, sample_breakfast_2/4, sample_sweet_1,
-sample_drink_1) have no servingGrams and so get named-servings-only; still
-true, nobody's supplied real weights for them yet.**
+---
 
-Food detail page reordered: serving row (tap → two-section bottom sheet:
-named servings, then generic units) → quantity row → macro chips → donut →
-pinned bottom bar. Also implemented real "convert don't reset" on
-fraction/decimal mode switch (`_switchMode`/`_nearestFractionPreset` in
-`food_detail_screen.dart`) — **this didn't exist before**; the old code
-just left `_whole`/`_fractionPreset` stale across a mode switch. New
-`test/macro_units_test.dart` (unit gating, density conversion,
-`kcalPercents` sum-to-100 incl. zero-fat/zero-kcal, macro colors, legacy
-`LogEntry` decode). Verified live on the emulator in Arabic/RTL — colors,
-bottom sheet sections, digit formatting all correct.
+## Hard rules, never violate
 
-### 5. Light/dark mode toggle in Settings (uncommitted — see above)
-New `AppState.themeModeCode` ('system'/'light'/'dark', persisted, mirrors
-the existing `quantityMode` pattern exactly) + `themeMode` getter +
-`setThemeMode()`. `main.dart`'s hardcoded `ThemeMode.system` → `state.
-themeMode` (one line). New Settings row right after language, with
-`_ThemeModeSegments` — same rounded-pill pattern as the food detail page's
-fraction/decimal toggle, icon-only (sun/moon/auto) with `Semantics` labels
-so it stays compact at 320dp. New l10n keys `appearance`/`themeSystem`/
-`themeLight`/`themeDark` (EN+AR). 4 new tests in `test/settings_test.dart`
-(switches live with no restart, switches back, persists across reload,
-renders in RTL). No golden impact (settings screen isn't in any golden,
-default 'system' behaves identically to the old hardcoded value).
+1. **Western digits (0-9) always**, including in Arabic. All numbers go through the
+   custom formatters in `models.dart`. Never locale-aware number formatting.
+2. **Full RTL in Arabic.** Language toggle in the top bar, choice persists.
+3. **All colors from `AppColors.of(context)`.** Never hardcode a hex in a widget.
+4. **All strings through `l10n.dart`**, EN and AR entries both.
+5. **No new packages** without an explicit decision from me.
+6. **Anti-eating-disorder guardrails.** No punishing streaks. No alarm-red for
+   exceeding goals. No encouragement to under-eat. Gentle, non-blocking confirmation
+   below the safety floors (1200 kcal, 1500 for men). Not medical advice, stated in
+   onboarding and settings in both languages.
+7. **Nutrition data honesty.** Verification status is a visible, first-class property.
+   Never present unverified numbers as accurate.
+8. **External-facing files live on a branch that won't be deleted.** Learned the hard
+   way: the privacy policy was on a feature branch and the URL nearly broke.
 
-## Environment notes for next session
+---
 
-1. **Android emulator is NOT currently running** (`adb devices` returned
-   empty at end of session). Relaunch: `flutter emulators --launch
-   libya_test_phone`, poll `adb devices` (1–3 min cold boot), `flutter run
-   -d emulator-5554`. Screenshots via `adb -s emulator-5554 exec-out
-   screencap -p > file.png` + Read; taps via `adb shell input tap X Y` —
-   **always recalibrate X/Y from a fresh screenshot for the CURRENT
-   screen** (the screenshot tool returns images at a *different* pixel
-   scale than the device — the caption states the multiplier, e.g. "×1.17"
-   — multiply displayed-image coordinates by it before tapping; forgetting
-   this wastes several tap-and-recheck cycles).
-2. This session's shell `cwd` reset to `C:\Users\abdul` at least once
-   across a compaction/continuation boundary — always `cd` into
-   `C:\Users\abdul\dev\calorie_tracker` explicitly before git/flutter
-   commands.
-3. The `.claude/launch.json` split (stale project-local copy vs. the real
-   global one at `C:\Users\abdul\.claude\launch.json`) from the previous
-   handoff is presumably still true; wasn't touched this session.
+## Current state (14 Aug 2026)
 
-## Next steps
+Private beta. Well ahead of the original timeline.
 
-Immediate: **decide on the uncommitted light/dark toggle work** (commit +
-push, or keep iterating first).
+**Done:** signed AAB, adaptive launcher icon, splash screen (light + dark), app rename
+to Zibda everywhere, privacy policy live, feature graphic (English), web demo
+deployed, 206 tests passing, analyze clean.
 
-After that, nothing blocking. Per the user's stated plan (CLAUDE.md), next
-up is continuing the Phase 2 data pipeline (snacks/biscuits is the next
-category after dairy), or further design/feature requests as they come.
-The web demo twin (linked in CLAUDE.md) is now out of sync with food_db.dart
-(milk batch) and with the new macro colors/food-detail layout — flag this
-to the owner if raised, per CLAUDE.md's own note about that artifact.
+**Blocked on one thing:** I own an iPhone 15 Pro Max and **no Android device**. This
+blocks Play store screenshots, real-device testing, and the 12-tester closed test that
+starts the mandatory 14-day clock. Everything else is a few hours of work.
+AVD `libya_test_phone` exists but currently fails to launch (exit code 1, empty stderr,
+undiagnosed).
+
+**Open work, no phone needed:**
+- Play Console listing copy, EN + AR
+- Data safety form, content rating, target audience, app access
+- Arabic feature graphic (Figma MCP hit the Starter plan tool-call limit)
+- Remove **Kalee** and **Bifa** from `food_db.dart` — those brands aren't sold in
+  Libya, it was my mistake. Phantom entries would confuse testers.
+- `main/docs/privacy.html` is now redundant (live copy serves from `gh-pages`)
+- Known test warning: a `tap()` on `quick-add-sample_snack_1` misses its hit target.
+  Tests pass, but it may be a real layout bug on small screens.
+
+**Deliberately deferred:** Flutter upgrade (build chain works, don't touch it before
+release), barcode scanner, accounts/sync, iOS via Codemagic + TestFlight ($99 budgeted).
+
+---
+
+## Architecture
+
+Flutter 3.44.6. Local-only `shared_preferences`, JSON day-logs keyed `yyyy-MM-dd`.
+No backend by design. Storage isolated in `AppState` so a backend could be swapped in.
+
+`lib/`
+- `main.dart` — MaterialApp, locale switching, web `?lang=ar|en` override
+- `app_state.dart` — `AppState` (ChangeNotifier) + `AppScope` (InheritedNotifier)
+- `models.dart` — FoodItem, LogEntry, MealType, DayTotals, ServingUnit, number formatters
+- `theme.dart` — `AppColors`, full light + dark palettes
+- `l10n.dart` — hand-rolled EN/AR strings, no intl codegen
+- `food_db.dart` — Libyan foods, EN+AR names, many now cite USDA FDC IDs
+- Screens: `home_screen`, `search_screen`, `meal_detail_screen`, `progress_screen`,
+  `profile_screen`, `create_meal_screen`, `food_detail_screen`
+- Widgets: `food_picker`, `all_foods_tab`, `food_history_tab`, `saved_meals_tab`,
+  `empty_state`
+
+## Color system (`lib/theme.dart` → `AppColors`)
+
+Light: pageBg `#F1EEE0`, header gradient `#35533B` → `#243D2A`, accent `#2E8B57`,
+gold `#E9B949`, card `#FFFDF6`, ink `#1E3325`, muted `#5F6E62`
+Macros: carb `#F59E0B`, fat `#8B5CF6`, protein `#EF4444`
+Also: `kcalAccent #2F8F5B`, `fieldError #D06A4F`
+Dark splash bg: `#12160F`
+`NotoNaskhArabic` bundled for Arabic.
+
+**The old `#16a34a` / `#f7f8fa` palette is dead. Never use it.**
+
+---
+
+## Paths and tooling
+
+| Thing | Path |
+|---|---|
+| Project | `C:\Users\abdul\dev\calorie_tracker` |
+| Flutter | `C:\dev\flutter\bin\flutter.bat` (not on PATH) |
+| JDK | `C:\Program Files\Eclipse Adoptium\jdk-25.0.4.7-hotspot` |
+| Android SDK | `C:\Users\abdul\AppData\Local\Android\Sdk` |
+| Build tools | `...\Sdk\build-tools\36.0.0` |
+| Keystore | `C:\Users\abdul\dev\keystore\calorie_tracker_upload.jks` |
+| AAB output | `build\app\outputs\bundle\release\app-release.aab` |
+
+Gradle 9.1. `compileSdk` and `targetSdk` pinned to **36**. `minSdk 24`, deliberate,
+for older Libyan phones. JDK 25 works despite the known Kotlin plugin risk.
+
+**Signing:** exactly ONE keystore. SHA-256 starts `57:C4:D7`. DN `O=ly.app`.
+Password in `android/key.properties` (gitignored). Backed up to USB drive D and cloud.
+`applicationId` is `ly.app.calorie_tracker` — permanent, cannot change after publish.
+
+**Verify signing after anything that touches `android/`:**
+```
+"C:\Program Files\Eclipse Adoptium\jdk-25.0.4.7-hotspot\bin\keytool.exe" -printcert -jarfile build\app\outputs\bundle\release\app-release.aab
+```
+Expect `O=ly.app` and `57:C4:D7`.
+
+---
+
+## Git layout
+
+Repo: `abdulmoezshadi90-art/calorie_tracker` (public)
+
+- `main` — source of truth for source code
+- `ui-restructure` — my active working branch
+- `gh-pages` — **orphan branch**, deployed website only, no source history
+
+GitHub Pages serves from `gh-pages` root:
+- Demo: `https://abdulmoezshadi90-art.github.io/calorie_tracker/`
+- Policy: `https://abdulmoezshadi90-art.github.io/calorie_tracker/privacy.html`
+
+**Deploying the web demo is a known trap.** `git rm -rf .` untracks files but leaves
+them on disk *and removes `.gitignore`*, so a later `git add -A` stages the entire
+working directory including `android/key.properties`. Always `git status --short`
+before committing on `gh-pages`. The safe wipe keeps `.git`:
+```
+for /d %d in (calorie_tracker\*) do @if /i not "%~nxd"==".git" rd /s /q "%d"
+del /q calorie_tracker\*.*
+```
+Web build command: `flutter build web --release --base-href /calorie_tracker/`
+The `--base-href` is required or Pages serves a blank page.
+`privacy.html` is not in the build output and must be added to the deploy folder.
+
+---
+
+## Design assets
+
+**Figma is the single source of truth.** File `2u2WR8pff16ghV9zpWwGh1`
+(`https://www.figma.com/design/2u2WR8pff16ghV9zpWwGh1`)
+
+Frames: `icon`, `adaptive_foreground`, `adaptive_background`, `splash_mark`,
+`splash_mark_dark`, `feature_graphic`.
+
+Icon: cream bowl, gold mound, forest green gradient background. Exports to
+`assets/icons/`. Splash marks to `assets/branding/`.
+
+The old generator script `tool/generate_app_icon.dart` **was deleted on purpose.**
+Do not recreate it. `tool/generate_meal_icons.dart` is unrelated and stays.
+
+**Adaptive icon constraint:** Android crops to circle/squircle/rounded-square. Keep
+everything inside the centre 666 of a 1024 canvas. Android also applies a 16% inset
+to the foreground layer.
+
+Figma MCP is on a **Starter plan with a tool-call limit** that gets hit quickly.
+
+---
+
+## Verify loop
+
+```
+C:\dev\flutter\bin\flutter.bat analyze
+C:\dev\flutter\bin\flutter.bat test
+```
+206 tests. Golden screenshots live in `test\goldens\`. When a layout change is
+deliberate, inspect `test\failures\*_isolatedDiff.png` **before** regenerating:
+```
+C:\dev\flutter\bin\flutter.bat test --update-goldens test\screenshots_test.dart
+```
+Never update goldens blind. It bakes in bugs permanently.
+
+---
+
+## Docs
+
+`README.md`, `PLAN.md`, `CLAUDE.md` (Claude Code handoff brief), `PRODUCT.md`,
+plus an Obsidian vault (dashboard, phase tracker, data verification tracker, beta
+feedback index, decision log, Ramadan countdown).
+
+`PRODUCT.md` is currently stale in places (says 46 tests, says all data is placeholder).
+Worth a refresh.

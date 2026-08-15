@@ -17,6 +17,7 @@ cover Libyan products or home dishes — this one does.
 | :---: | :---: |
 | ![Home, English, light](test/goldens/home_light_en.png) | ![Home, Arabic, dark](test/goldens/home_dark_ar.png) |
 
+**[Try the live web demo](https://abdulmoezshadi90-art.github.io/calorie_tracker/)**
 
 ## Tech
 
