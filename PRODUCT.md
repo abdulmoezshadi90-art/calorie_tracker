@@ -12,7 +12,7 @@ Primary users are people in the Libyan market who want to track daily calorie an
 
 ## Product Purpose
 
-A mobile calorie-counting app that fills the gap global apps (e.g. MyFitnessPal) leave for Libyan food culture: local packaged snacks (Kalee, Bifa, Al Naseem) and home dishes (bazin, mbakbka, couscous, usban, sfinz, maqrud) aren't in their databases. The app lets users log meals against daily calorie/macro goals, works fully offline, and keeps all data on-device.
+A mobile calorie-counting app that fills the gap global apps (e.g. MyFitnessPal) leave for Libyan food culture: local packaged brands (Al Naseem, Al-Jaied, Almarai, Hawaa) and home dishes (bazin, mbakbka, couscous, usban, sfinz, maqrud) aren't in their databases. The app lets users log meals against daily calorie/macro goals, works fully offline, and keeps all data on-device.
 
 ## Positioning
 
@@ -27,7 +27,7 @@ Solo-developer workflow: Windows 11, Flutter 3.44.6. Android is the primary dist
 - MVP scope is deliberately tight: no barcode scanner, no accounts/login, no social features, no ads, no in-app AI.
 - All numerals must render as Western digits (0-9) everywhere, including in Arabic UI text; Eastern Arabic numeral input is normalized on entry. This is a hard, never-relax requirement.
 - Full Arabic RTL layout with a persistent language toggle.
-- All nutrition data is placeholder/estimated until verified against real product labels or reference recipes through the documented data pipeline; verified vs. unverified status must stay visible to users, never silently presented as accurate.
+- Nutrition data enters through a documented verification pipeline (label photo, extraction, owner check against the photo) before it's marked verified. 108 of 164 foods carry a verified source note as of this update; the rest are placeholder estimates. Verified vs. unverified status must stay visible to users, never silently presented as accurate.
 - Anti-eating-disorder guardrails: no punishing streaks, no alarm-red styling for exceeding goals, no under-eating encouragement, gentle (non-blocking) confirmation below safety floors for calorie/macro goals.
 - Local-only storage (shared_preferences); no backend by design. An optional account/sync layer is a future-phase decision, never required.
 - Not medical advice — the app records intake, it does not prescribe or diagnose. This disclaimer is shown in onboarding and settings, in English and Arabic.
@@ -35,11 +35,11 @@ Solo-developer workflow: Windows 11, Flutter 3.44.6. Android is the primary dist
 
 ## Brand Commitments
 
-Name: "Calorie Tracker · متتبع السعرات". Positioning language that must never be contradicted by UI or store copy: works offline, no signup, data stays on the user's phone, built for Libyan food and Libyan life. Visual identity tokens (warm cream background, forest green header, gold accent, macro colors) are already established in the codebase (`lib/theme.dart`) with full light and dark palettes — treated as existing visual authority, not open for reinvention without a deliberate redesign decision.
+Name: "Zibda · زبدة" (one brand, both languages; the earlier name متتبع السعرات is retired). Positioning language that must never be contradicted by UI or store copy: works offline, no signup, data stays on the user's phone, built for Libyan food and Libyan life. Visual identity tokens (warm cream background, forest green header, gold accent, macro colors) are already established in the codebase (`lib/theme.dart`) with full light and dark palettes — treated as existing visual authority, not open for reinvention without a deliberate redesign decision.
 
 ## Evidence on Hand
 
-- Live codebase with an established Flutter design-token system (`lib/theme.dart`), 46 passing tests, and committed golden-image baselines (`test/goldens/`).
+- Live codebase with an established Flutter design-token system (`lib/theme.dart`), 206 passing tests, analyzer clean, and committed golden-image baselines (`test/goldens/`).
 - A prior interactive web demo (hand-built HTML twin of the app) and a screenshots artifact exist outside this repo; the web demo duplicates the food database and can drift out of sync when `food_db.dart` changes significantly.
 - Public GitHub repository: https://github.com/abdulmoezshadi90-art/calorie_tracker (tagged releases mirror roadmap phases).
 - No customer testimonials, press, or case studies exist yet (private beta stage) — future work must not fabricate these.
