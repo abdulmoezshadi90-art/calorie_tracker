@@ -19,7 +19,7 @@ const _mailChannel = MethodChannel('ly.app.calorie_tracker/mail');
 
 Future<void> openFeedbackEmail(BuildContext context, AppState state) async {
   final l = state.l;
-  final subject = 'Calorie Tracker feedback';
+  final subject = 'Zibda feedback';
   final body = 'App version: $appVersion\nLanguage: ${state.localeCode}\n\n';
   var opened = false;
   try {
