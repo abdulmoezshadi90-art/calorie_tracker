@@ -28,9 +28,9 @@ class HistoryTab extends StatefulWidget {
   /// unfiltered by search (the existing meal-type filter still applies).
   final String query;
 
-  /// Row tap — log flow pushes the food detail screen, the meal builder
-  /// adds a row to the draft meal. Second argument is the food's last-used
-  /// serving amount, so the log flow can prefill it.
+  /// Row tap — pushes the food detail screen (log flow logs to today, the
+  /// meal builder uses its draft-mode to add a row instead). Second
+  /// argument is the food's last-used serving amount, prefilled there.
   final void Function(FoodItem food, double servings) onFoodTap;
 
   /// Plus button — adds the food's last-used serving amount directly.

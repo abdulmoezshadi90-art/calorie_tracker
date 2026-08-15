@@ -12,15 +12,29 @@ import 'theme.dart';
 /// bottom sheet as the primary way to log from a food row. Constructor
 /// carries no search-specific state so it can be opened from anywhere
 /// (search results today; meal detail later).
+///
+/// Two confirm modes, exactly one applies:
+/// - [meal] set, [onConfirm] null: logs to today via `AppState.addEntry`
+///   (the normal log flow).
+/// - [onConfirm] set: hands back the resulting base-serving multiplier
+///   instead of logging anywhere, so a caller can use this same
+///   unit/quantity/macros picker for a non-logging context (the meal
+///   builder's draft rows, which have no date or meal-type per item).
+///   The time-of-day row makes no sense without a log entry, so it's
+///   hidden in this mode.
 class FoodDetailScreen extends StatefulWidget {
   const FoodDetailScreen({
     super.key,
     required this.food,
-    required this.meal,
+    this.meal,
     this.initialServings,
-  });
+    this.onConfirm,
+  }) : assert(
+         (meal == null) != (onConfirm == null),
+         'Pass exactly one of meal (log to today) or onConfirm (custom save).',
+       );
   final FoodItem food;
-  final MealType meal;
+  final MealType? meal;
 
   /// Prefills the quantity input with this many base servings (History tab
   /// row tap, "prefilled with the serving amount last used for that food").
@@ -29,6 +43,10 @@ class FoodDetailScreen extends StatefulWidget {
   /// that unit's multiplier is 1:1 with the base serving, so this value
   /// maps straight onto [_quantity] with no conversion needed.
   final double? initialServings;
+
+  /// See the class doc's "two confirm modes". Return true on success,
+  /// mirroring `AppState.addEntry`'s bool result.
+  final Future<bool> Function(double multiplier)? onConfirm;
 
   @override
   State<FoodDetailScreen> createState() => _FoodDetailScreenState();
@@ -45,6 +63,8 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
   late TimeOfDay _time;
 
   static const _fractionValues = {1: 0.25, 2: 1 / 3, 3: 0.5, 4: 2 / 3, 5: 0.75};
+
+  bool get _isDraftMode => widget.onConfirm != null;
 
   @override
   void initState() {
@@ -170,12 +190,14 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                   label: l.unitLabel(_unit),
                   onTap: () => _showUnitPicker(context),
                 ),
-                const SizedBox(height: 20),
-                _ServingRow(
-                  caption: l.time,
-                  label: fmtTime(_time.hour, _time.minute),
-                  onTap: () => _pickTime(context),
-                ),
+                if (!_isDraftMode) ...[
+                  const SizedBox(height: 20),
+                  _ServingRow(
+                    caption: l.time,
+                    label: fmtTime(_time.hour, _time.minute),
+                    onTap: () => _pickTime(context),
+                  ),
+                ],
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -271,22 +293,28 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
       return;
     }
     HapticFeedback.lightImpact();
-    final date = state.selectedDate;
-    final ok = await state.addEntry(
-      date,
-      widget.food.id,
-      _multiplier,
-      widget.meal,
-      unitId: _unit.id,
-      quantity: _quantity,
-      loggedAt: DateTime(
-        date.year,
-        date.month,
-        date.day,
-        _time.hour,
-        _time.minute,
-      ),
-    );
+    final onConfirm = widget.onConfirm;
+    final bool ok;
+    if (onConfirm != null) {
+      ok = await onConfirm(_multiplier);
+    } else {
+      final date = state.selectedDate;
+      ok = await state.addEntry(
+        date,
+        widget.food.id,
+        _multiplier,
+        widget.meal!,
+        unitId: _unit.id,
+        quantity: _quantity,
+        loggedAt: DateTime(
+          date.year,
+          date.month,
+          date.day,
+          _time.hour,
+          _time.minute,
+        ),
+      );
+    }
     if (!mounted) return;
     if (!ok) {
       setState(() => _error = l.saveFailed);
@@ -300,14 +328,19 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
     // the old sheet-on-search behavior. Callers that don't care (Foods
     // tab, a persistent tab underneath) simply ignore the result.
     Navigator.of(context).pop(true);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '${l.added}: ${l.foodName(widget.food)} · ${fmtInt(kcal)} ${l.kcal}',
+    // The draft-meal path shows the new row in the running list right
+    // behind this screen — that's feedback enough, and there's no "today"
+    // for the message to reference.
+    if (onConfirm == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${l.added}: ${l.foodName(widget.food)} · ${fmtInt(kcal)} ${l.kcal}',
+          ),
+          duration: const Duration(seconds: 2),
         ),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+      );
+    }
   }
 
   Future<void> _pickTime(BuildContext context) async {

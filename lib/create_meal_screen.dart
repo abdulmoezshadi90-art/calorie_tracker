@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'app_state.dart';
 import 'food_db.dart';
+import 'food_detail_screen.dart';
 import 'food_picker.dart';
 import 'models.dart';
 import 'settings_screen.dart' show WesternDigitsFormatter;
@@ -10,12 +11,13 @@ import 'theme.dart';
 /// Full-screen meal builder: name, optional meal-type tag, the shared food
 /// picker (food_picker.dart — All Foods/History/My Meals, same as the log
 /// flow), running list with per-item serving edit, live totals, save.
-/// Picking a food or saved meal here adds a draft row instead of pushing a
-/// detail screen or logging to today, since there is no "today" in a
-/// draft meal. [existing] non-null puts the screen in edit mode (My Meals
-/// tab long-press → Edit): fields prefill from it and Save updates it in
-/// place instead of creating
-/// a new SavedMeal.
+/// Picking a food or saved meal here mirrors the log flow: a row tap opens
+/// FoodDetailScreen's unit/quantity/macros picker (in its draft-mode —
+/// see that file — since there's no "today" or meal type per item to log
+/// against), quick-add appends a draft row immediately at 1 serving.
+/// [existing] non-null puts the screen in edit mode (My Meals tab
+/// long-press → Edit): fields prefill from it and Save updates it in
+/// place instead of creating a new SavedMeal.
 class CreateMealScreen extends StatefulWidget {
   const CreateMealScreen({super.key, this.existing});
   final SavedMeal? existing;
@@ -47,10 +49,10 @@ class _CreateMealScreenState extends State<CreateMealScreen> {
     super.dispose();
   }
 
-  /// Picking a food from the shared picker (row tap or quick-add — there is
-  /// no separate detail-screen step here, so both mean the same thing:
-  /// add a draft row starting at [servings]). Merges into an existing row
-  /// for the same food rather than duplicating it.
+  /// Adds (or merges into an existing row for the same food) a draft row
+  /// at [servings] base servings. Shared by quick-add (called directly)
+  /// and the detail-screen confirm path (called from [_openFoodDetail]'s
+  /// onConfirm once the user picks a unit and quantity there).
   void _addFood(FoodItem food, double servings) {
     setState(() {
       final index = _items.indexWhere((i) => i.foodId == food.id);
@@ -63,6 +65,25 @@ class _CreateMealScreenState extends State<CreateMealScreen> {
         _items.add(SavedMealItem(foodId: food.id, servings: servings));
       }
     });
+  }
+
+  /// Row tap — pushes the same unit/quantity/macros picker the log flow
+  /// uses, in its draft-mode (no meal type, no time-of-day row, hands back
+  /// a multiplier instead of logging to today). [servings] prefills the
+  /// quantity the way it does in the log flow.
+  Future<void> _openFoodDetail(FoodItem food, double servings) async {
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => FoodDetailScreen(
+          food: food,
+          initialServings: servings,
+          onConfirm: (multiplier) async {
+            _addFood(food, multiplier);
+            return true;
+          },
+        ),
+      ),
+    );
   }
 
   /// Picking a saved meal from the shared picker's My Meals tab — merges
@@ -296,7 +317,7 @@ class _CreateMealScreenState extends State<CreateMealScreen> {
               Expanded(
                 flex: 4,
                 child: FoodPicker(
-                  onFoodTap: _addFood,
+                  onFoodTap: _openFoodDetail,
                   onFoodQuickAdd: _addFood,
                   onMealTap: _addSavedMealItems,
                   onMealQuickAdd: _addSavedMealItems,

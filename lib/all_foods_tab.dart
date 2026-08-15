@@ -46,10 +46,10 @@ class AllFoodsTab extends StatefulWidget {
   /// food regardless of the current locale.
   final String query;
 
-  /// Row tap — log flow pushes the food detail screen, the meal builder
-  /// adds a row to the draft meal. Second argument is the serving count to
-  /// start from (always 1 here — a food with no logging history has no
-  /// "last used" amount to prefill).
+  /// Row tap — pushes the food detail screen (log flow logs to today, the
+  /// meal builder uses its draft-mode to add a row instead). Second
+  /// argument is the serving count to start from (always 1 here — a food
+  /// with no logging history has no "last used" amount to prefill).
   final void Function(FoodItem food, double servings) onFoodTap;
 
   /// Plus button — adds one serving directly (log flow logs it to today
