@@ -280,11 +280,21 @@ class _CreateMealScreenState extends State<CreateMealScreen> {
           return Column(
             children: [
               if (isShort)
-                Flexible(child: SingleChildScrollView(child: metadata))
+                // flex: 1 against the picker's flex: 4 below — Flexible and
+                // Expanded both default to flex: 1, which split the
+                // remaining space 50/50 regardless of how little metadata
+                // actually needed, starving the picker down to about half
+                // its real share. On a 320x568 screen this was a genuine
+                // bug, not just a cosmetic squeeze: the quick-add button's
+                // computed tap position landed on unrelated content and
+                // the tap silently did nothing. Confirmed by a repro test
+                // that checked the actual outcome, not just "no exception".
+                Flexible(flex: 1, child: SingleChildScrollView(child: metadata))
               else
                 metadata,
               Container(height: 1, color: c.divider),
               Expanded(
+                flex: 4,
                 child: FoodPicker(
                   onFoodTap: _addFood,
                   onFoodQuickAdd: _addFood,
