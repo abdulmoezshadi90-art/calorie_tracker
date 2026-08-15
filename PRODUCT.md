@@ -12,15 +12,15 @@ Primary users are people in the Libyan market who want to track daily calorie an
 
 ## Product Purpose
 
-A mobile calorie-counting app that fills the gap global apps (e.g. MyFitnessPal) leave for Libyan food culture: local packaged brands (Al Naseem, Al-Jaied, Almarai, Hawaa) and home dishes (bazin, mbakbka, couscous, usban, sfinz, maqrud) aren't in their databases. The app lets users log meals against daily calorie/macro goals, works fully offline, and keeps all data on-device.
+A mobile calorie-counting app that fills the gap global apps (e.g. MyFitnessPal) leave for Libyan food culture: local packaged brands (Al Naseem, Al-Jaied, Almarai, Hawaa) aren't in their databases, and neither are the everyday ingredients Libyan home cooking runs on. Named composite home dishes (bazin, mbakbka, usban, sfinz, maqrud) are planned but not yet entered in `food_db.dart` — current coverage is packaged brands plus base ingredients (flour, barley, couscous, pasta, produce, etc.), not the finished dishes themselves. The app lets users log meals against daily calorie/macro goals, works fully offline, and keeps all data on-device.
 
 ## Positioning
 
-Libyan-specific food database (packaged products and home dishes, searchable in Arabic or English) combined with full Arabic RTL support, no account/signup requirement, and zero data leaving the device — a combination no global calorie app offers for this market.
+Libyan-specific food database (packaged products and everyday ingredients today, searchable in Arabic or English; named home dishes are roadmap, not shipped) combined with full Arabic RTL support, no account/signup requirement, and zero data leaving the device — a combination no global calorie app offers for this market.
 
 ## Operating Context
 
-Solo-developer workflow: Windows 11, Flutter 3.44.6. Android is the primary distribution channel (direct APK plus eventual Play Store), with iOS as a best-effort parallel track via cloud CI (no Mac owned). Private beta is underway with real testers on their own phones; the developer has no physical Android devices and relies on an emulator (AVD `libya_test_phone`) for local QA. A weekly manual QA checklist runs before every release. Nutrition data enters through a manual verification pipeline (label photos + spreadsheet), not automated sourcing.
+Solo-developer workflow: Windows 11, Flutter 3.44.6. Android is the primary distribution channel (direct APK plus eventual Play Store), with iOS as a best-effort parallel track via cloud CI (no Mac owned). Private beta is underway with real testers on their own phones; the developer now has a physical Android device for local QA, in addition to the emulator (AVD `libya_test_phone`). A weekly manual QA checklist runs before every release. Nutrition data enters through a manual verification pipeline (label photos + spreadsheet), not automated sourcing.
 
 ## Capabilities and Constraints
 
@@ -39,7 +39,7 @@ Name: "Zibda · زبدة" (one brand, both languages; the earlier name متتب�
 
 ## Evidence on Hand
 
-- Live codebase with an established Flutter design-token system (`lib/theme.dart`), 206 passing tests, analyzer clean, and committed golden-image baselines (`test/goldens/`).
+- Live codebase with an established Flutter design-token system (`lib/theme.dart`), 207 passing tests, analyzer clean, and committed golden-image baselines (`test/goldens/`).
 - A prior interactive web demo (hand-built HTML twin of the app) and a screenshots artifact exist outside this repo; that older demo duplicates the food database and can drift out of sync when `food_db.dart` changes significantly.
 - The actual app also ships as a Flutter web build, deployed live at https://abdulmoezshadi90-art.github.io/calorie_tracker/ from the orphan `gh-pages` branch (`flutter build web --release --base-href /calorie_tracker/`). This is the real app, not the hand-built demo above, so it stays in sync with `food_db.dart` automatically.
 - Public GitHub repository: https://github.com/abdulmoezshadi90-art/calorie_tracker (tagged releases mirror roadmap phases).

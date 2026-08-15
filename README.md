@@ -1,13 +1,15 @@
 # Zibda · زبدة
 
 A calorie tracking app for the Libyan market. Global calorie apps don't
-cover Libyan products or home dishes — this one does.
+cover Libyan products — this one does. Named Libyan home dishes (bazin,
+mbakbka, usban, sfinz, maqrud) are planned but not in the database yet —
+today's coverage is local packaged brands (Al Naseem and others) and the
+everyday ingredients those dishes are built from.
 
 ## Why it's different
 
-- **Libyan foods and dishes**: Al Naseem, bazin,
-  mbakbka, couscous, usban, sfinz, maqrud, and more — searchable in
-  Arabic or English
+- **Libyan food coverage**: local packaged brands like Al Naseem, plus
+  everyday ingredients — searchable in Arabic or English
 - **Full Arabic RTL** with a one-tap language toggle
 - **Works completely offline** — no connection needed, ever
 - **No account required**, no sign-up
