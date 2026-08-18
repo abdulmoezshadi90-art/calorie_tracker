@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'app_shell.dart';
 import 'app_state.dart';
 import 'empty_state.dart';
-import 'food_db.dart';
 import 'models.dart';
 import 'theme.dart';
 import 'weight_log.dart';
@@ -558,11 +557,11 @@ class _MealSection extends StatelessWidget {
             child: Column(
               children: [
                 for (final entry in entries)
-                  if (foodById[entry.foodId] != null)
+                  if (state.resolveFood(entry.foodId) case final food?)
                     ListTile(
                       dense: true,
                       title: Text(
-                        l.foodName(foodById[entry.foodId]!),
+                        l.foodName(food),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -570,11 +569,11 @@ class _MealSection extends StatelessWidget {
                         ),
                       ),
                       subtitle: Text(
-                        '${fmtServings(entry.servings)} × ${l.servingLabel(foodById[entry.foodId]!)}',
+                        '${fmtServings(entry.servings)} × ${l.servingLabel(food)}',
                         style: TextStyle(fontSize: 11, color: c.muted),
                       ),
                       trailing: Text(
-                        '${fmtInt((foodById[entry.foodId]!.kcal * entry.servings).round())} ${l.kcal}',
+                        '${fmtInt((food.kcal * entry.servings).round())} ${l.kcal}',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,

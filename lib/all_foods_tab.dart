@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'app_state.dart';
+import 'custom_food_screen.dart';
 import 'empty_state.dart';
-import 'food_db.dart';
 import 'models.dart';
 import 'round_icon_button.dart';
 import 'theme.dart';
@@ -39,6 +39,7 @@ class AllFoodsTab extends StatefulWidget {
     required this.onFoodTap,
     required this.onQuickAdd,
     required this.onClearSearch,
+    required this.onAddCustomFood,
   });
 
   /// Trimmed or raw search text from food_picker.dart — empty means show
@@ -61,6 +62,11 @@ class AllFoodsTab extends StatefulWidget {
   /// state's action. food_db always has entries, so this is never reached
   /// with an empty query (see the debug assertion in build()).
   final VoidCallback onClearSearch;
+
+  /// The persistent "Add a food" row's tap target — always visible, never
+  /// hidden, unlike the log-flow-only action cards on the My Meals tab
+  /// (creating a custom food isn't tied to "today" or a specific meal).
+  final VoidCallback onAddCustomFood;
 
   @override
   State<AllFoodsTab> createState() => _AllFoodsTabState();
@@ -131,7 +137,7 @@ class _AllFoodsTabState extends State<AllFoodsTab> {
     final loggedIds = {for (final e in state.historyEntries) e.food.id};
     final logged = <FoodItem>[];
     final rest = <FoodItem>[];
-    for (final f in foodDatabase) {
+    for (final f in state.allFoods) {
       if (!matches(f)) continue;
       (loggedIds.contains(f.id) ? logged : rest).add(f);
     }
@@ -188,33 +194,91 @@ class _AllFoodsTabState extends State<AllFoodsTab> {
       'AllFoodsTab rendered empty with no active query — food_db is empty?',
     );
 
+    final Widget body;
     if (rows.isEmpty) {
       // Only reachable with an active query — never say "the food list is
       // empty" here, because it is not; only this search came up empty.
-      return EmptyState(
+      body = EmptyState(
         icon: Icons.search_off_outlined,
         line: l.noResults,
         hint: l.searchEmptyHint,
         actionLabel: l.clearSearch,
         onAction: widget.onClearSearch,
       );
+    } else {
+      final visible = rows.take(_visibleCount).toList();
+      body = ListView.builder(
+        controller: _scrollController,
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        itemCount: visible.length,
+        itemBuilder: (context, i) => switch (visible[i]) {
+          _HeaderRow(:final label) => _SectionHeader(label: label),
+          _FoodRow(:final food) => RepaintBoundary(
+            child: _AllFoodsRow(
+              food: food,
+              onTap: widget.onFoodTap,
+              onQuickAdd: widget.onQuickAdd,
+            ),
+          ),
+        },
+      );
     }
 
-    final visible = rows.take(_visibleCount).toList();
-    return ListView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      itemCount: visible.length,
-      itemBuilder: (context, i) => switch (visible[i]) {
-        _HeaderRow(:final label) => _SectionHeader(label: label),
-        _FoodRow(:final food) => RepaintBoundary(
-          child: _AllFoodsRow(
-            food: food,
-            onTap: widget.onFoodTap,
-            onQuickAdd: widget.onQuickAdd,
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: _AddFoodRow(onTap: widget.onAddCustomFood),
+        ),
+        Expanded(child: body),
+      ],
+    );
+  }
+}
+
+/// Persistent header above the list — always visible regardless of search
+/// or empty state, matching how the My Meals tab's action cards stay put
+/// (saved_meals_tab.dart), just styled as a single full-width row instead
+/// of a card since there's only one action here, not two side by side.
+class _AddFoodRow extends StatelessWidget {
+  const _AddFoodRow({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final l = AppScope.of(context).l;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: c.cardShadow,
+      ),
+      child: Material(
+        color: c.card,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Icon(Icons.add_circle_outline, color: c.accent, size: 22),
+                const SizedBox(width: 12),
+                Text(
+                  l.addFoodAction,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: c.ink,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      },
+      ),
     );
   }
 }
@@ -315,6 +379,12 @@ class _AllFoodsRow extends StatelessWidget {
             ],
           ),
           onTap: () => onTap(food, 1.0),
+          // Edit/delete only make sense for a food the user created —
+          // food_db.dart entries are the curated, verified database and
+          // stay read-only.
+          onLongPress: food.category == FoodCategory.custom
+              ? () => showCustomFoodOptionsSheet(context: context, food: food)
+              : null,
         ),
       ),
     );

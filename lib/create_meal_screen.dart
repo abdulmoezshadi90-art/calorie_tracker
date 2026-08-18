@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_state.dart';
-import 'food_db.dart';
+import 'custom_food_screen.dart';
 import 'food_detail_screen.dart';
 import 'food_picker.dart';
 import 'models.dart';
@@ -162,7 +162,7 @@ class _CreateMealScreenState extends State<CreateMealScreen> {
 
     double sumFor(double Function(FoodItem) pick) =>
         _items.fold(0.0, (sum, item) {
-          final food = foodById[item.foodId];
+          final food = state.resolveFood(item.foodId);
           if (food == null) return sum;
           return sum + pick(food) * item.servings;
         });
@@ -321,6 +321,11 @@ class _CreateMealScreenState extends State<CreateMealScreen> {
                   onFoodQuickAdd: _addFood,
                   onMealTap: _addSavedMealItems,
                   onMealQuickAdd: _addSavedMealItems,
+                  onAddCustomFood: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const CustomFoodScreen(),
+                    ),
+                  ),
                 ),
               ),
               SafeArea(
@@ -501,7 +506,7 @@ class _MealItemRowState extends State<_MealItemRow> {
     final c = AppColors.of(context);
     final state = AppScope.of(context);
     final l = state.l;
-    final food = foodById[widget.item.foodId];
+    final food = state.resolveFood(widget.item.foodId);
     if (food == null) return const SizedBox.shrink();
 
     return Padding(

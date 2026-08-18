@@ -5,14 +5,14 @@ import 'app_state.dart';
 import 'create_meal_screen.dart';
 import 'empty_state.dart';
 import 'filter_sort_sheet.dart';
-import 'food_db.dart';
 import 'models.dart';
 import 'round_icon_button.dart';
 import 'theme.dart';
 
-double _totalKcal(SavedMeal meal) => meal.items.fold(
+double _totalKcal(AppState state, SavedMeal meal) => meal.items.fold(
   0.0,
-  (sum, item) => sum + (foodById[item.foodId]?.kcal ?? 0) * item.servings,
+  (sum, item) =>
+      sum + (state.resolveFood(item.foodId)?.kcal ?? 0) * item.servings,
 );
 
 /// My Meals tab content (food_picker.dart's tab selector, tab 2):
@@ -285,7 +285,7 @@ class _SavedMealRow extends StatelessWidget {
     final c = AppColors.of(context);
     final state = AppScope.of(context);
     final l = state.l;
-    final kcal = _totalKcal(meal);
+    final kcal = _totalKcal(state, meal);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -373,7 +373,7 @@ Future<void> logSavedMealWithConfirmation({
     messenger.showSnackBar(SnackBar(content: Text(l.saveFailed)));
     return;
   }
-  final kcal = _totalKcal(meal);
+  final kcal = _totalKcal(state, meal);
   messenger.showSnackBar(
     SnackBar(
       content: Text('${l.added}: ${meal.name} · ${fmtInt(kcal)} ${l.kcal}'),
@@ -428,7 +428,7 @@ void showSavedMealDetailSheet({
                 itemCount: meal.items.length,
                 itemBuilder: (context, i) {
                   final item = meal.items[i];
-                  final food = foodById[item.foodId];
+                  final food = state.resolveFood(item.foodId);
                   if (food == null) return const SizedBox.shrink();
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6),

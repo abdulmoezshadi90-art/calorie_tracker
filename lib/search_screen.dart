@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'app_state.dart';
 import 'copy_meal_sheet.dart';
 import 'create_meal_screen.dart';
+import 'custom_food_screen.dart';
 import 'food_detail_screen.dart';
 import 'food_picker.dart';
 import 'models.dart';
@@ -110,6 +111,9 @@ class SearchScreen extends StatelessWidget {
         ).push(MaterialPageRoute(builder: (_) => const CreateMealScreen())),
         onCopyPreviousMeal: () =>
             showCopyMealSheet(context: context, targetMeal: meal),
+        onAddCustomFood: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const CustomFoodScreen())),
       ),
     );
   }

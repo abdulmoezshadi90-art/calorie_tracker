@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'app_state.dart';
-import 'food_db.dart';
 import 'models.dart';
 import 'theme.dart';
 
@@ -130,7 +129,7 @@ class _CopyMealRow extends StatelessWidget {
     final entries = state.entriesFor(day, meal: sourceMeal);
     final kcal = entries.fold<double>(
       0,
-      (sum, e) => sum + (foodById[e.foodId]?.kcal ?? 0) * e.servings,
+      (sum, e) => sum + (state.resolveFood(e.foodId)?.kcal ?? 0) * e.servings,
     );
 
     return Material(

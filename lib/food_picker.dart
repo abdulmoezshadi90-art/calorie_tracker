@@ -26,6 +26,7 @@ class FoodPicker extends StatefulWidget {
     required this.onFoodQuickAdd,
     required this.onMealTap,
     required this.onMealQuickAdd,
+    required this.onAddCustomFood,
     this.onCreateMeal,
     this.onCopyPreviousMeal,
   });
@@ -43,6 +44,10 @@ class FoodPicker extends StatefulWidget {
 
   /// Plus button on My Meals.
   final ValueChanged<SavedMeal> onMealQuickAdd;
+
+  /// All Foods tab's persistent "Add a food" row — always shown, unlike the
+  /// two callbacks below.
+  final VoidCallback onAddCustomFood;
 
   /// My Meals action cards — null hides the respective card.
   final VoidCallback? onCreateMeal;
@@ -178,6 +183,7 @@ class _FoodPickerState extends State<FoodPicker> {
               onFoodTap: widget.onFoodTap,
               onQuickAdd: widget.onFoodQuickAdd,
               onClearSearch: _clearSearch,
+              onAddCustomFood: widget.onAddCustomFood,
             ),
           },
         ),

@@ -343,6 +343,7 @@ class L10n {
     FoodCategory.breakfast => isAr ? 'فطور' : 'Breakfast',
     FoodCategory.sweet => isAr ? 'حلويات' : 'Sweets',
     FoodCategory.drink => isAr ? 'مشروبات' : 'Drinks',
+    FoodCategory.custom => isAr ? 'أطعمتي' : 'My Foods',
   };
 
   static const _monthsEn = [
@@ -482,6 +483,14 @@ class L10n {
   String get noPreviousMeals =>
       isAr ? 'لا توجد وجبات في آخر 14 يومًا' : 'No meals in the last 14 days';
   String get mealCopied => isAr ? 'تم نسخ الوجبة' : 'Meal copied';
+
+  // Custom food (add-a-product) screen and its All Foods tab entry point.
+  String get addFoodAction => isAr ? 'أضف طعامًا' : 'Add a food';
+  String get addFoodTitle => isAr ? 'إضافة طعام' : 'Add a food';
+  String get editFoodTitle => isAr ? 'تعديل الطعام' : 'Edit food';
+  String get foodNameLabel => isAr ? 'اسم الطعام' : 'Food name';
+  String get foodNameRequired => isAr ? 'أدخل اسم الطعام' : 'Enter a food name';
+  String get foodSaved => isAr ? 'تم حفظ الطعام' : 'Food saved';
 
   String foodName(FoodItem f) => isAr ? f.nameAr : f.nameEn;
   String servingLabel(FoodItem f) => isAr ? f.servingAr : f.servingEn;

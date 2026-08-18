@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'app_state.dart';
-import 'food_db.dart';
 import 'food_detail_screen.dart';
 import 'models.dart';
 import 'round_icon_button.dart';
 import 'theme.dart';
 
-/// Read-only browser over the food database, grouped by category. Tapping
-/// a food picks a meal, then opens the food detail page — browsing turns
-/// into logging in one tap. No new data model; a pure view over food_db.
+/// Read-only browser over every food (food_db.dart plus any custom foods
+/// the user has added), grouped by category — custom foods land in their
+/// own "My Foods" bucket (FoodCategory.custom). Tapping a food picks a
+/// meal, then opens the food detail page — browsing turns into logging in
+/// one tap. No new data model here; editing/deleting a custom food lives
+/// on the All Foods tab (all_foods_tab.dart), where it was created.
 class FoodsScreen extends StatelessWidget {
   const FoodsScreen({super.key});
 
@@ -36,7 +38,7 @@ class FoodsScreen extends StatelessWidget {
             ),
           ),
         ),
-        for (final food in foodDatabase)
+        for (final food in state.allFoods)
           if (food.category == category) food,
         const SizedBox(height: 8),
       ],

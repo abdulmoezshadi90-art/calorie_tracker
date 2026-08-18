@@ -8,6 +8,18 @@ class PortionPreset {
   final String nameAr;
   final double grams;
   const PortionPreset(this.nameEn, this.nameAr, this.grams);
+
+  Map<String, dynamic> toJson() => {
+    'nameEn': nameEn,
+    'nameAr': nameAr,
+    'grams': grams,
+  };
+
+  factory PortionPreset.fromJson(Map<String, dynamic> json) => PortionPreset(
+    json['nameEn'] as String,
+    json['nameAr'] as String,
+    (json['grams'] as num).toDouble(),
+  );
 }
 
 /// A food item in the local database. Nutrition values are per one serving.
@@ -135,16 +147,65 @@ class FoodItem {
     required this.fat,
     required this.category,
     this.verified = false,
-    this.sourceNote = 'Placeholder — unverified development estimate',
+    this.sourceNote = _placeholderSourceNote,
     this.barcode,
     this.servingGrams,
     this.presets = const [],
     this.isLiquid = false,
     this.densityGPerMl = 1.0,
   });
+
+  /// Round-trip for custom (user-created) foods, the only [FoodItem]s that
+  /// are ever persisted — every entry in food_db.dart is a compile-time
+  /// constant and never goes through this.
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'nameEn': nameEn,
+    'nameAr': nameAr,
+    'servingEn': servingEn,
+    'servingAr': servingAr,
+    'kcal': kcal,
+    'protein': protein,
+    'carbs': carbs,
+    'fat': fat,
+    'category': category.name,
+    'verified': verified,
+    'sourceNote': sourceNote,
+    'barcode': barcode,
+    'servingGrams': servingGrams,
+    'presets': presets.map((p) => p.toJson()).toList(),
+    'isLiquid': isLiquid,
+    'densityGPerMl': densityGPerMl,
+  };
+
+  factory FoodItem.fromJson(Map<String, dynamic> json) => FoodItem(
+    id: json['id'] as String,
+    nameEn: json['nameEn'] as String,
+    nameAr: json['nameAr'] as String,
+    servingEn: json['servingEn'] as String,
+    servingAr: json['servingAr'] as String,
+    kcal: (json['kcal'] as num).toInt(),
+    protein: (json['protein'] as num).toDouble(),
+    carbs: (json['carbs'] as num).toDouble(),
+    fat: (json['fat'] as num).toDouble(),
+    category: FoodCategory.values.byName(json['category'] as String),
+    verified: json['verified'] as bool? ?? false,
+    sourceNote: json['sourceNote'] as String? ?? _placeholderSourceNote,
+    barcode: json['barcode'] as String?,
+    servingGrams: (json['servingGrams'] as num?)?.toDouble(),
+    presets: [
+      for (final p in (json['presets'] as List? ?? const []))
+        PortionPreset.fromJson(p as Map<String, dynamic>),
+    ],
+    isLiquid: json['isLiquid'] as bool? ?? false,
+    densityGPerMl: (json['densityGPerMl'] as num?)?.toDouble() ?? 1.0,
+  );
+
+  static const _placeholderSourceNote =
+      'Placeholder — unverified development estimate';
 }
 
-enum FoodCategory { snack, main, breakfast, sweet, drink }
+enum FoodCategory { snack, main, breakfast, sweet, drink, custom }
 
 /// Sort options shared by the History and My Meals tabs (search_screen.dart).
 /// "Most recent"/"Most frequent" read different underlying fields per tab

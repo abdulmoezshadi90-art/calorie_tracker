@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 
 import 'app_state.dart';
 import 'empty_state.dart';
-import 'food_db.dart';
 import 'models.dart';
 import 'search_screen.dart';
 import 'theme.dart';
@@ -58,7 +57,7 @@ class MealDetailScreen extends StatelessWidget {
     final entries = state.entriesFor(state.selectedDate, meal: meal);
     final totalKcal = entries.fold<double>(
       0,
-      (sum, e) => sum + (foodById[e.foodId]?.kcal ?? 0) * e.servings,
+      (sum, e) => sum + (state.resolveFood(e.foodId)?.kcal ?? 0) * e.servings,
     );
 
     return Scaffold(
@@ -99,7 +98,7 @@ class MealDetailScreen extends StatelessWidget {
                     itemCount: entries.length,
                     itemBuilder: (context, i) {
                       final entry = entries[i];
-                      final food = foodById[entry.foodId];
+                      final food = state.resolveFood(entry.foodId);
                       if (food == null) return const SizedBox.shrink();
                       return _EntryRow(
                         key: ValueKey(entry.id),

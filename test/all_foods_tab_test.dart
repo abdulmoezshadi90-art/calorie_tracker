@@ -46,11 +46,13 @@ AllFoodsTab _allFoodsTab({
   void Function(FoodItem, double)? onFoodTap,
   void Function(FoodItem, double)? onQuickAdd,
   VoidCallback? onClearSearch,
+  VoidCallback? onAddCustomFood,
 }) => AllFoodsTab(
   query: query,
   onFoodTap: onFoodTap ?? (_, _) {},
   onQuickAdd: onQuickAdd ?? (_, _) {},
   onClearSearch: onClearSearch ?? () {},
+  onAddCustomFood: onAddCustomFood ?? () {},
 );
 
 void main() {
@@ -78,6 +80,7 @@ void main() {
           onFoodQuickAdd: (_, _) {},
           onMealTap: (_) {},
           onMealQuickAdd: (_) {},
+          onAddCustomFood: () {},
         ),
       );
 
@@ -171,6 +174,7 @@ void main() {
           onFoodQuickAdd: (_, _) {},
           onMealTap: (_) {},
           onMealQuickAdd: (_) {},
+          onAddCustomFood: () {},
         ),
       );
       // Confirms History is indeed the opening tab here (logs exist).
@@ -206,6 +210,7 @@ void main() {
           onFoodQuickAdd: (_, _) {},
           onMealTap: (_) {},
           onMealQuickAdd: (_) {},
+          onAddCustomFood: () {},
         ),
       );
       await tester.enterText(find.byType(TextField), 'zzzzznomatch');
@@ -353,6 +358,7 @@ void main() {
             onFoodQuickAdd: (_, _) {},
             onMealTap: (_) {},
             onMealQuickAdd: (_) {},
+            onAddCustomFood: () {},
           ),
           direction: direction,
         );

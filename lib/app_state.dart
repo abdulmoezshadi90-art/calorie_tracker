@@ -25,6 +25,7 @@ class AppState extends ChangeNotifier {
   static const _quantityModeKey = 'quantity_mode';
   static const _themeModeKey = 'theme_mode';
   static const _savedMealsKey = 'saved_meals';
+  static const _customFoodsKey = 'custom_foods';
   // _v2: the tab set grew from two (History/My Meals) to three (All Foods/
   // History/My Meals) with a different index meaning — a fresh key avoids
   // silently reinterpreting an existing beta tester's old index 1 (used to
@@ -59,6 +60,28 @@ class AppState extends ChangeNotifier {
 
   List<SavedMeal> _savedMeals = [];
   List<SavedMeal> get savedMeals => List.unmodifiable(_savedMeals);
+
+  List<FoodItem> _customFoods = [];
+  List<FoodItem> get customFoods => List.unmodifiable(_customFoods);
+
+  /// Every food a user can pick from: the built-in database plus whatever
+  /// they've added themselves. Anywhere that lists "all foods" (the All
+  /// Foods tab, the Foods browse tab) should read this, not [foodDatabase]
+  /// directly, or custom foods silently won't show up there.
+  List<FoodItem> get allFoods => [...foodDatabase, ..._customFoods];
+
+  /// Looks a food up by id across both sources — a logged entry or saved
+  /// meal item doesn't know or care whether its food came from food_db.dart
+  /// or was user-created, so every lookup site needs to check both. Prefer
+  /// this over the bare top-level `foodById[id]` map anywhere a custom food
+  /// could plausibly be the answer (which, since ids flow through the same
+  /// LogEntry/SavedMealItem.foodId field either way, is everywhere).
+  FoodItem? resolveFood(String id) =>
+      foodById[id] ?? _customFoodById[id];
+
+  Map<String, FoodItem> get _customFoodById => {
+    for (final f in _customFoods) f.id: f,
+  };
 
   /// Which food-selection tab was last open (0 = All Foods, 1 = History,
   /// 2 = My Meals) — food_picker.dart's tab selector, persisted like any
@@ -106,8 +129,7 @@ class AppState extends ChangeNotifier {
 
   /// Foods logged to a meal on a day, in log order (skips unknown ids).
   List<FoodItem> foodsFor(DateTime date, MealType meal) => [
-    for (final e in entriesFor(date, meal: meal))
-      if (foodById[e.foodId] != null) foodById[e.foodId]!,
+    for (final e in entriesFor(date, meal: meal)) ?resolveFood(e.foodId),
   ];
 
   /// How many of the four meals have at least one entry.
@@ -153,9 +175,9 @@ class AppState extends ChangeNotifier {
 
     final result = [
       for (final e in agg.entries)
-        if (foodById[e.key] != null)
+        if (resolveFood(e.key) case final food?)
           HistoryEntry(
-            food: foodById[e.key]!,
+            food: food,
             lastLoggedAt: e.value.lastLoggedAt,
             logCount: e.value.logCount,
             mealTypes: e.value.mealTypes,
@@ -169,7 +191,7 @@ class AppState extends ChangeNotifier {
   DayTotals totalsFor(DateTime date) {
     final totals = DayTotals();
     for (final entry in _logsByDate[dateKey(date)] ?? const <LogEntry>[]) {
-      final food = foodById[entry.foodId];
+      final food = resolveFood(entry.foodId);
       if (food == null) continue;
       totals.kcal += food.kcal * entry.servings;
       totals.protein += food.protein * entry.servings;
@@ -440,6 +462,52 @@ class AppState extends ChangeNotifier {
   String newSavedMealId() =>
       'meal_${DateTime.now().microsecondsSinceEpoch}_${_idSeq++}';
 
+  // ─────────────────────────── Custom foods ───────────────────────────
+
+  Future<bool> addCustomFood(FoodItem food) async {
+    _customFoods.add(food);
+    notifyListeners();
+    if (await _save()) return true;
+    _customFoods.removeWhere((f) => f.id == food.id);
+    notifyListeners();
+    return false;
+  }
+
+  /// Invalidates [_historyCache] on the way out — it may hold a
+  /// [HistoryEntry] built from this food's old macro values.
+  Future<bool> updateCustomFood(FoodItem food) async {
+    final index = _customFoods.indexWhere((f) => f.id == food.id);
+    if (index < 0) return false;
+    final previous = _customFoods[index];
+    _customFoods[index] = food;
+    _historyCache = null;
+    notifyListeners();
+    if (await _save()) return true;
+    _customFoods[index] = previous;
+    _historyCache = null;
+    notifyListeners();
+    return false;
+  }
+
+  Future<bool> deleteCustomFood(String id) async {
+    final index = _customFoods.indexWhere((f) => f.id == id);
+    if (index < 0) return false;
+    final removed = _customFoods.removeAt(index);
+    _historyCache = null;
+    notifyListeners();
+    if (await _save()) return true;
+    _customFoods.insert(index, removed);
+    _historyCache = null;
+    notifyListeners();
+    return false;
+  }
+
+  /// Fresh, unused id for a new custom [FoodItem] — `custom_` prefix keeps
+  /// it visually distinct from food_db.dart ids and guarantees no
+  /// collision with them (none of those start with it).
+  String newCustomFoodId() =>
+      'custom_${DateTime.now().microsecondsSinceEpoch}_${_idSeq++}';
+
   Future<bool> setFoodTabIndex(int index) async {
     final previous = foodTabIndex;
     foodTabIndex = index;
@@ -628,6 +696,25 @@ class AppState extends ChangeNotifier {
         _savedMeals = [];
       }
     }
+    final rawCustomFoods = prefs.getString(_customFoodsKey);
+    if (rawCustomFoods != null) {
+      // Same salvage spirit as saved meals: one malformed custom food must
+      // not discard the rest.
+      try {
+        final decoded = jsonDecode(rawCustomFoods) as List;
+        final foods = <FoodItem>[];
+        for (final f in decoded) {
+          try {
+            foods.add(FoodItem.fromJson(f as Map<String, dynamic>));
+          } catch (_) {
+            // Skip the bad entry, keep the rest.
+          }
+        }
+        _customFoods = foods;
+      } catch (_) {
+        _customFoods = [];
+      }
+    }
     final raw = prefs.getString(_logsKey);
     if (raw != null) {
       // Salvage per day and per entry: one malformed record must not
@@ -698,6 +785,10 @@ class AppState extends ChangeNotifier {
       await prefs.setString(
         _savedMealsKey,
         jsonEncode(_savedMeals.map((m) => m.toJson()).toList()),
+      );
+      await prefs.setString(
+        _customFoodsKey,
+        jsonEncode(_customFoods.map((f) => f.toJson()).toList()),
       );
       if (_profile != null) {
         await prefs.setString(_profileKey, jsonEncode(_profile!.toJson()));
