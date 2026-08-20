@@ -168,9 +168,14 @@ class L10n {
   String get skip => isAr ? 'تخطي' : 'Skip';
   String get getStarted => isAr ? 'ابدأ الآن' : 'Get started';
   String get introTitle => isAr ? 'سجّل ما تأكل' : 'Log what you eat';
+  // No em dashes (house style), and no naming specific foods that aren't
+  // actually searchable yet: Kalee was never a real Libyan brand (removed
+  // from food_db.dart), and named home dishes like bazin aren't in the
+  // database yet either, only their raw ingredients are. Local packaged
+  // brands are the real, honest hook today.
   String get introBody => isAr
-      ? 'ابحث عن الأطعمة الليبية — من شيبسي كالي إلى البازين — وأضفها إلى وجباتك بضغطة. يعمل التطبيق بدون إنترنت وبياناتك تبقى على هاتفك.'
-      : 'Search Libyan foods — from Kalee chips to bazin — and add them to your meals with a tap. Works offline, and your data stays on your phone.';
+      ? 'ابحث عن العلامات الليبية والأطعمة اليومية، بالعربية أو الإنجليزية، وأضفها لوجباتك بضغطة واحدة. يعمل بدون إنترنت، وبياناتك تبقى في هاتفك فقط.'
+      : 'Search Libyan brands and everyday foods, in Arabic or English, and add them to your meals with a tap. Works offline, your data never leaves your phone.';
   String get onboardGoalsTitle =>
       isAr ? 'حدد أهدافك اليومية' : 'Set your daily goals';
   String get onboardGoalsBody => isAr
@@ -263,9 +268,12 @@ class L10n {
       ? 'تم رفع هدفك إلى الحد الأدنى الآمن.'
       : 'Your target was raised to a safe minimum.';
   String get continueLabel => isAr ? 'متابعة' : 'Continue';
+  // "Exercise" was defined here, but "intense" (used in the High and
+  // Athlete activity descriptions below) never was — added a second
+  // sentence using the standard talk-test definition.
   String get exerciseHelper => isAr
-      ? 'التمرين يعني نشاطًا يرفع نبض القلب لمدة 15-30 دقيقة أو أكثر'
-      : 'Exercise means 15 to 30+ minutes of elevated heart rate activity';
+      ? 'التمرين يعني نشاطًا يرفع نبض القلب لمدة 15 إلى 30 دقيقة أو أكثر. أما الشاق فيعني صعوبة الحديث أثناء الأداء.'
+      : 'Exercise means 15 to 30+ minutes of elevated heart rate activity. Intense means hard enough that talking through it is difficult.';
 
   String activityDesc(ActivityLevel a) => switch (a) {
     ActivityLevel.sedentary =>
@@ -401,6 +409,13 @@ class L10n {
     final month = (isAr ? _monthsAr : _monthsEn)[d.month - 1];
     return isAr ? '$wd، ${d.day} $month' : '$wd, $month ${d.day}';
   }
+
+  /// Calendar sheet header, e.g. "August 2026" / "أغسطس 2026". Year is
+  /// plain int interpolation, same as every other on-screen number here —
+  /// never intl-based formatting, which could slip in Eastern Arabic
+  /// numerals (hard requirement 1).
+  String monthYear(DateTime d) =>
+      '${(isAr ? _monthsAr : _monthsEn)[d.month - 1]} ${d.year}';
 
   // Short weekday labels for the week strip, indexed by DateTime.weekday % 7.
   static const _daysEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];

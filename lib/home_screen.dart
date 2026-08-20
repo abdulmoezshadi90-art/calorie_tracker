@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'app_state.dart';
+import 'date_picker_sheet.dart';
 import 'l10n.dart';
 import 'meal_detail_screen.dart';
 import 'models.dart';
@@ -304,7 +305,11 @@ class _TodayPill extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => state.selectDate(state.now()),
+        // Opens the calendar sheet (date_picker_sheet.dart) instead of
+        // jumping straight to today — the label stays "Today" (it's the
+        // trigger for the picker, not a live readout of the viewed day;
+        // _DatePill next to it already shows the actual selected date).
+        onTap: () => showDatePickerSheet(context: context),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
           child: Row(
