@@ -60,6 +60,7 @@ flutter:
 
   assets:
     - assets/icons/
+    - assets/branding/
 
   # Bundled Arabic font (naskh style, like Word's Traditional Arabic).
   # SIL OFL — license in assets/fonts/OFL.txt. Guarantees identical Arabic

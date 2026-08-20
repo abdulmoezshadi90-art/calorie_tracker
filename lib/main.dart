@@ -4,9 +4,8 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'app_shell.dart';
 import 'app_state.dart';
-import 'onboarding_screen.dart';
+import 'splash_screen.dart';
 import 'theme.dart';
 
 Future<void> main() async {
@@ -100,9 +99,7 @@ class CalorieApp extends StatelessWidget {
         themeMode: state.themeMode,
         builder: (context, child) =>
             AppScope(state: state, child: _PhoneFrame(child: child!)),
-        home: state.onboardingDone
-            ? const AppShell()
-            : const OnboardingScreen(),
+        home: const AppStartup(),
       ),
     );
   }
