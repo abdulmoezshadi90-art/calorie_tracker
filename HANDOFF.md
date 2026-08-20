@@ -23,12 +23,20 @@ Windows 11. Email: abdulmoezshadi.90@gmail.com
   (`C:\Users\abdul\dev\calorie_tracker`). Never mix them in one block.
 - Give me one command at a time when it matters. I paste blocks and the terminal
   merges them into one line.
-- Before writing anything user-facing (docs, store copy), verify claims against the
-  actual code, not against what an older doc says. This session caught a real false
-  claim (see below) by checking `food_db.dart` directly instead of trusting `README.md`.
+- Before writing anything user-facing (docs, store copy, in-app text), verify claims
+  against the actual code, not against what an older doc says. Caught twice now: a
+  README/PRODUCT.md claim about searchable dishes that weren't real, and an onboarding
+  paragraph naming a brand ("Kalee") that was never actually sold in Libya.
 - When asked to review your own work, actually check it against the codebase from
-  multiple angles (accuracy, consistency, policy risk, format limits), not just reread
-  the text. That's what caught the issues in the 15 Aug session log below.
+  multiple angles (accuracy, consistency, policy risk, format limits, live on-device
+  behavior), not just reread the text.
+- This machine has hit two environment gremlins worth recognizing fast if they recur:
+  a Windows Application Control policy that suddenly blocked `flutter_tester.exe`
+  from launching (blocked every test file, not just recently touched ones, resolved
+  itself or got fixed on my end without a clear cause), and the Android emulator
+  stalling mid-boot (qemu process alive but CPU usage flatlines after initially
+  climbing normally, kill and relaunch fresh fixed it both times). Neither is a code
+  problem, don't go looking for one in the diff.
 
 ---
 
@@ -42,7 +50,9 @@ as a brand (may survive as a store keyword).
 named home dishes (bazin, mbakbka, couscous, usban, sfinz, maqrud) are **planned,
 not shipped** — only their raw ingredients (flour, barley, couscous, pasta, produce)
 are in `food_db.dart` right now. Don't describe these dishes as searchable in any
-doc or store copy until they're actually entered.
+doc, store copy, or in-app text until they're actually entered. Users can work around
+this themselves now with custom foods (see 20 Aug session log), but that's a manual
+per-food workaround, not the same as the dishes being in the curated database.
 
 **Differentiators, in order of importance:**
 1. Fully offline. No network permission at all (confirmed: no `uses-permission` in
@@ -50,8 +60,9 @@ doc or store copy until they're actually entered.
 2. No ads, ever. Stated product principle (confirmed: no ad/analytics packages in
    `pubspec.yaml`, only `shared_preferences` and `flutter_localizations`).
 3. Arabic-first with full RTL and a language toggle.
-4. Verified nutrition data with visible provenance (108 of 164 foods verified as of
-   15 Aug 2026, shown via a checkmark badge on the food detail screen).
+4. Verified nutrition data with visible provenance (108 of 164 food_db.dart entries
+   verified; that count doesn't include user-added custom foods, which are always
+   unverified by definition).
 5. Ramadan mode, household portion presets. Ramadan mode is **not implemented** —
    roadmap idea only, don't claim it exists. Household portion presets (plate, bowl,
    cup, glass, tbsp) are real, in `food_db.dart`'s `servingEn` fields.
@@ -79,132 +90,107 @@ Speed matters more than I first thought.
 7. **Nutrition data honesty.** Verification status is a visible, first-class property.
    Never present unverified numbers as accurate. This extends to **feature honesty**
    too now — don't claim a food, dish, or feature exists in user-facing copy unless
-   it's actually in the code. See the bazin/mbakbka catch below.
+   it's actually in the code.
 8. **External-facing files live on a branch that won't be deleted.** Learned the hard
    way: the privacy policy was on a feature branch and the URL nearly broke.
 
 ---
 
-## Session log — 15 Aug 2026
+## Session log — 20 Aug 2026
 
-Continuation of the 14 Aug session. Everything below is committed to `ui-restructure`
-but **not pushed** to origin (4 commits ahead as of this handoff). `git log --oneline -8`
-to see them: `a32ff6b`, `6b13eed`, `384aa32`, `817b57b`, plus the 14 Aug commits under
-them (`5f43d01`, `0a83f01`, `c6bd062`, `f70dcbd`).
+Three features since the 15 Aug handoff, all committed and **pushed**, `git log
+--oneline -3`: `abfd99c`, `74232a1`, `69c2edc`. Branch is fully in sync with origin,
+nothing pending.
 
-**1. Fixed a real bug in the meal builder** (`817b57b`). Reported as: "in create a
-meal, tapping a food quick-adds it instead of letting me choose quantity, like every
-other add-food flow in the app." Root cause: `create_meal_screen.dart` wired both row
-tap and the quick-add button to the same instant-add function, a leftover assumption
-from an earlier refactor that was never actually confirmed with me. Fix: added a
-draft mode to `FoodDetailScreen` (`onConfirm` callback hands back a multiplier
-instead of logging to today, and `meal` becomes optional; the time-of-day row hides
-itself in draft mode since a saved-meal item has no log timestamp). Row tap now
-pushes that screen; quick-add is unchanged. Caught a second bug while testing this:
-the test helper's `AppScope` only wrapped the initial route via `MaterialApp(home:
-...)` instead of `MaterialApp(builder: ...)`, so any route a test pushes can't find
-app state. Fixed the same way `main.dart` actually does it. New regression test in
-`test/create_meal_screen_test.dart`.
+**1. Custom foods** (`69c2edc`). A new "Add a food" row in the All Foods tab lets
+you create your own entry: name plus per-serving calories/protein/carbs/fat, nothing
+else, no gram weight or unit picker (that stays exclusive to `food_db.dart`, which
+cites a real label weight). Drops into the same `FoodPicker` every built-in food
+uses, so it's searchable, loggable, usable in saved meals and the meal builder, and
+browsable in the Foods tab under a new "My Foods" category. Long-press a custom food
+to edit or delete it; `food_db.dart` entries stay read-only.
 
-**2. Signing is done.** `android/key.properties` now exists and is filled in
-(`keyAlias`, `keyPassword`, `storePassword` sourced from the USB backup, `storeFile`
-points at `C:/Users/abdul/dev/keystore/calorie_tracker_upload.jks`). Don't ask me to
-recreate it, don't print its contents back to me, it's gitignored and already correct.
-Built and verified both:
-- `flutter build appbundle --release` → `build\app\outputs\bundle\release\app-release.aab`,
-  verified with `keytool -printcert -jarfile`, `O=ly.app`, SHA-256 `57:C4:D7...`.
-- `flutter build apk --release` → `build\app\outputs\flutter-apk\app-release.apk`.
-  **`keytool -printcert -jarfile` says "Not a signed jar file" for this one, that's
-  expected, not a bug** — modern Android builds sign APKs with the v2/v3 scheme,
-  which `keytool` can't read. Use `apksigner verify --print-certs` instead:
-  `C:\Users\abdul\AppData\Local\Android\Sdk\build-tools\36.0.0\apksigner.bat`.
-  Confirmed same cert.
+**The important architectural change underneath this:** every place that resolved a
+food by id, day totals, History, Progress, saved meals, the meal builder, went
+through the static `foodById` map with no way to see a custom food. Added
+`AppState.resolveFood(id)` and `AppState.allFoods` (built-in plus custom), and routed
+roughly 18 call sites across 8 files through them. **If you add a new place that
+looks up a food by id, use `state.resolveFood(id)`, never the bare `foodById[id]`
+map, or a logged custom food will silently vanish from that screen's totals.**
 
-**3. The "no Android device" blocker is gone.** I have a physical Android phone now.
-It wasn't physically present during this session, so nothing got sideloaded or tested
-on it yet, that's the actual next step. AVD `libya_test_phone`'s launch failure is
-lower priority now that a real device exists, but still unfixed if you want it back.
+**2. Animated splash screen** (`74232a1`). Logo pops in with a slight overshoot, the
+"Zibda · زبدة" wordmark fades in below it (fixed English-left/Arabic-right order
+regardless of the app's own RTL state, forced via an explicit `Directionality`), then
+three gold dots pulse while it settles, about 1.2s, before crossfading into
+onboarding or the app shell. Background matches the native splash exactly.
 
-**4. Started Play Console prep**, three new files in `store_assets/`:
-- `en/listing.md`, `ar/listing.md` — short + full store descriptions. **Drafts.** I
-  haven't given final sign-off, especially the Arabic, which was AI-translated and
-  needs my native-speaker read before anything gets pasted into Play Console.
-- `play_console_forms.md` — draft answers for data safety, content rating (IARC),
-  target audience, app access, category. Grounded in actual facts (no backend, no
-  `INTERNET` permission, no accounts, no ad/analytics deps) but still needs to be
-  walked through the real Play Console forms by me, wording differs there.
+Two things worth remembering if you touch this again:
+- `assets/branding/` was never declared as a bundled Flutter asset, it only existed
+  for `flutter_native_splash`'s build-time codegen. Now in `pubspec.yaml`'s
+  `flutter: assets:` list, needed for `Image.asset()` to find it at runtime.
+- `AppStartup.splashDuration` is `@visibleForTesting` mutable, and
+  `test/flutter_test_config.dart` zeroes it for the whole suite. Without that, the
+  artificial 1.2s delay would cost real wall-clock time across every one of the ~30
+  test files that construct `CalorieApp`.
+- Caught after my first pass, at frame 0 the logo sat visibly shifted upward,
+  because it was centered as part of one group with the name and dots below it,
+  which reserved layout space for them even while they were still invisible. Fixed
+  by pinning the logo to the true screen center independently (a `Stack` with
+  `Positioned` name/dots underneath it, not a `Column` centered as a whole group).
 
-**5. Caught a real false claim while drafting these**, not a copy nitpick, an actual
-factual error already sitting in committed docs: `README.md` and `PRODUCT.md` both
-claimed bazin, mbakbka, usban, sfinz, and maqrud were searchable dishes. They aren't.
-Only base ingredients are in `food_db.dart`. I confirmed with the owner (me): planned,
-not shipped. Fixed both docs (`6b13eed`) to describe current coverage honestly instead.
-**If you're about to write any store copy, marketing text, or doc claiming specific
-food/dish coverage, check `food_db.dart`'s `nameEn` fields directly first.**
+**3. Calendar picker on the Today pill, plus two copy fixes** (`abfd99c`). The Today
+pill (top-left of Home) used to just jump straight back to today on tap. Now opens a
+calendar sheet (`date_picker_sheet.dart`), pick any day, past or future. Today gets
+the exact same glowing gold treatment (`daySelectedBg` + the same blur/offset
+`BoxShadow`) the week strip already uses for its selected day, so it reads as one
+visual language. Month-nav chevrons stay fixed left/right regardless of Arabic RTL
+on purpose, Gregorian calendar navigation isn't mirrored in real apps (Google
+Calendar, WhatsApp do the same), flipping it would be the actually confusing choice.
 
-**6. Ran a 5-angle review pass** on the store copy after that catch (factual accuracy
-against code, cross-file consistency, Play Store policy risk, character limits,
-grammar/format) and found five more things, all fixed:
-- `PRODUCT.md` still said "no physical Android devices" (stale, see #3) and "206
-  passing tests" (stale, it's 207 now, one new regression test from #1).
-- `en/listing.md` named **MyFitnessPal directly** in public store copy, a real
-  trademark/policy risk. Removed in favor of generic "global calorie apps," matching
-  what the Arabic version already said (it hadn't made the same mistake).
-- Arabic short description was 79 of the 80-character limit, right at the edge, and
-  had a diacritic that could count differently in Play Console's own counter. Trimmed
-  to 73 chars and dropped the diacritic.
-- Two Arabic phrasings reworked: a verb-gender agreement question around زبدة (sidestepped
-  by making تطبيق, unambiguously masculine, the grammatical subject instead) and an
-  awkward literal "nothing to lose" construction.
-- Bonus, found while verifying the feedback-email claim in `play_console_forms.md`
-  against the actual code: `lib/settings_screen.dart` still hardcoded `'Calorie
-  Tracker feedback'` as the email subject, the retired app name, live in the shipped
-  app. Fixed (`384aa32`). **This means the "Zibda everywhere" rename claim in earlier
-  docs was itself not fully true until this fix. If anything else still says "Calorie
-  Tracker" anywhere, that's a real bug, not a doc problem.**
+Same session, caught two honesty/quality issues in `l10n.dart` while touching nearby
+code: the onboarding intro paragraph had two em dashes and named "Kalee chips" and
+"bazin" as searchable, neither is true (same false-claim pattern as the README/
+PRODUCT.md catch from 15 Aug, see hard rule 7). And the training-intensity step
+defined "exercise" but never "intense", even though the High and Athlete activity
+levels both use it, added a second sentence to the existing helper caption.
 
-All fixes verified: `flutter analyze` clean, `flutter test` 207/207, both before and
-after every code change in this list.
+**All verified live on the emulator, not just in tests**, for every feature above:
+rebuilt the release APK, installed it, walked the actual flows (add a custom food
+and confirm it logs and counts toward the day total, watch the splash render frame
+by frame via rapid adb screenshots, open the calendar and tap a day and watch it
+navigate). 234 tests passing, analyzer clean.
 
-**Immediate next steps, in order:**
-1. Push the 4 local commits to `origin/ui-restructure` (not done, wasn't asked to).
-2. Get the phone physically present, sideload the built APK
-   (`build\app\outputs\flutter-apk\app-release.apk`), run the real-device parts of
-   `QA_CHECKLIST.md` that were never possible before (launcher icon, splash light/dark,
-   haptics, restart persistence).
-3. My own review of `store_assets/en/listing.md` and `store_assets/ar/listing.md`,
-   especially the Arabic.
-4. Walk `store_assets/play_console_forms.md`'s answers into the actual Play Console
-   data safety / content rating / target audience / app access forms.
-5. Open the 12-tester closed test, starts the mandatory 14-day clock.
+**Open work, unchanged from 15 Aug, still not done:**
+- Get the phone physically present, sideload
+  `build\app\outputs\flutter-apk\app-release.apk`, run the real-device parts of
+  `QA_CHECKLIST.md` (launcher icon, splash light/dark, haptics, restart persistence).
+  Everything above was verified on the emulator only.
+- My own review of `store_assets/en/listing.md` and `store_assets/ar/listing.md`,
+  especially the Arabic, before anything goes near Play Console.
+- Walk `store_assets/play_console_forms.md`'s answers into the actual Play Console
+  data safety / content rating / target audience / app access forms.
+- Open the 12-tester closed test, starts the mandatory 14-day clock.
+- `main/docs/privacy.html` is redundant (live copy serves from `gh-pages`), cleanup
+  item, not urgent.
+- AVD `libya_test_phone` occasionally stalls mid-boot (see the environment-gremlins
+  note above), kill and relaunch works, root cause still undiagnosed.
+- Named Libyan home dishes still not in `food_db.dart`, roadmap item.
 
 ---
 
-## Current state (15 Aug 2026)
+## Current state (20 Aug 2026)
 
-Private beta. Well ahead of the original timeline.
+Private beta. Well ahead of the original timeline. No hard blockers left, signing
+works, docs are accurate, the app itself has real feature depth now (custom foods,
+polished onboarding, a proper date picker). What's left is my own review time and
+the mechanical Play Console work, plus actually testing on my own phone.
 
-**Done:** signing fully working (see session log above), signed AAB and APK built and
-verified, adaptive launcher icon, splash screen (light + dark), app rename to Zibda
-verified complete (including the feedback-email subject line fix), privacy policy
-live, feature graphics EN + AR, web demo deployed and confirmed live, 207 tests
-passing, analyze clean, meal-builder quantity-picker bug fixed, Play Store listing
-copy and compliance-form answers drafted (pending my review).
-
-**Not blocked on anything hard anymore.** Phone exists, signing works, docs are
-accurate. What's left is my own review time and the mechanical Play Console work.
-
-**Open work:**
-- Push local commits to origin.
-- Sideload and real-device QA (see immediate next steps above).
-- My review of the drafted store listing copy, especially Arabic.
-- Actually fill the Play Console forms using `store_assets/play_console_forms.md`.
-- `main/docs/privacy.html` is redundant (live copy serves from `gh-pages`), cleanup
-  item, not urgent.
-- AVD `libya_test_phone` still fails to launch (exit code 1, empty stderr,
-  undiagnosed), low priority now.
-- Named Libyan home dishes (bazin, mbakbka, usban, sfinz, maqrud) are still not in
-  `food_db.dart`, roadmap item whenever there's appetite for it.
+**Done:** signing fully working, signed AAB and APK build and verify clean, adaptive
+launcher icon, splash screen (now animated, light + dark), app rename to Zibda
+verified complete, privacy policy live, feature graphics EN + AR, web demo deployed
+and confirmed live, custom foods, calendar date picker, 234 tests passing, analyze
+clean, Play Store listing copy and compliance-form answers drafted (pending my
+review).
 
 **Deliberately deferred:** Flutter upgrade (build chain works, don't touch it before
 release), barcode scanner, accounts/sync, iOS via Codemagic + TestFlight ($99 budgeted).
@@ -218,32 +204,40 @@ No backend by design. Storage isolated in `AppState` so a backend could be swapp
 
 `lib/`
 - `main.dart` — MaterialApp, locale switching, web `?lang=ar|en` override. `AppScope`
-  is wired via `MaterialApp`'s `builder:`, not around `home:` — it has to cover every
-  pushed route, not just the first one. If you're writing a test that pumps a screen
-  standalone, wire it the same way or a pushed route won't find app state (see
-  session log item 1 for what that failure looks like).
-- `app_state.dart` — `AppState` (ChangeNotifier) + `AppScope` (InheritedNotifier)
+  is wired via `MaterialApp`'s `builder:`, not around `home:` (which is now
+  `AppStartup`, see splash_screen.dart) — it has to cover every pushed route, not
+  just the first one. If you're writing a test that pumps a screen standalone, wire
+  it the same way or a pushed route won't find app state.
+- `splash_screen.dart` — `AppStartup` (splash then real content) + `SplashScreen`,
+  see 20 Aug session log.
+- `date_picker_sheet.dart` — the Today pill's calendar sheet, see 20 Aug session log.
+- `custom_food_screen.dart` — add/edit form for user-created foods, see 20 Aug
+  session log.
+- `app_state.dart` — `AppState` (ChangeNotifier) + `AppScope` (InheritedNotifier).
+  `resolveFood(id)` / `allFoods` are the correct way to look up any food now, built
+  in or custom, never the bare `foodById` map from `food_db.dart` directly.
 - `models.dart` — FoodItem, LogEntry, MealType, DayTotals, ServingUnit, number formatters
 - `theme.dart` — `AppColors`, full light + dark palettes
 - `l10n.dart` — hand-rolled EN/AR strings, no intl codegen
 - `food_db.dart` — Libyan foods, EN+AR names, many now cite USDA FDC IDs. 164 entries,
-  108 verified. Source of truth for "what's actually searchable" — check here before
-  writing any doc or copy claiming food/dish coverage.
+  108 verified. Source of truth for what's built in, but not the whole picture
+  anymore, custom foods live in `AppState` instead, use `state.allFoods` to see both.
 - Screens: `home_screen`, `search_screen`, `meal_detail_screen`, `progress_screen`,
-  `profile_screen`, `create_meal_screen`, `food_detail_screen` (now has a draft mode,
-  see session log item 1)
+  `profile_screen`, `create_meal_screen`, `food_detail_screen` (has a draft mode for
+  the meal builder, `onConfirm` callback instead of logging to today)
 - Widgets: `food_picker`, `all_foods_tab`, `food_history_tab`, `saved_meals_tab`,
   `empty_state`
 - `settings_screen.dart` — feedback email via native `MethodChannel` mail intent
   (`ly.app.calorie_tracker/mail`), not `url_launcher`, deliberate tiny dependency
-  footprint. Subject line now correctly says "Zibda feedback".
+  footprint.
 
 ## Color system (`lib/theme.dart` → `AppColors`)
 
 Light: pageBg `#F1EEE0`, header gradient `#35533B` → `#243D2A`, accent `#2E8B57`,
 gold `#E9B949`, card `#FFFDF6`, ink `#1E3325`, muted `#5F6E62`
 Macros: carb `#F59E0B`, fat `#8B5CF6`, protein `#EF4444`
-Also: `kcalAccent #2F8F5B`, `fieldError #D06A4F`
+Also: `kcalAccent #2F8F5B`, `fieldError #D06A4F`, `daySelectedBg #EFC65B` (the glow
+color, week strip and the date picker's today cell both use it)
 Dark splash bg: `#12160F`
 `NotoNaskhArabic` bundled for Arabic.
 
@@ -283,6 +277,13 @@ file", that's normal (v2/v3 scheme), use apksigner instead:**
 "C:\Users\abdul\AppData\Local\Android\Sdk\build-tools\36.0.0\apksigner.bat" verify --print-certs build\app\outputs\flutter-apk\app-release.apk
 ```
 
+**Installing a fresh build on the emulator, if the signature ever mismatches**
+(`INSTALL_FAILED_UPDATE_INCOMPATIBLE`, usually means whatever's installed was a
+debug build from a different signing path): `adb uninstall ly.app.calorie_tracker`
+first, then a plain install, not `-r`. To re-walk onboarding on an already-installed
+build without losing the signing check, `adb shell pm clear ly.app.calorie_tracker`
+wipes app data only, keeps the same signed install.
+
 ---
 
 ## Git layout
@@ -290,8 +291,7 @@ file", that's normal (v2/v3 scheme), use apksigner instead:**
 Repo: `abdulmoezshadi90-art/calorie_tracker` (public)
 
 - `main` — source of truth for source code
-- `ui-restructure` — my active working branch, **4 commits ahead of origin as of
-  15 Aug 2026, not pushed yet**
+- `ui-restructure` — my active working branch, in sync with origin as of 20 Aug 2026
 - `gh-pages` — **orphan branch**, deployed website only, no source history
 
 GitHub Pages serves from `gh-pages` root:
@@ -321,10 +321,8 @@ Frames: `icon`, `adaptive_foreground`, `adaptive_background`, `splash_mark`,
 `splash_mark_dark`, `feature_graphic`.
 
 Icon: cream bowl, gold mound, forest green gradient background. Exports to
-`assets/icons/`. Splash marks to `assets/branding/`. Confirmed as of 14 Aug 2026 that
-`assets/icons/` and the generated Android/iOS/web launcher icons were already fully
-in sync with the Figma export, `flutter pub run flutter_launcher_icons` regenerated
-zero actual content (only line-ending noise, discarded).
+`assets/icons/`. Splash marks to `assets/branding/` (now also declared as a bundled
+Flutter asset in `pubspec.yaml`, needed at runtime by the animated splash screen).
 
 The old generator script `tool/generate_app_icon.dart` **was deleted on purpose.**
 Do not recreate it. `tool/generate_meal_icons.dart` is unrelated and stays.
@@ -336,8 +334,8 @@ to the foreground layer.
 Figma MCP is on a **Starter plan with a tool-call limit** that gets hit quickly.
 
 Feature graphics (1024x500, Play Store) are done, EN + AR, at `store_assets/en/` and
-`store_assets/ar/`. Same directory now also holds the draft store listing copy and
-Play Console form prep, see session log above.
+`store_assets/ar/`. Same directory also holds the draft store listing copy and Play
+Console form prep, still pending my own review.
 
 ---
 
@@ -347,13 +345,16 @@ Play Console form prep, see session log above.
 C:\dev\flutter\bin\flutter.bat analyze
 C:\dev\flutter\bin\flutter.bat test
 ```
-**207 tests** (was 206, one new regression test added 15 Aug for the meal-builder
-fix). Golden screenshots live in `test\goldens\`. When a layout change is
+**234 tests.** Golden screenshots live in `test\goldens\`. When a layout change is
 deliberate, inspect `test\failures\*_isolatedDiff.png` **before** regenerating:
 ```
 C:\dev\flutter\bin\flutter.bat test --update-goldens test\screenshots_test.dart
 ```
 Never update goldens blind. It bakes in bugs permanently.
+
+If `flutter test` fails to even launch with "An Application Control policy has
+blocked this file" against `flutter_tester.exe`, that's a Windows security policy,
+not a code problem, see the environment-gremlins note near the top of this doc.
 
 ---
 
@@ -361,17 +362,16 @@ Never update goldens blind. It bakes in bugs permanently.
 
 `README.md`, `PRODUCT.md`, `HANDOFF.md` (this file, kept current directly by Claude
 each session, replace it fully rather than leaving stale sections when you hand off).
-`PLAN.md`, `CLAUDE.md`, and `DEV_NOTES.md` **do not exist anywhere on this machine**
-as of 15 Aug 2026, not even in a private folder, despite older docs referencing them.
-They were stripped in commit `f1c22a7` ("prepare repository for public release") and
-never recreated. Don't assume they exist, don't fabricate their contents, if you need
-that context ask the owner where the real copies live.
+`PLAN.md`, `CLAUDE.md`, and `DEV_NOTES.md` **do not exist anywhere on this machine**,
+not even in a private folder, despite older docs referencing them. They were stripped
+in commit `f1c22a7` ("prepare repository for public release") and never recreated.
+Don't assume they exist, don't fabricate their contents, if you need that context ask
+the owner where the real copies live.
 
 `store_assets/` holds Play Store material: `en/feature_graphic.png`,
 `ar/feature_graphic.png`, `en/listing.md`, `ar/listing.md` (draft store copy, pending
 owner review), `play_console_forms.md` (draft compliance-form answers).
 
-`README.md` and `PRODUCT.md` were both fixed 15 Aug 2026 for a real false claim about
-Libyan dish coverage (see session log). Both are accurate as of this handoff. If you
-edit either again, verify against `food_db.dart` and the actual test count first,
-don't just extend the existing prose.
+All three docs (`README.md`, `PRODUCT.md`, this file) are accurate as of 20 Aug 2026.
+If you edit any of them again, verify against `food_db.dart` / `AppState` and the
+actual test count first, don't just extend the existing prose.

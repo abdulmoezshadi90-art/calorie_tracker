@@ -10,6 +10,8 @@ everyday ingredients those dishes are built from.
 
 - **Libyan food coverage**: local packaged brands like Al Naseem, plus
   everyday ingredients — searchable in Arabic or English
+- **Add your own foods**: can't find something? add a name and macros
+  yourself, in seconds
 - **Full Arabic RTL** with a one-tap language toggle
 - **Works completely offline** — no connection needed, ever
 - **No account required**, no sign-up
@@ -40,7 +42,9 @@ In private beta. Public launch planned for December 2026.
 Packaged food values come from product labels; home dish values are
 estimates from documented reference recipes. Entries carry a source note
 and a verified flag in [food_db.dart](lib/food_db.dart) — values marked
-unverified there are placeholders pending label verification.
+unverified there are placeholders pending label verification. Foods users
+add themselves are always unverified, by definition, since nobody has
+checked them against a label.
 
 ## Legal
 
